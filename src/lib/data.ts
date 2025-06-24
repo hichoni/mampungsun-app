@@ -25,6 +25,9 @@ export const mockUsers: User[] = [
 
   // AI User
   { id: 'ai-cheerer', name: '응원 요정', nickname: '응원 요정', grade: 0, class: 0, studentId: 0, pin: '', isApproved: true, avatarUrl: `https://placehold.co/100x100/FFDAB9/8B4513.png?text=${encodeURIComponent('요')}` },
+
+  // Teacher User
+  { id: 'teacher-master', name: '선생님', nickname: '선생님', grade: -1, class: -1, studentId: -1, pin: 'password123', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('샘')}` },
 ];
 
 export const mockDiaryEntries: DiaryEntry[] = [

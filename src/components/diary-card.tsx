@@ -71,12 +71,12 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
   const [commenter, setCommenter] = useState<User | null>(null);
 
   useEffect(() => {
-    const LOGGED_IN_USER_ID = '4'; // Test User ID
+    const LOGGED_IN_USER_ID = isTeacherView ? 'teacher-master' : '4'; // Teacher or Student
     const storedUsers = localStorage.getItem('mampungsun_users');
     const allUsers: User[] = storedUsers ? JSON.parse(storedUsers) : mockUsers;
     const currentCommenter = allUsers.find(u => u.id === LOGGED_IN_USER_ID);
     if(currentCommenter) setCommenter(currentCommenter);
-  }, []);
+  }, [isTeacherView]);
 
   useEffect(() => {
     const likedEntryIds = new Set<string>(JSON.parse(localStorage.getItem('likedEntries') || '[]'));
@@ -125,7 +125,7 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
 
       if (moderationResult && moderationResult.isAppropriate) {
         const newCommentPayload: Comment = {
-          id: crypto.randomUUID(),
+          id: `comment-${Date.now()}`,
           userId: commenter.id,
           nickname: commenter.nickname,
           avatarUrl: commenter.avatarUrl,
@@ -178,7 +178,7 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
         <div className="flex items-start gap-4">
           <Avatar>
             <AvatarImage src={author?.avatarUrl} alt={author?.nickname} />
-            <AvatarFallback>{author?.nickname.charAt(0)}</AvatarFallback>
+            <AvatarFallback>{author?.nickname?.charAt(0)}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <CardTitle className="text-base truncate">{author?.nickname}</CardTitle>
@@ -255,7 +255,7 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
                                       <div key={`${entry.id}-comment-${index}`} className="flex items-start gap-2">
                                           <Avatar className="w-8 h-8 border">
                                               <AvatarImage src={comment.avatarUrl} alt={comment.nickname} />
-                                              <AvatarFallback>{comment.nickname.charAt(0)}</AvatarFallback>
+                                              <AvatarFallback>{comment.nickname?.charAt(0)}</AvatarFallback>
                                           </Avatar>
                                           <div className="flex-1 space-y-1">
                                               <div className="bg-muted p-3 rounded-lg rounded-tl-none">
