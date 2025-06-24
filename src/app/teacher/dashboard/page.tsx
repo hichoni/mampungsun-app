@@ -65,12 +65,18 @@ const headlineFonts = [
   { name: 'Gaegu', value: 'Gaegu', family: 'Gaegu, cursive' },
   { name: 'Nanum Pen Script', value: 'Nanum Pen Script', family: '"Nanum Pen Script", cursive' },
   { name: 'Do Hyeon', value: 'Do Hyeon', family: '"Do Hyeon", sans-serif' },
+  { name: 'Black Han Sans', value: 'Black Han Sans', family: '"Black Han Sans", sans-serif' },
+  { name: 'East Sea Dokdo', value: 'East Sea Dokdo', family: '"East Sea Dokdo", cursive' },
+  { name: 'Gugi', value: 'Gugi', family: '"Gugi", cursive' },
 ]
 
 const bodyFonts = [
   { name: 'Gowun Dodum', value: 'Gowun Dodum', family: '"Gowun Dodum", sans-serif' },
   { name: 'Noto Sans KR', value: 'Noto Sans KR', family: '"Noto Sans KR", sans-serif' },
   { name: 'Nanum Gothic', value: 'Nanum Gothic', family: '"Nanum Gothic", sans-serif' },
+  { name: 'IBM Plex Sans KR', value: 'IBM Plex Sans KR', family: '"IBM Plex Sans KR", sans-serif' },
+  { name: 'Sunflower', value: 'Sunflower', family: '"Sunflower", sans-serif' },
+  { name: 'Hi Melody', value: 'Hi Melody', family: '"Hi Melody", cursive' },
 ]
 
 
@@ -249,7 +255,7 @@ export default function TeacherDashboard() {
   return (
     <div className="min-h-screen bg-background">
       <header className="px-4 lg:px-6 h-16 flex items-center border-b">
-        <Link href="/" className="flex items-center justify-center">
+        <Link href="/teacher/dashboard" className="flex items-center justify-center">
           <BalloonIcon className="h-8 w-8 text-primary" />
           <span className="ml-2 text-xl font-headline font-bold text-foreground">맘풍선 교사 페이지</span>
         </Link>
