@@ -1,3 +1,4 @@
+
 'use client'
 
 import React, { useState, useRef, useEffect } from "react"
@@ -43,6 +44,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { PieChart, Pie, Cell } from "recharts"
+import { type ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 
 
 const getEmotionBadgeVariant = (emotion: string) => {
@@ -215,6 +218,34 @@ export default function TeacherDashboard() {
     return a.studentId - b.studentId;
   });
 
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+  const recentEntries = mockDiaryEntries.filter(entry => new Date(entry.createdAt) > oneWeekAgo);
+
+  const emotionCounts = recentEntries.reduce((acc, entry) => {
+      const emotion = entry.dominantEmotion || '정보 없음';
+      acc[emotion] = (acc[emotion] || 0) + 1;
+      return acc;
+  }, {} as Record<string, number>);
+
+  const chartConfig = {
+      기쁨: { label: "기쁨", color: "hsl(var(--primary))" },
+      슬픔: { label: "슬픔", color: "hsl(var(--destructive))" },
+      불안: { label: "불안", color: "hsl(var(--secondary))" },
+      평온: { label: "평온", color: "hsl(var(--accent))" },
+      '정보 없음': { label: "정보 없음", color: "hsl(var(--muted))" },
+  } satisfies ChartConfig;
+  
+  const chartData = Object.keys(emotionCounts)
+    .filter(emotion => emotion in chartConfig)
+    .map(emotion => ({
+        emotion,
+        count: emotionCounts[emotion],
+        fill: chartConfig[emotion as keyof typeof chartConfig].color
+    }));
+
+
   return (
     <div className="min-h-screen bg-background">
       <header className="px-4 lg:px-6 h-16 flex items-center border-b">
@@ -232,6 +263,34 @@ export default function TeacherDashboard() {
         </div>
       </header>
       <main className="p-4 sm:p-6 md:p-8 space-y-8">
+        
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline">학급 감정 통계</CardTitle>
+                <CardDescription>최근 일주일간 학생들의 감정 분포입니다.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+                {chartData.length > 0 ? (
+                    <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[350px]">
+                        <PieChart>
+                            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel nameKey="emotion" />} />
+                            <Pie data={chartData} dataKey="count" nameKey="emotion" cx="50%" cy="50%" outerRadius={100} innerRadius={60}>
+                                {chartData.map((entry) => (
+                                    <Cell key={`cell-${entry.emotion}`} fill={entry.fill} className="stroke-background hover:opacity-80" />
+                                ))}
+                            </Pie>
+                            <ChartLegend content={<ChartLegendContent nameKey="emotion" />} className="[&_.recharts-legend-item-text]:capitalize" />
+                        </PieChart>
+                    </ChartContainer>
+                ) : (
+                    <div className="flex items-center justify-center h-64">
+                      <p className="text-muted-foreground text-center">아직 통계를 낼 맘풍선 데이터가 없습니다.</p>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+
+
         <Card>
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-4">
@@ -413,3 +472,5 @@ export default function TeacherDashboard() {
     </div>
   )
 }
+
+    
