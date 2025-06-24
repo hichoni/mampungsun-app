@@ -92,14 +92,14 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
   }
 
   const handleCommentLikeToggle = (commentId: string, commentIndex: number) => {
-    const uniqueCommentId = `${entry.id}-${commentId}`;
+    const uniqueCommentKey = `${entry.id}-${commentId}-${commentIndex}`;
     const newLikedComments = new Set(likedComments);
-    const action = newLikedComments.has(uniqueCommentId) ? 'unlike' : 'like';
+    const action = newLikedComments.has(uniqueCommentKey) ? 'unlike' : 'like';
 
     if (action === 'like') {
-      newLikedComments.add(uniqueCommentId);
+      newLikedComments.add(uniqueCommentKey);
     } else {
-      newLikedComments.delete(uniqueCommentId);
+      newLikedComments.delete(uniqueCommentKey);
     }
 
     setLikedComments(newLikedComments);
@@ -217,7 +217,7 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
                                               </div>
                                               <div className="flex items-center gap-2 pl-2">
                                                   <Button variant="ghost" size="sm" className="p-1 h-auto flex items-center gap-1" onClick={() => handleCommentLikeToggle(comment.id, index)}>
-                                                      <Heart className={`h-3 w-3 ${likedComments.has(`${entry.id}-${comment.id}`) ? 'text-red-500 fill-current' : ''}`} />
+                                                      <Heart className={`h-3 w-3 ${likedComments.has(`${entry.id}-${comment.id}-${index}`) ? 'text-red-500 fill-current' : ''}`} />
                                                       {comment.likes > 0 && <span className="text-xs text-muted-foreground font-normal">{comment.likes}</span>}
                                                   </Button>
                                                   {isTeacherView && (
