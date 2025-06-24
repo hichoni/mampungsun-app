@@ -59,7 +59,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body;
+    @apply bg-background text-foreground font-body break-keep;
   }
 
   h1, h2, h3, h4, h5, h6 {
