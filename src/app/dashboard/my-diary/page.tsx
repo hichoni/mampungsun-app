@@ -18,15 +18,22 @@ const chartConfig = {
   '정보 없음': { label: "정보 없음", color: "hsl(var(--muted))" },
 } satisfies ChartConfig;
 
+const USERS_STORAGE_KEY = 'mampungsun_users';
+const LOGGED_IN_USER_ID = '4'; // Test User ID
 
 export default function MyDiaryPage() {
   const [entries, setEntries] = useState<DiaryEntry[]>([])
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [welcomeMessage, setWelcomeMessage] = useState<string>('');
   const [isLoadingWelcome, setIsLoadingWelcome] = useState<boolean>(true);
   
   useEffect(() => {
     const storedEntries = localStorage.getItem('diaryEntries');
     setEntries(storedEntries ? JSON.parse(storedEntries) : mockDiaryEntries);
+
+    const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
+    const allUsers: User[] = storedUsers ? JSON.parse(storedUsers) : mockUsers;
+    setCurrentUser(allUsers.find(u => u.id === LOGGED_IN_USER_ID) || null);
 
     const fetchWelcomeMessage = async () => {
       setIsLoadingWelcome(true);
@@ -44,13 +51,9 @@ export default function MyDiaryPage() {
     fetchWelcomeMessage();
   }, [])
   
-  // In a real app, you'd fetch entries for the currently logged-in user
-  const loggedInUserId = '4'; // Test User ID
   const myEntries = entries
-    .filter(entry => entry.userId === loggedInUserId)
+    .filter(entry => entry.userId === LOGGED_IN_USER_ID)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  
-  const currentUser = mockUsers.find(user => user.id === loggedInUserId);
 
   const handleComment = (entryId: string, newComment: Comment) => {
     setEntries(currentEntries => {

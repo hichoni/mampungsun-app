@@ -9,13 +9,19 @@ import type { DiaryEntry, User, Comment } from "@/lib/definitions"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 
+const USERS_STORAGE_KEY = 'mampungsun_users';
+
 export default function ContentManagementPage() {
   const [entries, setEntries] = useState<DiaryEntry[]>([])
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const { toast } = useToast()
 
   useEffect(() => {
     const storedEntriesStr = localStorage.getItem('diaryEntries');
     setEntries(storedEntriesStr ? JSON.parse(storedEntriesStr) : mockDiaryEntries);
+
+    const storedUsersStr = localStorage.getItem(USERS_STORAGE_KEY);
+    setAllUsers(storedUsersStr ? JSON.parse(storedUsersStr) : mockUsers);
   }, []);
 
   const handlePinEntry = (entryId: string) => {
@@ -117,7 +123,7 @@ export default function ContentManagementPage() {
   };
 
   const findUserById = (userId: string): User | undefined => {
-    return mockUsers.find(user => user.id === userId);
+    return allUsers.find(user => user.id === userId);
   }
 
   return (

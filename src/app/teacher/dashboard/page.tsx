@@ -47,6 +47,7 @@ import { type ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, Char
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { generateNickname } from "@/ai/flows/generate-nickname-flow"
 
+const USERS_STORAGE_KEY = 'mampungsun_users';
 
 const getEmotionBadgeVariant = (emotion: string) => {
   switch (emotion) {
@@ -62,7 +63,7 @@ const getEmotionBadgeVariant = (emotion: string) => {
 };
 
 export default function TeacherDashboard() {
-  const [students, setStudents] = useState<User[]>(initialMockUsers);
+  const [students, setStudents] = useState<User[]>([]);
   const [studentToDelete, setStudentToDelete] = useState<User | null>(null);
   const [isAddStudentDialogOpen, setAddStudentDialogOpen] = useState(false);
   const [isBatchUploadDialogOpen, setBatchUploadDialogOpen] = useState(false);
@@ -73,6 +74,17 @@ export default function TeacherDashboard() {
   const [selectedClass, setSelectedClass] = useState<string>('all');
   
   const { toast } = useToast();
+
+  useEffect(() => {
+    const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
+    setStudents(storedUsers ? JSON.parse(storedUsers) : initialMockUsers);
+  }, []);
+
+  useEffect(() => {
+    if (students.length > 0) {
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(students));
+    }
+  }, [students]);
 
   const handleApprovalChange = (studentId: string, isApproved: boolean) => {
     setStudents(currentStudents => 
@@ -204,6 +216,7 @@ export default function TeacherDashboard() {
   const filteredStudentIds = useMemo(() => {
     return new Set(students
       .filter(student => {
+        if (student.grade === 0) return false; // Always exclude AI user
         if (selectedGrade === 'all') return true;
         if (student.grade !== parseInt(selectedGrade)) return false;
         if (selectedClass === 'all') return true;

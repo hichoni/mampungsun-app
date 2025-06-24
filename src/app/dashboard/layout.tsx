@@ -16,7 +16,6 @@ const navLinksData = [
   { href: "/dashboard", icon: Home, label: "모두의 맘풍선" },
   { href: "/dashboard/my-diary", icon: BookUser, label: "나의 맘풍선" },
   { href: "/dashboard/chat", icon: MessageSquare, label: "마음 대화" },
-  { href: "/dashboard/profile", icon: User, label: "프로필" },
 ];
 
 
@@ -86,7 +85,7 @@ export default function DashboardLayout({
                 </SheetClose>
                 
                 {navLinksData.map((link) => (
-                   <SheetClose asChild key={link.href}>
+                   <SheetClose asChild key={`mobile-${link.href}`}>
                       <Link
                         href={link.href}
                         className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
@@ -112,6 +111,12 @@ export default function DashboardLayout({
           <div className="w-full flex-1">
             {/* Can add a search bar here later */}
           </div>
+          <Button variant="outline" size="icon" asChild>
+            <Link href="/dashboard/profile">
+              <User className="h-5 w-5" />
+              <span className="sr-only">프로필</span>
+            </Link>
+          </Button>
           <Button variant="outline" size="icon" asChild>
             <Link href="/">
               <LogOut className="h-5 w-5" />

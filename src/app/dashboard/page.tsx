@@ -8,16 +8,18 @@ import { generateAiComment } from "@/ai/flows/generate-ai-comment-flow"
 import { generateWelcomeMessage } from "@/ai/flows/generate-welcome-message-flow"
 import { Lightbulb } from "lucide-react"
 
+const USERS_STORAGE_KEY = 'mampungsun_users';
 const AI_CHEERER_ID = 'ai-cheerer';
 // For demonstration, any post older than 1 hour without engagement gets a comment.
 const AI_COMMENT_THRESHOLD_HOURS = 1;
 
 export default function DashboardPage() {
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [welcomeMessage, setWelcomeMessage] = useState<string>('');
   const [isLoadingWelcome, setIsLoadingWelcome] = useState<boolean>(true);
 
-  // Load entries from localStorage on mount and run AI checks
+  // Load entries and users from localStorage on mount and run AI checks
   useEffect(() => {
     // Fetch welcome message
     const fetchWelcomeMessage = async () => {
@@ -32,6 +34,10 @@ export default function DashboardPage() {
         setIsLoadingWelcome(false);
       }
     };
+
+    const storedUsersStr = localStorage.getItem(USERS_STORAGE_KEY);
+    const users = storedUsersStr ? JSON.parse(storedUsersStr) : mockUsers;
+    setAllUsers(users);
     
     const storedEntriesStr = localStorage.getItem('diaryEntries');
     let initialEntries = storedEntriesStr ? JSON.parse(storedEntriesStr) : mockDiaryEntries;
@@ -42,7 +48,7 @@ export default function DashboardPage() {
     
     const addAutoComments = async () => {
       let entriesWereUpdated = false;
-      const aiUser = mockUsers.find(u => u.id === AI_CHEERER_ID);
+      const aiUser = users.find(u => u.id === AI_CHEERER_ID);
       if (!aiUser) return;
 
       const updatedEntriesPromises = initialEntries.map(async (entry: DiaryEntry) => {
@@ -140,13 +146,11 @@ export default function DashboardPage() {
     console.log("Delete action not permitted for students.");
   };
 
-
-  // In a real app, you would fetch this data
   const publicEntries = entries.filter(entry => entry.isPublic)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const findUserById = (userId: string): User | undefined => {
-    return mockUsers.find(user => user.id === userId);
+    return allUsers.find(user => user.id === userId);
   }
 
   return (
