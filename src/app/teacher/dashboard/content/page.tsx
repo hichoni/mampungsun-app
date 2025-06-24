@@ -10,81 +10,87 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 
 export default function ContentManagementPage() {
-  const [entries, setEntries] = useState<DiaryEntry[]>(mockDiaryEntries)
+  const [entries, setEntries] = useState<DiaryEntry[]>([])
   const { toast } = useToast()
 
   useEffect(() => {
     const storedEntriesStr = localStorage.getItem('diaryEntries');
-    const initialEntries = storedEntriesStr ? JSON.parse(storedEntriesStr) : mockDiaryEntries;
-    setEntries(initialEntries);
+    setEntries(storedEntriesStr ? JSON.parse(storedEntriesStr) : mockDiaryEntries);
   }, []);
 
-  const updateAndStoreEntries = (updatedEntries: DiaryEntry[]) => {
-    setEntries(updatedEntries);
-    localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
-  }
-
   const handleComment = (entryId: string, newComment: Comment) => {
-    const updatedEntries = entries.map(entry => {
-      if (entry.id === entryId) {
-        return { ...entry, comments: [...entry.comments, newComment] };
-      }
-      return entry;
+    setEntries(currentEntries => {
+        const updatedEntries = currentEntries.map(entry => {
+          if (entry.id === entryId) {
+            return { ...entry, comments: [...entry.comments, newComment] };
+          }
+          return entry;
+        });
+        localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
+        return updatedEntries;
     });
-    updateAndStoreEntries(updatedEntries);
   };
 
   const handleLikeEntry = (entryId: string, action: 'like' | 'unlike') => {
-    const updatedEntries = entries.map(entry => {
-      if (entry.id === entryId) {
-        const newLikes = action === 'like' ? entry.likes + 1 : Math.max(0, entry.likes - 1);
-        return { ...entry, likes: newLikes };
-      }
-      return entry;
+    setEntries(currentEntries => {
+        const updatedEntries = currentEntries.map(entry => {
+          if (entry.id === entryId) {
+            const newLikes = action === 'like' ? entry.likes + 1 : Math.max(0, entry.likes - 1);
+            return { ...entry, likes: newLikes };
+          }
+          return entry;
+        });
+        localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
+        return updatedEntries;
     });
-    updateAndStoreEntries(updatedEntries);
   };
 
   const handleLikeComment = (entryId: string, commentId: string, action: 'like' | 'unlike') => {
-    const newEntries = [...entries];
-    const entryIndex = newEntries.findIndex(e => e.id === entryId);
-    if (entryIndex === -1) return;
+    setEntries(currentEntries => {
+        const newEntries = [...currentEntries];
+        const entryIndex = newEntries.findIndex(e => e.id === entryId);
+        if (entryIndex === -1) return currentEntries;
 
-    const entryToUpdate = newEntries[entryIndex];
-    const commentIndex = entryToUpdate.comments.findIndex(c => c.id === commentId);
-    if (commentIndex === -1) return;
+        const entryToUpdate = { ...newEntries[entryIndex] }; // Deep copy entry
+        const commentIndex = entryToUpdate.comments.findIndex(c => c.id === commentId);
+        if (commentIndex === -1) return currentEntries;
 
-    const newComments = [...entryToUpdate.comments];
-    const commentToUpdate = newComments[commentIndex];
-    const newLikes = action === 'like' ? commentToUpdate.likes + 1 : Math.max(0, commentToUpdate.likes - 1);
+        const newComments = [...entryToUpdate.comments]; // Copy comments array
+        const commentToUpdate = { ...newComments[commentIndex] }; // Deep copy comment
+        const newLikes = action === 'like' ? commentToUpdate.likes + 1 : Math.max(0, commentToUpdate.likes - 1);
+        newComments[commentIndex] = { ...commentToUpdate, likes: newLikes };
+        
+        const updatedEntry = { ...entryToUpdate, comments: newComments };
+        newEntries[entryIndex] = updatedEntry;
 
-    newComments[commentIndex] = { ...commentToUpdate, likes: newLikes };
-    
-    const updatedEntry = { ...entryToUpdate, comments: newComments };
-    newEntries[entryIndex] = updatedEntry;
-
-    updateAndStoreEntries(newEntries);
+        localStorage.setItem('diaryEntries', JSON.stringify(newEntries));
+        return newEntries;
+    });
   };
 
   const handleDeleteComment = (entryId: string, commentId: string) => {
-    const newEntries = [...entries];
-    const entryIndex = newEntries.findIndex(e => e.id === entryId);
-    if (entryIndex === -1) return;
+    setEntries(currentEntries => {
+        const newEntries = [...currentEntries];
+        const entryIndex = newEntries.findIndex(e => e.id === entryId);
+        if (entryIndex === -1) return currentEntries;
 
-    const entryToUpdate = newEntries[entryIndex];
-    const commentIndex = entryToUpdate.comments.findIndex(c => c.id === commentId);
-    if (commentIndex === -1) return;
-    
-    const newComments = [...entryToUpdate.comments];
-    newComments.splice(commentIndex, 1);
+        const entryToUpdate = { ...newEntries[entryIndex] };
+        const newComments = [...entryToUpdate.comments];
+        const commentIndex = newComments.findIndex(c => c.id === commentId);
+        
+        if (commentIndex === -1) return currentEntries;
+        
+        newComments.splice(commentIndex, 1);
 
-    const updatedEntry = { ...entryToUpdate, comments: newComments };
-    newEntries[entryIndex] = updatedEntry;
-
-    updateAndStoreEntries(newEntries);
-    toast({
-        title: "성공",
-        description: "댓글이 삭제되었습니다."
+        const updatedEntry = { ...entryToUpdate, comments: newComments };
+        newEntries[entryIndex] = updatedEntry;
+        
+        localStorage.setItem('diaryEntries', JSON.stringify(newEntries));
+        toast({
+            title: "성공",
+            description: "댓글이 삭제되었습니다."
+        });
+        return newEntries;
     });
   };
 

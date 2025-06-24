@@ -11,125 +11,118 @@ const AI_CHEERER_ID = 'ai-cheerer';
 const AI_COMMENT_THRESHOLD_HOURS = 1;
 
 export default function DashboardPage() {
-  const [entries, setEntries] = useState<DiaryEntry[]>(mockDiaryEntries);
+  const [entries, setEntries] = useState<DiaryEntry[]>([]);
 
-  const updateAndStoreEntries = (updatedEntries: DiaryEntry[]) => {
-    setEntries(updatedEntries);
-    localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
-  };
-
-
+  // Load entries from localStorage on mount and run AI check
   useEffect(() => {
     const storedEntriesStr = localStorage.getItem('diaryEntries');
-    const initialEntries = storedEntriesStr ? JSON.parse(storedEntriesStr) : mockDiaryEntries;
-    
+    let initialEntries = storedEntriesStr ? JSON.parse(storedEntriesStr) : mockDiaryEntries;
+
     if (storedEntriesStr === null) {
       localStorage.setItem('diaryEntries', JSON.stringify(mockDiaryEntries));
     }
     
-    setEntries(initialEntries);
-
     const addAutoComments = async () => {
-      let currentEntries: DiaryEntry[] = JSON.parse(localStorage.getItem('diaryEntries') || '[]');
       let entriesWereUpdated = false;
       const aiUser = mockUsers.find(u => u.id === AI_CHEERER_ID);
-
       if (!aiUser) return;
-      
-      const updatedEntries = [...currentEntries];
 
-      for (let i = 0; i < updatedEntries.length; i++) {
-        const entry = updatedEntries[i];
-        const hasEngagement = entry.likes > 0 || entry.comments.length > 0;
-        const hasAiComment = entry.comments.some((c: any) => c.userId === AI_CHEERER_ID);
+      const updatedEntriesPromises = initialEntries.map(async (entry: DiaryEntry) => {
+        const newEntry = { ...entry, comments: [...entry.comments] };
+        const hasEngagement = newEntry.likes > 0 || newEntry.comments.length > 0;
+        const hasAiComment = newEntry.comments.some((c: any) => c.userId === AI_CHEERER_ID);
         
-        if (hasEngagement || hasAiComment) {
-          continue;
-        }
+        if (hasEngagement || hasAiComment) return newEntry;
 
-        const entryDate = new Date(entry.createdAt);
+        const entryDate = new Date(newEntry.createdAt);
         const hoursDiff = (new Date().getTime() - entryDate.getTime()) / (1000 * 60 * 60);
 
         if (hoursDiff > AI_COMMENT_THRESHOLD_HOURS) {
           try {
-            const result = await generateAiComment({ diaryEntryContent: entry.content });
-            
+            const result = await generateAiComment({ diaryEntryContent: newEntry.content });
             if (result.comment) {
               const aiComment: Comment = {
-                id: `ai-${entry.id}`,
+                id: `ai-${newEntry.id}-${Date.now()}`,
                 userId: AI_CHEERER_ID,
                 nickname: aiUser.nickname,
                 comment: result.comment,
                 likes: 0,
               };
-              updatedEntries[i].comments.push(aiComment);
+              newEntry.comments.push(aiComment);
               entriesWereUpdated = true;
             }
           } catch (error) {
-            console.error("Failed to generate AI comment for entry:", entry.id, error);
+            console.error("Failed to generate AI comment for entry:", newEntry.id, error);
           }
         }
-      }
+        return newEntry;
+      });
+
+      const processedEntries = await Promise.all(updatedEntriesPromises);
 
       if (entriesWereUpdated) {
-        updateAndStoreEntries(updatedEntries);
+        setEntries(processedEntries);
+        localStorage.setItem('diaryEntries', JSON.stringify(processedEntries));
+      } else {
+        setEntries(initialEntries);
       }
     };
     
-    // Set a small timeout to avoid running this on very fast re-renders
-    // and to allow the initial state to settle.
-    const timer = setTimeout(() => {
-      addAutoComments();
-    }, 1000); // Wait 1 second before checking
-    
-    return () => clearTimeout(timer);
-
-  }, []); // Run only on mount
+    addAutoComments();
+  }, []);
 
 
   const handleComment = (entryId: string, newComment: Comment) => {
-    const updatedEntries = entries.map(entry => {
-      if (entry.id === entryId) {
-        return {
-          ...entry,
-          comments: [...entry.comments, newComment],
-        };
-      }
-      return entry;
+    setEntries(currentEntries => {
+      const updatedEntries = currentEntries.map(entry => {
+        if (entry.id === entryId) {
+          return {
+            ...entry,
+            comments: [...entry.comments, newComment],
+          };
+        }
+        return entry;
+      });
+      localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
+      return updatedEntries;
     });
-    updateAndStoreEntries(updatedEntries);
   };
   
   const handleLikeEntry = (entryId: string, action: 'like' | 'unlike') => {
-    const updatedEntries = entries.map(entry => {
-      if (entry.id === entryId) {
-        const newLikes = action === 'like' ? entry.likes + 1 : Math.max(0, entry.likes - 1);
-        return { ...entry, likes: newLikes };
-      }
-      return entry;
+    setEntries(currentEntries => {
+      const updatedEntries = currentEntries.map(entry => {
+        if (entry.id === entryId) {
+          const newLikes = action === 'like' ? entry.likes + 1 : Math.max(0, entry.likes - 1);
+          return { ...entry, likes: newLikes };
+        }
+        return entry;
+      });
+      localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
+      return updatedEntries;
     });
-    updateAndStoreEntries(updatedEntries);
   };
 
   const handleLikeComment = (entryId: string, commentId: string, action: 'like' | 'unlike') => {
-    const newEntries = [...entries];
-    const entryIndex = newEntries.findIndex(e => e.id === entryId);
-    if (entryIndex === -1) return;
+    setEntries(currentEntries => {
+        const newEntries = [...currentEntries];
+        const entryIndex = newEntries.findIndex(e => e.id === entryId);
+        if (entryIndex === -1) return currentEntries;
 
-    const entryToUpdate = newEntries[entryIndex];
-    const commentIndex = entryToUpdate.comments.findIndex(c => c.id === commentId);
-    if (commentIndex === -1) return;
+        const entryToUpdate = { ...newEntries[entryIndex] };
+        const commentIndex = entryToUpdate.comments.findIndex(c => c.id === commentId);
+        if (commentIndex === -1) return currentEntries;
 
-    const newComments = [...entryToUpdate.comments];
-    const commentToUpdate = newComments[commentIndex];
-    const newLikes = action === 'like' ? commentToUpdate.likes + 1 : Math.max(0, commentToUpdate.likes - 1);
+        const newComments = [...entryToUpdate.comments];
+        const commentToUpdate = { ...newComments[commentIndex] };
+        const newLikes = action === 'like' ? commentToUpdate.likes + 1 : Math.max(0, commentToUpdate.likes - 1);
+        newComments[commentIndex] = { ...commentToUpdate, likes: newLikes };
+        
+        const updatedEntry = { ...entryToUpdate, comments: newComments };
+        newEntries[entryIndex] = updatedEntry;
 
-    newComments[commentIndex] = { ...commentToUpdate, likes: newLikes };
-    
-    const updatedEntry = { ...entryToUpdate, comments: newComments };
-    newEntries[entryIndex] = updatedEntry;
-
-    updateAndStoreEntries(newEntries);
+        localStorage.setItem('diaryEntries', JSON.stringify(newEntries));
+        return newEntries;
+    });
   };
 
   const handleDeleteComment = (entryId: string, commentId: string) => {

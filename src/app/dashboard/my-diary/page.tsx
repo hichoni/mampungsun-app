@@ -18,13 +18,11 @@ const chartConfig = {
 
 
 export default function MyDiaryPage() {
-  const [entries, setEntries] = useState<DiaryEntry[]>(mockDiaryEntries)
+  const [entries, setEntries] = useState<DiaryEntry[]>([])
   
   useEffect(() => {
     const storedEntries = localStorage.getItem('diaryEntries');
-    if (storedEntries) {
-      setEntries(JSON.parse(storedEntries));
-    }
+    setEntries(storedEntries ? JSON.parse(storedEntries) : mockDiaryEntries);
   }, [])
   
   // In a real app, you'd fetch entries for the currently logged-in user
@@ -35,55 +33,57 @@ export default function MyDiaryPage() {
   
   const currentUser = mockUsers.find(user => user.id === loggedInUserId);
 
-  const updateAndStoreEntries = (updatedEntries: DiaryEntry[]) => {
-    setEntries(updatedEntries);
-    localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
-  };
-
-
   const handleComment = (entryId: string, newComment: Comment) => {
-    const updatedEntries = entries.map(entry => {
-      if (entry.id === entryId) {
-        return {
-          ...entry,
-          comments: [...entry.comments, newComment],
-        };
-      }
-      return entry;
+    setEntries(currentEntries => {
+      const updatedEntries = currentEntries.map(entry => {
+        if (entry.id === entryId) {
+          return {
+            ...entry,
+            comments: [...entry.comments, newComment],
+          };
+        }
+        return entry;
+      });
+      localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
+      return updatedEntries;
     });
-    updateAndStoreEntries(updatedEntries);
   };
   
   const handleLikeEntry = (entryId: string, action: 'like' | 'unlike') => {
-    const updatedEntries = entries.map(entry => {
-      if (entry.id === entryId) {
-        const newLikes = action === 'like' ? entry.likes + 1 : Math.max(0, entry.likes - 1);
-        return { ...entry, likes: newLikes };
-      }
-      return entry;
+    setEntries(currentEntries => {
+      const updatedEntries = currentEntries.map(entry => {
+        if (entry.id === entryId) {
+          const newLikes = action === 'like' ? entry.likes + 1 : Math.max(0, entry.likes - 1);
+          return { ...entry, likes: newLikes };
+        }
+        return entry;
+      });
+      localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
+      return updatedEntries;
     });
-    updateAndStoreEntries(updatedEntries);
   };
 
   const handleLikeComment = (entryId: string, commentId: string, action: 'like' | 'unlike') => {
-    const newEntries = [...entries];
-    const entryIndex = newEntries.findIndex(e => e.id === entryId);
-    if (entryIndex === -1) return;
+    setEntries(currentEntries => {
+      const newEntries = [...currentEntries];
+      const entryIndex = newEntries.findIndex(e => e.id === entryId);
+      if (entryIndex === -1) return currentEntries;
 
-    const entryToUpdate = newEntries[entryIndex];
-    const commentIndex = entryToUpdate.comments.findIndex(c => c.id === commentId);
-    if (commentIndex === -1) return;
+      const entryToUpdate = { ...newEntries[entryIndex] };
+      const commentIndex = entryToUpdate.comments.findIndex(c => c.id === commentId);
+      if (commentIndex === -1) return currentEntries;
 
-    const newComments = [...entryToUpdate.comments];
-    const commentToUpdate = newComments[commentIndex];
-    const newLikes = action === 'like' ? commentToUpdate.likes + 1 : Math.max(0, commentToUpdate.likes - 1);
-
-    newComments[commentIndex] = { ...commentToUpdate, likes: newLikes };
-    
-    const updatedEntry = { ...entryToUpdate, comments: newComments };
-    newEntries[entryIndex] = updatedEntry;
-
-    updateAndStoreEntries(newEntries);
+      const newComments = [...entryToUpdate.comments];
+      const commentToUpdate = { ...newComments[commentIndex] };
+      const newLikes = action === 'like' ? commentToUpdate.likes + 1 : Math.max(0, commentToUpdate.likes - 1);
+      newComments[commentIndex] = { ...commentToUpdate, likes: newLikes };
+      
+      const updatedEntry = { ...entryToUpdate, comments: newComments };
+      newEntries[entryIndex] = updatedEntry;
+      
+      localStorage.setItem('diaryEntries', JSON.stringify(newEntries));
+      return newEntries;
+    });
   };
 
   const handleDeleteComment = (entryId: string, commentId: string) => {
