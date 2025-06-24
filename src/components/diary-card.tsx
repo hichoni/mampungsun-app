@@ -68,8 +68,15 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [newCommentText, setNewCommentText] = useState('');
   const [isPending, startTransition] = useTransition();
+  const [commenter, setCommenter] = useState<User | null>(null);
 
-  const commenter = mockUsers.find(u => u.id === '4');
+  useEffect(() => {
+    const LOGGED_IN_USER_ID = '4'; // Test User ID
+    const storedUsers = localStorage.getItem('mampungsun_users');
+    const allUsers: User[] = storedUsers ? JSON.parse(storedUsers) : mockUsers;
+    const currentCommenter = allUsers.find(u => u.id === LOGGED_IN_USER_ID);
+    if(currentCommenter) setCommenter(currentCommenter);
+  }, []);
 
   useEffect(() => {
     const likedEntryIds = new Set<string>(JSON.parse(localStorage.getItem('likedEntries') || '[]'));
@@ -121,6 +128,7 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
           id: crypto.randomUUID(),
           userId: commenter.id,
           nickname: commenter.nickname,
+          avatarUrl: commenter.avatarUrl,
           comment: commentText,
           likes: 0,
         };
@@ -169,7 +177,7 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
       <CardHeader>
         <div className="flex items-start gap-4">
           <Avatar>
-            <AvatarImage src={`https://placehold.co/40x40.png?text=${author?.nickname.charAt(0)}`} />
+            <AvatarImage src={author?.avatarUrl} alt={author?.nickname} />
             <AvatarFallback>{author?.nickname.charAt(0)}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
@@ -246,7 +254,7 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
                                     entry.comments.map((comment, index) => (
                                       <div key={`${entry.id}-comment-${index}`} className="flex items-start gap-2">
                                           <Avatar className="w-8 h-8 border">
-                                              <AvatarImage src={`https://placehold.co/40x40.png?text=${comment.nickname.charAt(0)}`} />
+                                              <AvatarImage src={comment.avatarUrl} alt={comment.nickname} />
                                               <AvatarFallback>{comment.nickname.charAt(0)}</AvatarFallback>
                                           </Avatar>
                                           <div className="flex-1 space-y-1">

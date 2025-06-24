@@ -7,6 +7,7 @@ export type User = {
   studentId: number;
   pin: string;
   isApproved: boolean;
+  avatarUrl?: string;
 };
 
 export type Comment = {
@@ -15,6 +16,7 @@ export type Comment = {
   nickname: string;
   comment: string;
   likes: number;
+  avatarUrl?: string;
 };
 
 export type DiaryEntry = {

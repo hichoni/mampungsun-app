@@ -8,6 +8,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { SendHorizonal, User } from "lucide-react"
 import { emotionCoach, type EmotionCoachInput } from "@/ai/flows/emotion-coach-flow"
 import { cn } from "@/lib/utils"
+import type { User as UserType } from "@/lib/definitions"
+import { mockUsers } from "@/lib/data"
 
 type Message = {
     role: 'user' | 'model';
@@ -50,6 +52,7 @@ export default function ChatPage() {
     const [isPending, startTransition] = useTransition();
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const [currentUser, setCurrentUser] = useState<UserType | null>(null);
 
     useEffect(() => {
         if (scrollAreaRef.current) {
@@ -59,6 +62,14 @@ export default function ChatPage() {
             });
         }
     }, [messages]);
+
+    useEffect(() => {
+        // In a real app, this would come from an auth context
+        const LOGGED_IN_USER_ID = '4';
+        const storedUsers = localStorage.getItem('mampungsun_users');
+        const allUsers: UserType[] = storedUsers ? JSON.parse(storedUsers) : mockUsers;
+        setCurrentUser(allUsers.find(u => u.id === LOGGED_IN_USER_ID) || null);
+    }, [])
 
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -106,6 +117,7 @@ export default function ChatPage() {
                                 </div>
                                 {message.role === 'user' && (
                                      <Avatar className="w-8 h-8">
+                                        <AvatarImage src={currentUser?.avatarUrl} alt={currentUser?.nickname} />
                                         <AvatarFallback><User className="w-5 h-5"/></AvatarFallback>
                                     </Avatar>
                                 )}

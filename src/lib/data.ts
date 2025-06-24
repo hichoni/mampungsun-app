@@ -2,29 +2,29 @@ import type { User, DiaryEntry } from './definitions';
 
 export const mockUsers: User[] = [
   // Grade 1 (up to 7 classes)
-  { id: '101', name: '김민준', nickname: '행복한 토끼', grade: 1, class: 2, studentId: 3, pin: '1234', isApproved: true },
-  { id: '102', name: '이서연', nickname: '꿈꾸는 돌고래', grade: 1, class: 3, studentId: 12, pin: '5678', isApproved: true },
-  { id: '103', name: '박지훈', nickname: '슬기로운 거북이', grade: 1, class: 7, studentId: 15, pin: '1111', isApproved: true },
-  { id: '4', name: '김테스트', nickname: '테스트다람쥐', grade: 1, class: 1, studentId: 1, pin: '0000', isApproved: true },
+  { id: '101', name: '김민준', nickname: '행복한 토끼', grade: 1, class: 2, studentId: 3, pin: '1234', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('토')}` },
+  { id: '102', name: '이서연', nickname: '꿈꾸는 돌고래', grade: 1, class: 3, studentId: 12, pin: '5678', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('돌')}` },
+  { id: '103', name: '박지훈', nickname: '슬기로운 거북이', grade: 1, class: 7, studentId: 15, pin: '1111', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('거')}` },
+  { id: '4', name: '김테스트', nickname: '테스트다람쥐', grade: 1, class: 1, studentId: 1, pin: '0000', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('테')}` },
 
   // Grade 2 (up to 6 classes)
-  { id: '201', name: '최수빈', nickname: '밝은 해바라기', grade: 2, class: 1, studentId: 5, pin: '2222', isApproved: false },
-  { id: '202', name: '정다은', nickname: '친절한 코알라', grade: 2, class: 6, studentId: 3, pin: '3333', isApproved: true },
+  { id: '201', name: '최수빈', nickname: '밝은 해바라기', grade: 2, class: 1, studentId: 5, pin: '2222', isApproved: false, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('해')}` },
+  { id: '202', name: '정다은', nickname: '친절한 코알라', grade: 2, class: 6, studentId: 3, pin: '3333', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('코')}` },
 
   // Grade 3 (up to 5 classes)
-  { id: '301', name: '강현우', nickname: '씩씩한 호랑이', grade: 3, class: 5, studentId: 21, pin: '4444', isApproved: true },
+  { id: '301', name: '강현우', nickname: '씩씩한 호랑이', grade: 3, class: 5, studentId: 21, pin: '4444', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('호')}` },
 
   // Grade 4 (up to 6 classes)
-  { id: '401', name: '조아라', nickname: '노래하는 카나리아', grade: 4, class: 6, studentId: 10, pin: '5555', isApproved: true },
+  { id: '401', name: '조아라', nickname: '노래하는 카나리아', grade: 4, class: 6, studentId: 10, pin: '5555', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('카')}` },
 
   // Grade 5 (up to 5 classes)
-  { id: '501', name: '윤재호', nickname: '지혜로운 부엉이', grade: 5, class: 5, studentId: 8, pin: '6666', isApproved: true },
+  { id: '501', name: '윤재호', nickname: '지혜로운 부엉이', grade: 5, class: 5, studentId: 8, pin: '6666', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('부')}` },
 
   // Grade 6 (up to 6 classes)
-  { id: '601', name: '송예진', nickname: '우아한 백조', grade: 6, class: 6, studentId: 19, pin: '7777', isApproved: true },
+  { id: '601', name: '송예진', nickname: '우아한 백조', grade: 6, class: 6, studentId: 19, pin: '7777', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('백')}` },
 
   // AI User
-  { id: 'ai-cheerer', name: '응원 요정', nickname: '응원 요정', grade: 0, class: 0, studentId: 0, pin: '', isApproved: true },
+  { id: 'ai-cheerer', name: '응원 요정', nickname: '응원 요정', grade: 0, class: 0, studentId: 0, pin: '', isApproved: true, avatarUrl: `https://placehold.co/100x100/FFDAB9/8B4513.png?text=${encodeURIComponent('요')}` },
 ];
 
 export const mockDiaryEntries: DiaryEntry[] = [
@@ -38,7 +38,7 @@ export const mockDiaryEntries: DiaryEntry[] = [
     suggestedResponses: ['괜찮아, 그럴 수 있어.', '힘내, 내가 옆에 있을게.', '너의 잘못이 아니야.'],
     likes: 12,
     comments: [
-      { id: 'c1', userId: '102', nickname: '꿈꾸는 돌고래', comment: '괜찮아, 그럴 수 있어.', likes: 3 }
+      { id: 'c1', userId: '102', nickname: '꿈꾸는 돌고래', comment: '괜찮아, 그럴 수 있어.', likes: 3, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('돌')}` }
     ],
     isPinned: false,
   },
@@ -52,8 +52,8 @@ export const mockDiaryEntries: DiaryEntry[] = [
     suggestedResponses: ['정말 대단하다!', '네가 자랑스러워.', '노력의 결실이네! 축하해.'],
     likes: 25,
     comments: [
-      { id: 'c2', userId: '101', nickname: '행복한 토끼', comment: '정말 대단하다!', likes: 5 },
-      { id: 'c3', userId: '201', nickname: '밝은 해바라기', comment: '네가 자랑스러워.', likes: 2 }
+      { id: 'c2', userId: '101', nickname: '행복한 토끼', comment: '정말 대단하다!', likes: 5, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('토')}` },
+      { id: 'c3', userId: '201', nickname: '밝은 해바라기', comment: '네가 자랑스러워.', likes: 2, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('해')}` }
     ],
     isPinned: true,
   },
