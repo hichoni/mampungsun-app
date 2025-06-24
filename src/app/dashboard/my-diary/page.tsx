@@ -89,9 +89,14 @@ export default function MyDiaryPage() {
   };
 
   const chartData = useMemo(() => {
-    if (!myEntries || myEntries.length === 0) return [];
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    const recentEntries = myEntries.filter(entry => new Date(entry.createdAt) > oneWeekAgo);
+
+    if (recentEntries.length === 0) return [];
     
-    const emotionCounts = myEntries.reduce((acc, entry) => {
+    const emotionCounts = recentEntries.reduce((acc, entry) => {
         const emotion = entry.dominantEmotion || '정보 없음';
         acc[emotion] = (acc[emotion] || 0) + 1;
         return acc;
@@ -119,7 +124,7 @@ export default function MyDiaryPage() {
       <Card>
         <CardHeader>
             <CardTitle className="font-headline">나의 마음 날씨</CardTitle>
-            <CardDescription>내가 기록한 감정 분포를 돌아보며 마음을 챙겨보세요.</CardDescription>
+            <CardDescription>최근 7일간 내가 기록한 감정 분포를 돌아보며 마음을 챙겨보세요.</CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center">
             {chartData.length > 0 ? (
@@ -127,8 +132,8 @@ export default function MyDiaryPage() {
                     <PieChart>
                         <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel nameKey="emotion" />} />
                         <Pie data={chartData} dataKey="count" nameKey="emotion" cx="50%" cy="50%" outerRadius={80} innerRadius={50}>
-                            {chartData.map((entry) => (
-                                <Cell key={`cell-${entry.emotion}`} fill={entry.fill} className="stroke-background hover:opacity-80" />
+                            {chartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.fill} className="stroke-background hover:opacity-80" />
                             ))}
                         </Pie>
                         <ChartLegend content={<ChartLegendContent nameKey="emotion" />} className="[&_.recharts-legend-item-text]:capitalize" />
@@ -137,7 +142,7 @@ export default function MyDiaryPage() {
             ) : (
                 <div className="flex items-center justify-center h-48">
                   <p className="text-muted-foreground text-center">
-                    아직 마음 날씨를 표시할 데이터가 없어요.
+                    최근 7일간의 마음 날씨 데이터가 없어요.
                     <br />
                     맘풍선을 날려 나의 감정을 기록해보세요!
                   </p>
