@@ -19,15 +19,9 @@ export default function ContentManagementPage() {
   }, []);
 
   const handlePinEntry = (entryId: string) => {
+    let entryToPin: DiaryEntry | undefined;
     setEntries(currentEntries => {
-      const entryToPin = currentEntries.find(e => e.id === entryId);
-      if (entryToPin) {
-        toast({
-          title: !entryToPin.isPinned ? "상단에 고정됨" : "고정 해제됨",
-          description: "맘풍선 순서가 변경되었습니다.",
-        });
-      }
-      
+      entryToPin = currentEntries.find(e => e.id === entryId);
       const updatedEntries = currentEntries.map(entry => {
         if (entry.id === entryId) {
           return { ...entry, isPinned: !entry.isPinned };
@@ -37,17 +31,24 @@ export default function ContentManagementPage() {
       localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
       return updatedEntries;
     });
+
+    if (entryToPin) {
+      toast({
+        title: !entryToPin.isPinned ? "상단에 고정됨" : "고정 해제됨",
+        description: "맘풍선 순서가 변경되었습니다.",
+      });
+    }
   };
 
   const handleDeleteEntry = (entryId: string) => {
     setEntries(currentEntries => {
       const updatedEntries = currentEntries.filter(entry => entry.id !== entryId);
       localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
-      toast({
-        title: "성공",
-        description: "맘풍선이 삭제되었습니다."
-      });
       return updatedEntries;
+    });
+    toast({
+      title: "성공",
+      description: "맘풍선이 삭제되었습니다."
     });
   };
 
@@ -106,11 +107,11 @@ export default function ContentManagementPage() {
       newEntries[entryIndex].comments.splice(commentIndex, 1);
       localStorage.setItem('diaryEntries', JSON.stringify(newEntries));
       
-      toast({
-        title: "성공",
-        description: "댓글이 삭제되었습니다."
-      });
       return newEntries;
+    });
+    toast({
+      title: "성공",
+      description: "댓글이 삭제되었습니다."
     });
   };
 
