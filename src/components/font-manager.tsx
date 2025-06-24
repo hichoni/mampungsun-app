@@ -13,9 +13,11 @@ export default function FontManager() {
     const bodyFont = localStorage.getItem('app-font-body') || defaultFonts.body;
     const headlineSize = localStorage.getItem('app-font-headline-size') || '100';
     const bodySize = localStorage.getItem('app-font-body-size') || '100';
+    const uiScale = localStorage.getItem('app-ui-scale') || '100';
 
     const quoteFont = (font: string) => font.includes(' ') ? `'${font}'` : font;
 
+    document.documentElement.style.fontSize = `${parseInt(uiScale, 10)}%`;
     document.documentElement.style.setProperty('--font-headline', quoteFont(headlineFont));
     document.documentElement.style.setProperty('--font-body', quoteFont(bodyFont));
     document.documentElement.style.setProperty('--font-size-headline-scale', String(parseInt(headlineSize, 10) / 100));
