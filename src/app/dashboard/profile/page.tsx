@@ -4,59 +4,55 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { mockUsers } from "@/lib/data"
 import { useToast } from "@/hooks/use-toast"
 import React, { useState, useEffect, useTransition } from "react"
 import type { User } from "@/lib/definitions"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { User as UserIcon, Loader2 } from "lucide-react"
 import { generateAvatar } from "@/ai/flows/generate-avatar-flow"
-
-const USERS_STORAGE_KEY = 'mampungsun_users';
-const LOGGED_IN_USER_ID = '4'; // Test User ID
+import { useRouter } from "next/navigation"
+import { getUser, updateUser } from "@/lib/actions"
 
 export default function ProfilePage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
-  const [isGenerating, startTransition] = useTransition();
-
+  const [isGenerating, startGenerating] = useTransition();
+  const [isUpdating, startUpdating] = useTransition();
+  
   const [nickname, setNickname] = useState('');
   const [currentPin, setCurrentPin] = useState('');
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
 
   useEffect(() => {
-    let allUsers: User[] = [];
-    const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
-    if (storedUsers) {
-        allUsers = JSON.parse(storedUsers);
-    } else {
-        allUsers = mockUsers;
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(mockUsers));
+    const userId = localStorage.getItem('mampungsun_user_id');
+    if (!userId) {
+      router.push('/login');
+      return;
     }
-    const currentUser = allUsers.find(u => u.id === LOGGED_IN_USER_ID);
-    if (currentUser) {
-      setUser(currentUser);
-      setNickname(currentUser.nickname);
-    }
-  }, []);
+    
+    startUpdating(async () => {
+        const currentUser = await getUser(userId);
+        if (currentUser) {
+          setUser(currentUser);
+          setNickname(currentUser.nickname);
+        } else {
+            router.push('/login');
+        }
+    });
+  }, [router]);
 
   const handleProfileUpdate = () => {
     if (!user) return;
     
-    const updatedUser = { ...user, nickname };
-    setUser(updatedUser);
-
-    const allUsers: User[] = JSON.parse(localStorage.getItem(USERS_STORAGE_KEY) || '[]');
-    const userIndex = allUsers.findIndex(u => u.id === user.id);
-    if (userIndex !== -1) {
-      allUsers[userIndex] = updatedUser;
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(allUsers));
-    }
-    
-    toast({
-      title: "성공",
-      description: "프로필이 저장되었습니다."
+    startUpdating(async () => {
+        await updateUser(user.id, { nickname });
+        setUser(prev => prev ? {...prev, nickname} : null);
+        toast({
+          title: "성공",
+          description: "프로필이 저장되었습니다."
+        });
     });
   }
   
@@ -75,39 +71,26 @@ export default function ProfilePage() {
       return;
     }
 
-    const updatedUser = { ...user, pin: newPin };
-    setUser(updatedUser);
-
-    const allUsers: User[] = JSON.parse(localStorage.getItem(USERS_STORAGE_KEY) || '[]');
-    const userIndex = allUsers.findIndex(u => u.id === user.id);
-    if (userIndex !== -1) {
-      allUsers[userIndex] = updatedUser;
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(allUsers));
-    }
-
-    toast({ title: "성공", description: "PIN 번호가 변경되었습니다." });
-    setCurrentPin('');
-    setNewPin('');
-    setConfirmPin('');
+    startUpdating(async () => {
+        await updateUser(user.id, { pin: newPin });
+        setUser(prev => prev ? {...prev, pin: newPin} : null);
+        toast({ title: "성공", description: "PIN 번호가 변경되었습니다." });
+        setCurrentPin('');
+        setNewPin('');
+        setConfirmPin('');
+    });
   }
 
   const handleAvatarGeneration = () => {
     if (!user) return;
-    startTransition(async () => {
+    startGenerating(async () => {
       try {
         toast({ title: "AI 아바타 생성 중...", description: "잠시만 기다려주세요. 멋진 아바타를 만들고 있어요!" });
         const result = await generateAvatar({ nickname: user.nickname });
         const newAvatarUrl = result.avatarDataUri;
 
-        const updatedUser = { ...user, avatarUrl: newAvatarUrl };
-        setUser(updatedUser);
-
-        const allUsers: User[] = JSON.parse(localStorage.getItem(USERS_STORAGE_KEY) || '[]');
-        const userIndex = allUsers.findIndex(u => u.id === user.id);
-        if (userIndex !== -1) {
-          allUsers[userIndex] = updatedUser;
-          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(allUsers));
-        }
+        await updateUser(user.id, { avatarUrl: newAvatarUrl });
+        setUser(prev => prev ? { ...prev, avatarUrl: newAvatarUrl } : null);
 
         toast({
           title: "성공!",
@@ -124,6 +107,8 @@ export default function ProfilePage() {
     });
   };
   
+  const isPending = isGenerating || isUpdating;
+
   if (!user) {
     return (
         <div className="flex items-center justify-center h-full">
@@ -145,10 +130,10 @@ export default function ProfilePage() {
                     <Avatar className="w-32 h-32 text-6xl">
                         <AvatarImage src={user.avatarUrl} alt={user.nickname} />
                         <AvatarFallback>
-                            {user.nickname?.charAt(0) || <UserIcon />}
+                            {isGenerating ? <Loader2 className="h-12 w-12 animate-spin" /> : user.nickname?.charAt(0) || <UserIcon />}
                         </AvatarFallback>
                     </Avatar>
-                    <Button onClick={handleAvatarGeneration} disabled={isGenerating}>
+                    <Button onClick={handleAvatarGeneration} disabled={isPending}>
                         {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         AI 아바타 새로 만들기
                     </Button>
@@ -181,9 +166,12 @@ export default function ProfilePage() {
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="nickname">별명</Label>
-                        <Input id="nickname" value={nickname} onChange={e => setNickname(e.target.value)} />
+                        <Input id="nickname" value={nickname} onChange={e => setNickname(e.target.value)} disabled={isPending}/>
                     </div>
-                    <Button onClick={handleProfileUpdate}>저장하기</Button>
+                    <Button onClick={handleProfileUpdate} disabled={isPending}>
+                        {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        저장하기
+                    </Button>
                 </CardContent>
             </Card>
 
@@ -195,17 +183,20 @@ export default function ProfilePage() {
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="current-pin">현재 PIN 번호</Label>
-                        <Input id="current-pin" type="password" value={currentPin} onChange={e => setCurrentPin(e.target.value)} maxLength={4}/>
+                        <Input id="current-pin" type="password" value={currentPin} onChange={e => setCurrentPin(e.target.value)} maxLength={4} disabled={isPending}/>
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="new-pin">새 PIN 번호</Label>
-                        <Input id="new-pin" type="password" value={newPin} onChange={e => setNewPin(e.target.value)} maxLength={4}/>
+                        <Input id="new-pin" type="password" value={newPin} onChange={e => setNewPin(e.target.value)} maxLength={4} disabled={isPending}/>
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="confirm-pin">새 PIN 번호 확인</Label>
-                        <Input id="confirm-pin" type="password" value={confirmPin} onChange={e => setConfirmPin(e.target.value)} maxLength={4}/>
+                        <Input id="confirm-pin" type="password" value={confirmPin} onChange={e => setConfirmPin(e.target.value)} maxLength={4} disabled={isPending}/>
                     </div>
-                    <Button onClick={handlePinChange}>PIN 변경하기</Button>
+                    <Button onClick={handlePinChange} disabled={isPending}>
+                        {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        PIN 변경하기
+                    </Button>
                 </CardContent>
             </Card>
         </div>

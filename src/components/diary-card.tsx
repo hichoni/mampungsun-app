@@ -34,21 +34,18 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { useState, useTransition, useEffect } from "react"
-import { mockUsers } from "@/lib/data"
 import { ScrollArea } from "./ui/scroll-area"
 import { Input } from "./ui/input"
 import { moderateText } from "@/ai/flows/moderate-text-flow"
 import { cn } from "@/lib/utils"
+import { addComment, deleteComment, getUser, likeEntry } from "@/lib/actions"
+import { useRouter } from "next/navigation"
 
 interface DiaryCardProps {
   entry: DiaryEntry
   author: User | undefined
-  onComment: (entryId: string, comment: Comment) => void;
-  onLikeEntry: (entryId: string, action: 'like' | 'unlike') => void;
-  onLikeComment: (entryId: string, commentIndex: number, action: 'like' | 'unlike') => void;
-  onDeleteComment: (entryId: string, commentIndex: number) => void;
   onDeleteEntry?: (entryId: string) => void;
-  onPinEntry?: (entryId: string) => void;
+  onPinEntry?: (entryId: string, isPinned: boolean) => void;
   isTeacherView?: boolean;
 }
 
@@ -61,119 +58,124 @@ const getEmotionBadgeVariant = (emotion: string): 'default' | 'secondary' | 'des
   }
 }
 
-export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment, onDeleteComment, onDeleteEntry, onPinEntry, isTeacherView = false }: DiaryCardProps) {
+export function DiaryCard({ entry, author, onDeleteEntry, onPinEntry, isTeacherView = false }: DiaryCardProps) {
   const { toast } = useToast();
+  const router = useRouter();
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [commenter, setCommenter] = useState<User | null>(null);
+  
   const [isLiked, setIsLiked] = useState(false);
-  const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
+  const [likeCount, setLikeCount] = useState(entry.likes || 0);
+
+  const [comments, setComments] = useState<Comment[]>(entry.comments || []);
+  
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [newCommentText, setNewCommentText] = useState('');
   const [isPending, startTransition] = useTransition();
-  const [commenter, setCommenter] = useState<User | null>(null);
   const [timeAgo, setTimeAgo] = useState('');
 
   useEffect(() => {
     const calculateTimeAgo = () => {
       const seconds = Math.floor((new Date().getTime() - new Date(entry.createdAt).getTime()) / 1000);
       if (seconds < 0) return '방금 전';
+      if (seconds < 60) return `${Math.floor(seconds)}초 전`;
+      
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `${minutes}분 전`;
 
-      let interval = seconds / 31536000;
-      if (interval > 1) return `${Math.floor(interval)}년 전`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}시간 전`;
 
-      interval = seconds / 2592000;
-      if (interval > 1) return `${Math.floor(interval)}달 전`;
+      const days = Math.floor(hours / 24);
+      if (days < 30) return `${days}일 전`;
 
-      interval = seconds / 86400;
-      if (interval > 1) return `${Math.floor(interval)}일 전`;
+      const months = Math.floor(days / 30);
+      if (months < 12) return `${months}달 전`;
 
-      interval = seconds / 3600;
-      if (interval > 1) return `${Math.floor(interval)}시간 전`;
-
-      interval = seconds / 60;
-      if (interval > 1) return `${Math.floor(interval)}분 전`;
-
-      return `${Math.floor(seconds)}초 전`;
+      return `${Math.floor(months / 12)}년 전`;
     };
 
     setTimeAgo(calculateTimeAgo());
-
-    const timer = setInterval(() => {
-      setTimeAgo(calculateTimeAgo());
-    }, 60000); // Update every minute
-
+    const timer = setInterval(() => setTimeAgo(calculateTimeAgo()), 60000);
     return () => clearInterval(timer);
   }, [entry.createdAt]);
 
   useEffect(() => {
-    const LOGGED_IN_USER_ID = isTeacherView ? 'teacher-master' : '4'; // Teacher or Student
-    const storedUsers = localStorage.getItem('mampungsun_users');
-    const allUsers: User[] = storedUsers ? JSON.parse(storedUsers) : mockUsers;
-    const currentCommenter = allUsers.find(u => u.id === LOGGED_IN_USER_ID);
-    if(currentCommenter) setCommenter(currentCommenter);
-  }, [isTeacherView]);
+    const fetchCommenter = async (id: string) => {
+      const user = await getUser(id);
+      setCommenter(user);
+    };
 
-  useEffect(() => {
-    const likedEntryIds = new Set<string>(JSON.parse(localStorage.getItem('likedEntries') || '[]'));
-    setIsLiked(likedEntryIds.has(entry.id));
+    const userId = localStorage.getItem(isTeacherView ? 'mampungsun_teacher_id' : 'mampungsun_user_id');
+    setCurrentUserId(userId);
+    if(userId) fetchCommenter(userId);
 
-    const likedCommentIds = new Set<string>(JSON.parse(localStorage.getItem('likedComments') || '[]'));
-    setLikedComments(likedCommentIds);
-  }, [entry.id]);
+    setIsLiked(!!userId && !!entry.likedBy && entry.likedBy.includes(userId));
+    setLikeCount(entry.likes || 0);
+    setComments(entry.comments || []);
+
+  }, [isTeacherView, entry]);
+
 
   const handleLikeToggle = () => {
+    if (!currentUserId) {
+        toast({variant: "destructive", title: "로그인이 필요합니다."});
+        router.push('/login');
+        return;
+    }
     const newIsLiked = !isLiked;
     setIsLiked(newIsLiked);
-    
-    const likedEntryIds = new Set<string>(JSON.parse(localStorage.getItem('likedEntries') || '[]'));
-    if (newIsLiked) {
-      likedEntryIds.add(entry.id);
-    } else {
-      likedEntryIds.delete(entry.id);
-    }
-    localStorage.setItem('likedEntries', JSON.stringify(Array.from(likedEntryIds)));
-    
-    onLikeEntry(entry.id, newIsLiked ? 'like' : 'unlike');
+    setLikeCount(prev => newIsLiked ? prev + 1 : prev - 1);
+
+    startTransition(async () => {
+        try {
+            await likeEntry(entry.id, currentUserId);
+        } catch(e) {
+            // Revert optimistic update on failure
+            setIsLiked(!newIsLiked);
+            setLikeCount(prev => !newIsLiked ? prev + 1 : prev - 1);
+            toast({variant: "destructive", title: "오류", description: "좋아요 처리에 실패했습니다."});
+        }
+    });
   }
 
-  const handleCommentLikeToggle = (commentIndex: number) => {
-    const uniqueCommentKey = `${entry.id}-comment-${commentIndex}`;
-    const newLikedComments = new Set(likedComments);
-    const action = newLikedComments.has(uniqueCommentKey) ? 'unlike' : 'like';
-
-    if (action === 'like') {
-      newLikedComments.add(uniqueCommentKey);
-    } else {
-      newLikedComments.delete(uniqueCommentKey);
-    }
-
-    setLikedComments(newLikedComments);
-    localStorage.setItem('likedComments', JSON.stringify(Array.from(newLikedComments)));
-    onLikeComment(entry.id, commentIndex, action);
-  };
-
   const handlePostComment = (commentText: string) => {
-    if (!commentText.trim() || !commenter) return;
+    if (!commentText.trim() || !commenter) {
+        toast({variant: "destructive", title: "댓글을 입력하거나 로그인 해주세요."});
+        return;
+    }
 
     startTransition(async () => {
       const moderationResult = await moderateText({ text: commentText });
 
       if (moderationResult && moderationResult.isAppropriate) {
-        const newCommentPayload: Comment = {
-          id: `comment-${entry.id}-${Date.now()}`,
+        const newCommentPayload: Omit<Comment, 'id'|'createdAt'|'likes'> = {
           userId: commenter.id,
           nickname: commenter.nickname,
           avatarUrl: commenter.avatarUrl,
           comment: commentText,
-          likes: 0,
         };
-    
-        onComment(entry.id, newCommentPayload);
         
-        toast({
-          title: "댓글이 등록되었어요.",
-          description: `"${commentText}"`,
-        });
-
+        // Optimistic update
+        const tempComment: Comment = {
+            ...newCommentPayload,
+            id: `temp-${Date.now()}`,
+            createdAt: new Date().toISOString(),
+            likes: 0
+        };
+        setComments(prev => [...prev, tempComment]);
         setNewCommentText('');
+
+        try {
+            await addComment(entry.id, newCommentPayload, commenter.id);
+            toast({ title: "댓글이 등록되었어요." });
+            // In a real app, you'd re-fetch or get the new comment from the server action
+            // For now, the optimistic update is fine.
+        } catch(e) {
+            setComments(prev => prev.filter(c => c.id !== tempComment.id)); // Revert
+            toast({ variant: "destructive", title: "댓글 등록 실패", description: "다시 시도해주세요." });
+        }
+
       } else {
         toast({
             variant: "destructive",
@@ -181,6 +183,20 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
             description: moderationResult?.reason || "따뜻하고 고운 말을 사용해주세요.",
         });
       }
+    });
+  }
+
+  const handleDeleteComment = (commentId: string) => {
+    startTransition(async () => {
+        const originalComments = comments;
+        setComments(prev => prev.filter(c => c.id !== commentId));
+        try {
+            await deleteComment(entry.id, commentId);
+            toast({title: "성공", description: "댓글이 삭제되었습니다."});
+        } catch (e) {
+            setComments(originalComments);
+            toast({variant: "destructive", title: "삭제 실패", description: "다시 시도해주세요."});
+        }
     });
   }
 
@@ -198,7 +214,7 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
             <AvatarFallback>{author?.nickname?.charAt(0)}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <CardTitle className="text-base truncate">{author?.nickname}</CardTitle>
+            <CardTitle className="text-base truncate">{author?.nickname || '알 수 없음'}</CardTitle>
             <CardDescription>{timeAgo || '계산 중...'}</CardDescription>
           </div>
           <div className="flex items-center gap-1">
@@ -206,7 +222,7 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
             {isTeacherView && (
               <>
                 {onPinEntry && (
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => onPinEntry(entry.id)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => onPinEntry(entry.id, entry.isPinned || false)}>
                     <Pin className={cn("h-4 w-4", entry.isPinned && "fill-primary text-primary")} />
                     <span className="sr-only">고정하기</span>
                   </Button>
@@ -245,15 +261,15 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
       </CardContent>
       <CardFooter className="flex justify-between mt-auto">
         <div className="flex gap-4">
-            <Button variant="ghost" size="sm" onClick={handleLikeToggle} className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={handleLikeToggle} className="flex items-center gap-2" disabled={isPending}>
                 <Heart className={`h-4 w-4 ${isLiked ? 'text-red-500 fill-current' : ''}`} />
-                {entry.likes}
+                {likeCount}
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
                     <Button variant="ghost" size="sm" className="flex items-center gap-2">
                         <MessageCircle className="h-4 w-4" />
-                        {entry.comments.length}
+                        {comments.length}
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="max-h-[80vh] flex flex-col">
@@ -267,9 +283,9 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
                     <div className="flex-1 my-4 overflow-hidden">
                         <ScrollArea className="h-full pr-6">
                             <div className="space-y-4">
-                                {entry.comments.length > 0 ? (
-                                    entry.comments.map((comment, index) => (
-                                      <div key={`${entry.id}-comment-${index}`} className="flex items-start gap-2">
+                                {comments.length > 0 ? (
+                                    comments.map((comment, index) => (
+                                      <div key={comment.id} className="flex items-start gap-2">
                                           <Avatar className="w-8 h-8 border">
                                               <AvatarImage src={comment.avatarUrl} alt={comment.nickname} />
                                               <AvatarFallback>{comment.nickname?.charAt(0)}</AvatarFallback>
@@ -280,10 +296,6 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
                                                   <p className="text-sm text-muted-foreground">{comment.comment}</p>
                                               </div>
                                               <div className="flex items-center gap-2 pl-2">
-                                                  <Button variant="ghost" size="sm" className="p-1 h-auto flex items-center gap-1" onClick={() => handleCommentLikeToggle(index)}>
-                                                      <Heart className={`h-3 w-3 ${likedComments.has(`${entry.id}-comment-${index}`) ? 'text-red-500 fill-current' : ''}`} />
-                                                      {comment.likes > 0 && <span className="text-xs text-muted-foreground font-normal">{comment.likes}</span>}
-                                                  </Button>
                                                   {isTeacherView && (
                                                        <AlertDialog>
                                                           <AlertDialogTrigger asChild>
@@ -300,7 +312,7 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
                                                             </AlertDialogHeader>
                                                             <AlertDialogFooter>
                                                               <AlertDialogCancel>취소</AlertDialogCancel>
-                                                              <AlertDialogAction onClick={() => onDeleteComment(entry.id, index)} className="bg-destructive hover:bg-destructive/90">
+                                                              <AlertDialogAction onClick={() => handleDeleteComment(comment.id)} className="bg-destructive hover:bg-destructive/90">
                                                                 삭제
                                                               </AlertDialogAction>
                                                             </AlertDialogFooter>
@@ -338,9 +350,9 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
                                 onChange={(e) => setNewCommentText(e.target.value)}
                                 placeholder="직접 응원 메시지를 입력할 수도 있어요."
                                 className="flex-1"
-                                disabled={isPending}
+                                disabled={isPending || !commenter}
                             />
-                            <Button type="submit" disabled={!newCommentText.trim() || isPending}>
+                            <Button type="submit" disabled={!newCommentText.trim() || isPending || !commenter}>
                                 {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "전송"}
                             </Button>
                         </form>

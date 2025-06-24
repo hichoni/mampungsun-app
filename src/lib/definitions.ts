@@ -1,3 +1,5 @@
+import { type Timestamp } from "firebase/firestore";
+
 export type User = {
   id: string;
   name: string;
@@ -17,6 +19,7 @@ export type Comment = {
   comment: string;
   likes: number;
   avatarUrl?: string;
+  createdAt: string | Timestamp; // Allow both for client/server
 };
 
 export type DiaryEntry = {
@@ -24,10 +27,11 @@ export type DiaryEntry = {
   userId: string;
   content: string;
   isPublic: boolean;
-  createdAt: string;
+  createdAt: string | Timestamp; // Allow both for client/server
   dominantEmotion: string;
   suggestedResponses: string[];
   likes: number;
   comments: Comment[];
   isPinned?: boolean;
+  likedBy?: string[]; // Array of user IDs who liked the entry
 };

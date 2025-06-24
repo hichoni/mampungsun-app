@@ -1,14 +1,15 @@
 'use client'
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useTransition } from "react"
 import { DiaryCard } from "@/components/diary-card"
-import { mockDiaryEntries, mockUsers } from "@/lib/data"
-import type { DiaryEntry, User, Comment } from "@/lib/definitions"
+import type { DiaryEntry, User } from "@/lib/definitions"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PieChart, Pie, Cell } from "recharts"
 import { type ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { generateMyDiaryWelcomeMessage } from "@/ai/flows/generate-my-diary-welcome-flow"
-import { Lightbulb } from "lucide-react"
+import { Lightbulb, Loader2 } from "lucide-react"
+import { getUser, getUserEntries } from "@/lib/actions"
+import { useRouter } from "next/navigation"
 
 const chartConfig = {
   기쁨: { label: "기쁨", color: "hsl(var(--primary))" },
@@ -18,90 +19,39 @@ const chartConfig = {
   '정보 없음': { label: "정보 없음", color: "hsl(var(--muted))" },
 } satisfies ChartConfig;
 
-const USERS_STORAGE_KEY = 'mampungsun_users';
-const LOGGED_IN_USER_ID = '4'; // Test User ID
-
 export default function MyDiaryPage() {
   const [entries, setEntries] = useState<DiaryEntry[]>([])
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [welcomeMessage, setWelcomeMessage] = useState<string>('');
-  const [isLoadingWelcome, setIsLoadingWelcome] = useState<boolean>(true);
+  const [isLoading, startLoading] = useTransition();
+  const router = useRouter();
   
   useEffect(() => {
-    const storedEntries = localStorage.getItem('diaryEntries');
-    setEntries(storedEntries ? JSON.parse(storedEntries) : mockDiaryEntries);
+    const userId = localStorage.getItem('mampungsun_user_id');
+    if (!userId) {
+        router.push('/login');
+        return;
+    }
 
-    const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
-    const allUsers: User[] = storedUsers ? JSON.parse(storedUsers) : mockUsers;
-    setCurrentUser(allUsers.find(u => u.id === LOGGED_IN_USER_ID) || null);
+    startLoading(async () => {
+      const [user, userEntries] = await Promise.all([
+        getUser(userId),
+        getUserEntries(userId)
+      ]);
+      setCurrentUser(user);
+      setEntries(userEntries);
 
-    const fetchWelcomeMessage = async () => {
-      setIsLoadingWelcome(true);
       try {
         const result = await generateMyDiaryWelcomeMessage();
         setWelcomeMessage(result.welcomeMessage || "내가 날린 마음의 풍선들을 다시 확인해보세요.");
       } catch (error) {
         console.error("Failed to generate welcome message:", error);
         setWelcomeMessage("내가 날린 마음의 풍선들을 다시 확인해보세요."); // Fallback message
-      } finally {
-        setIsLoadingWelcome(false);
       }
-    };
-    
-    fetchWelcomeMessage();
-  }, [])
-  
-  const myEntries = entries
-    .filter(entry => entry.userId === LOGGED_IN_USER_ID)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-  const handleComment = (entryId: string, newComment: Comment) => {
-    setEntries(currentEntries => {
-      const newEntries = JSON.parse(JSON.stringify(currentEntries));
-      const entryIndex = newEntries.findIndex((e: DiaryEntry) => e.id === entryId);
-      if (entryIndex !== -1) {
-        newEntries[entryIndex].comments.push(newComment);
-        localStorage.setItem('diaryEntries', JSON.stringify(newEntries));
-        return newEntries;
-      }
-      return currentEntries;
     });
-  };
+  }, [router])
   
-  const handleLikeEntry = (entryId: string, action: 'like' | 'unlike') => {
-    setEntries(currentEntries => {
-      const updatedEntries = currentEntries.map(entry => {
-        if (entry.id === entryId) {
-          const newLikes = action === 'like' ? entry.likes + 1 : Math.max(0, entry.likes - 1);
-          return { ...entry, likes: newLikes };
-        }
-        return entry;
-      });
-      localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
-      return updatedEntries;
-    });
-  };
-
-  const handleLikeComment = (entryId: string, commentIndex: number, action: 'like' | 'unlike') => {
-    setEntries(currentEntries => {
-      const newEntries = JSON.parse(JSON.stringify(currentEntries));
-      const entryIndex = newEntries.findIndex((e: DiaryEntry) => e.id === entryId);
-      
-      if (entryIndex === -1 || !newEntries[entryIndex].comments[commentIndex]) {
-        return currentEntries;
-      }
-      
-      const comment = newEntries[entryIndex].comments[commentIndex];
-      comment.likes = action === 'like' ? comment.likes + 1 : Math.max(0, comment.likes - 1);
-  
-      localStorage.setItem('diaryEntries', JSON.stringify(newEntries));
-      return newEntries;
-    });
-  };
-
-  const handleDeleteComment = (entryId: string, commentIndex: number) => {
-    // Students cannot delete comments from this view.
-  };
+  const myEntries = entries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const chartData = useMemo(() => {
     const oneWeekAgo = new Date();
@@ -126,14 +76,13 @@ export default function MyDiaryPage() {
       }));
   }, [myEntries]);
 
-
   return (
     <>
       <div className="flex items-start gap-4 p-4 rounded-lg bg-primary/10 mb-6 border border-primary/20">
         <Lightbulb className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
         <div>
           <h1 className="text-lg font-semibold md:text-xl font-headline text-primary">나의 맘풍선</h1>
-          {isLoadingWelcome ? (
+          {isLoading ? (
              <p className="text-muted-foreground animate-pulse">따뜻한 격려의 말을 준비 중이에요...</p>
           ) : (
             <p className="text-muted-foreground">{welcomeMessage}</p>
@@ -147,7 +96,11 @@ export default function MyDiaryPage() {
             <CardDescription>최근 7일간 내가 기록한 감정 분포를 돌아보며 마음을 챙겨보세요.</CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center">
-            {chartData.length > 0 ? (
+            {isLoading ? (
+                <div className="flex items-center justify-center h-48">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+            ) : chartData.length > 0 ? (
                 <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[300px]">
                     <PieChart>
                         <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel nameKey="emotion" />} />
@@ -171,23 +124,25 @@ export default function MyDiaryPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {myEntries.length > 0 ? (
-          myEntries.map(entry => (
-            <DiaryCard 
-              key={entry.id} 
-              entry={entry} 
-              author={currentUser} 
-              onComment={handleComment} 
-              onLikeEntry={handleLikeEntry}
-              onLikeComment={handleLikeComment}
-              onDeleteComment={handleDeleteComment}
-            />
-          ))
-        ) : (
-          <p className="col-span-full text-center text-muted-foreground">아직 날린 맘풍선이 없어요. '새로운 맘풍선 날리기'로 첫 마음을 기록해보세요.</p>
-        )}
-      </div>
+      {isLoading ? (
+         <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {myEntries.length > 0 ? (
+            myEntries.map(entry => (
+                <DiaryCard 
+                key={entry.id} 
+                entry={entry} 
+                author={currentUser} 
+                />
+            ))
+            ) : (
+            <p className="col-span-full text-center text-muted-foreground pt-8">아직 날린 맘풍선이 없어요. '새로운 맘풍선 날리기'로 첫 마음을 기록해보세요.</p>
+            )}
+        </div>
+      )}
     </>
   )
 }

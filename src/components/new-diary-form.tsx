@@ -12,10 +12,15 @@ import { analyzeStudentEmotions, type AnalyzeStudentEmotionsOutput } from '@/ai/
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import type { DiaryEntry } from '@/lib/definitions';
-import { mockDiaryEntries } from '@/lib/data';
+import { addDiaryEntry } from '@/lib/actions';
 
-export function NewDiaryForm() {
-  const [isPending, startTransition] = useTransition();
+interface NewDiaryFormProps {
+    userId: string;
+}
+
+export function NewDiaryForm({ userId }: NewDiaryFormProps) {
+  const [isSubmitting, startSubmitting] = useTransition();
+  const [isAnalyzing, startAnalyzing] = useTransition();
   const router = useRouter();
   const { toast } = useToast();
   const [diaryEntry, setDiaryEntry] = useState('');
@@ -32,15 +37,23 @@ export function NewDiaryForm() {
       return;
     }
 
-    startTransition(async () => {
-      const result = await analyzeStudentEmotions({ diaryEntry });
-      if (result) {
-        setAnalysis(result);
-      } else {
+    startAnalyzing(async () => {
+      try {
+        const result = await analyzeStudentEmotions({ diaryEntry });
+        if (result) {
+          setAnalysis(result);
+        } else {
+          toast({
+            variant: "destructive",
+            title: "분석 실패",
+            description: "AI 감정 분석에 실패했어요. 잠시 후 다시 시도해주세요.",
+          });
+        }
+      } catch (error) {
         toast({
-          variant: "destructive",
-          title: "분석 실패",
-          description: "AI 감정 분석에 실패했어요. 잠시 후 다시 시도해주세요.",
+            variant: "destructive",
+            title: "분석 오류",
+            description: "AI 감정 분석 중 오류가 발생했습니다. API 키 설정을 확인해주세요.",
         });
       }
     });
@@ -56,40 +69,37 @@ export function NewDiaryForm() {
          return;
     }
     
-    // Create a new diary entry object
-    const newEntry: DiaryEntry = {
-      id: Date.now().toString(),
-      userId: '4', // Hardcoded test user ID
-      content: diaryEntry,
-      isPublic: isPublic,
-      createdAt: new Date().toISOString(),
-      dominantEmotion: analysis?.dominantEmotion || '평온',
-      suggestedResponses: analysis?.suggestedResponses || ['오늘 하루도 수고했어.', '평범한 날도 소중해.', '내일은 더 좋은 일이 있을 거야.'],
-      likes: 0,
-      comments: [],
-    };
+    startSubmitting(async () => {
+        const newEntryData = {
+          userId: userId,
+          content: diaryEntry,
+          isPublic: isPublic,
+          dominantEmotion: analysis?.dominantEmotion || '평온',
+          suggestedResponses: analysis?.suggestedResponses || ['오늘 하루도 수고했어.', '평범한 날도 소중해.', '내일은 더 좋은 일이 있을 거야.'],
+        };
 
-    // Retrieve existing entries from localStorage, add the new one, and save back
-    try {
-      const storedEntries = localStorage.getItem('diaryEntries');
-      const entries = storedEntries ? JSON.parse(storedEntries) : mockDiaryEntries;
-      const updatedEntries = [newEntry, ...entries];
-      localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
-    } catch (error) {
-      console.error("Failed to save to localStorage", error);
-    }
-    
-    toast({
-      title: "맘풍선을 날렸어요!",
-      description: "당신의 마음이 잘 전달되었을 거예요.",
+        try {
+            await addDiaryEntry(newEntryData);
+            
+            toast({
+              title: "맘풍선을 날렸어요!",
+              description: "당신의 마음이 잘 전달되었을 거예요.",
+            });
+        
+            router.push('/dashboard/my-diary');
+
+        } catch (error) {
+            console.error("Failed to save to Firestore", error);
+            toast({
+                variant: "destructive",
+                title: "저장 실패",
+                description: "맘풍선을 저장하는 중 문제가 발생했습니다.",
+            });
+        }
     });
-
-    setDiaryEntry('');
-    setAnalysis(null);
-    
-    // Redirect to the diary page to see the new entry
-    router.push('/dashboard/my-diary');
   };
+
+  const isPending = isAnalyzing || isSubmitting;
 
   return (
     <Card>
@@ -103,6 +113,7 @@ export function NewDiaryForm() {
           className="min-h-[200px] text-base"
           value={diaryEntry}
           onChange={(e) => setDiaryEntry(e.target.value)}
+          disabled={isPending}
         />
         {analysis && (
           <Alert className="bg-accent/50">
@@ -122,15 +133,18 @@ export function NewDiaryForm() {
       </CardContent>
       <CardFooter className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center space-x-2">
-          <Switch id="is-public" checked={isPublic} onCheckedChange={setIsPublic} />
+          <Switch id="is-public" checked={isPublic} onCheckedChange={setIsPublic} disabled={isPending}/>
           <Label htmlFor="is-public">다른 친구들에게 공개하기</Label>
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={handleAnalyze} disabled={isPending}>
-            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lightbulb className="mr-2 h-4 w-4"/>}
+            {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lightbulb className="mr-2 h-4 w-4"/>}
             AI 감정 분석
           </Button>
-          <Button onClick={handleSubmit}>맘풍선 날리기</Button>
+          <Button onClick={handleSubmit} disabled={isPending}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            맘풍선 날리기
+          </Button>
         </div>
       </CardFooter>
     </Card>

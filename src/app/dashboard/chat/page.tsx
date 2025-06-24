@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { SendHorizonal, User } from "lucide-react"
+import { SendHorizonal, User, Loader2 } from "lucide-react"
 import { emotionCoach, type EmotionCoachInput } from "@/ai/flows/emotion-coach-flow"
 import { cn } from "@/lib/utils"
 import type { User as UserType } from "@/lib/definitions"
-import { mockUsers } from "@/lib/data"
+import { getUser } from "@/lib/actions"
+import { useRouter } from "next/navigation"
 
 type Message = {
     role: 'user' | 'model';
@@ -53,6 +54,7 @@ export default function ChatPage() {
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const [currentUser, setCurrentUser] = useState<UserType | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
         if (scrollAreaRef.current) {
@@ -64,17 +66,28 @@ export default function ChatPage() {
     }, [messages]);
 
     useEffect(() => {
-        // In a real app, this would come from an auth context
-        const LOGGED_IN_USER_ID = '4';
-        const storedUsers = localStorage.getItem('mampungsun_users');
-        const allUsers: UserType[] = storedUsers ? JSON.parse(storedUsers) : mockUsers;
-        setCurrentUser(allUsers.find(u => u.id === LOGGED_IN_USER_ID) || null);
-    }, [])
+        const userId = localStorage.getItem('mampungsun_user_id');
+        if (!userId) {
+            router.push('/login');
+            return;
+        }
+
+        const fetchUser = async () => {
+            const user = await getUser(userId);
+            if (user) {
+                setCurrentUser(user);
+            } else {
+                router.push('/login');
+            }
+        };
+
+        fetchUser();
+    }, [router])
 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!input.trim()) return;
+        if (!input.trim() || !currentUser) return;
 
         const newUserMessage: Message = { role: 'user', content: input };
         setMessages(prev => [...prev, newUserMessage]);
@@ -93,6 +106,14 @@ export default function ChatPage() {
                 setMessages(prev => [...prev, newAiMessage]);
             }
         });
+    }
+    
+    if (!currentUser) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        )
     }
 
     return (

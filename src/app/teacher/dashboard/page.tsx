@@ -1,9 +1,8 @@
 'use client'
 
-import React, { useState, useRef, useEffect, useMemo } from "react"
+import React, { useState, useRef, useEffect, useMemo, useTransition } from "react"
 import Papa from 'papaparse'
 import Image from "next/image"
-import { mockUsers as initialMockUsers, mockDiaryEntries } from "@/lib/data"
 import type { User } from "@/lib/definitions"
 import {
   Table,
@@ -16,7 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { LogOut, PlusCircle, Trash2, Upload, Download, MessageSquareText } from "lucide-react"
+import { LogOut, PlusCircle, Trash2, Upload, Download, MessageSquareText, Loader2, Database } from "lucide-react"
 import Link from "next/link"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
@@ -46,8 +45,10 @@ import { PieChart, Pie, Cell } from "recharts"
 import { type ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { generateNickname } from "@/ai/flows/generate-nickname-flow"
-
-const USERS_STORAGE_KEY = 'mampungsun_users';
+import { isFirebaseConfigured } from "@/lib/firebase"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { getAllStudents, approveUser, deleteUser, addUser, getAllEntries, seedDatabase } from "@/lib/actions"
+import type { DiaryEntry } from "@/lib/definitions"
 
 const getEmotionBadgeVariant = (emotion: string) => {
   switch (emotion) {
@@ -64,6 +65,10 @@ const getEmotionBadgeVariant = (emotion: string) => {
 
 export default function TeacherDashboard() {
   const [students, setStudents] = useState<User[]>([]);
+  const [diaryEntries, setDiaryEntries] = useState<DiaryEntry[]>([]);
+  const [isLoading, startLoading] = useTransition();
+  const [isSeeding, startSeeding] = useTransition();
+
   const [studentToDelete, setStudentToDelete] = useState<User | null>(null);
   const [isAddStudentDialogOpen, setAddStudentDialogOpen] = useState(false);
   const [isBatchUploadDialogOpen, setBatchUploadDialogOpen] = useState(false);
@@ -76,22 +81,27 @@ export default function TeacherDashboard() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
-    setStudents(storedUsers ? JSON.parse(storedUsers) : initialMockUsers);
+    if (isFirebaseConfigured()) {
+        startLoading(async () => {
+            const [fetchedStudents, fetchedEntries] = await Promise.all([
+                getAllStudents(),
+                getAllEntries()
+            ]);
+            setStudents(fetchedStudents);
+            setDiaryEntries(fetchedEntries);
+        });
+    }
   }, []);
 
-  useEffect(() => {
-    if (students.length > 0) {
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(students));
-    }
-  }, [students]);
-
   const handleApprovalChange = (studentId: string, isApproved: boolean) => {
-    setStudents(currentStudents => 
-        currentStudents.map(student => 
-            student.id === studentId ? { ...student, isApproved } : student
-        )
-    );
+    startLoading(async () => {
+        await approveUser(studentId, isApproved);
+        setStudents(currentStudents => 
+            currentStudents.map(student => 
+                student.id === studentId ? { ...student, isApproved } : student
+            )
+        );
+    });
   }
 
   const handleAddStudent = () => {
@@ -101,27 +111,28 @@ export default function TeacherDashboard() {
       return;
     }
 
-    const newUser: User = {
-      id: new Date().getTime().toString(),
-      grade: parseInt(grade, 10),
-      class: parseInt(studentClass, 10),
-      studentId: parseInt(studentId, 10),
-      name,
-      nickname,
-      pin: Math.floor(1000 + Math.random() * 9000).toString(),
-      isApproved: true,
-    };
-
-    setStudents(prev => [...prev, newUser]);
-    toast({ title: "성공", description: "새로운 학생이 추가되었습니다." });
-    setNewStudent({ grade: '', studentClass: '', studentId: '', name: '', nickname: '' });
-    setAddStudentDialogOpen(false);
+    startLoading(async () => {
+        const newUser = await addUser({
+            grade: parseInt(grade, 10),
+            class: parseInt(studentClass, 10),
+            studentId: parseInt(studentId, 10),
+            name,
+            nickname,
+        });
+        setStudents(prev => [...prev, newUser]);
+        toast({ title: "성공", description: "새로운 학생이 추가되었습니다." });
+        setNewStudent({ grade: '', studentClass: '', studentId: '', name: '', nickname: '' });
+        setAddStudentDialogOpen(false);
+    });
   };
   
   const handleDeleteStudent = (studentId: string) => {
-    setStudents(currentStudents => currentStudents.filter(s => s.id !== studentId));
-    toast({ title: "성공", description: "학생 정보가 삭제되었습니다." });
-    setStudentToDelete(null);
+    startLoading(async () => {
+        await deleteUser(studentId);
+        setStudents(currentStudents => currentStudents.filter(s => s.id !== studentId));
+        toast({ title: "성공", description: "학생 정보가 삭제되었습니다." });
+        setStudentToDelete(null);
+    });
   }
 
   const handleDownloadSample = () => {
@@ -146,56 +157,62 @@ export default function TeacherDashboard() {
       description: 'AI 별명 생성 등 학생 정보를 처리하고 있습니다. 잠시만 기다려주세요.',
     });
 
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      encoding: "UTF-8",
-      complete: async (results) => {
-        try {
-          const studentPromises = results.data.map(async (row: any, index: number) => {
-            if (!row['학년'] || !row['반'] || !row['번호'] || !row['이름']) {
-              throw new Error(`CSV 파일의 ${index + 2}번째 줄 형식을 확인해주세요. 필수 항목(학년,반,번호,이름)이 모두 필요합니다.`);
-            }
-            
-            let nickname = row['별명'];
-            if (!nickname || nickname.trim() === '') {
+    startLoading(async () => {
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            encoding: "UTF-8",
+            complete: async (results) => {
               try {
-                  const result = await generateNickname({ name: row['이름'] });
-                  nickname = result.nickname;
-              } catch(e) {
-                  console.error("AI 별명 생성에 실패했습니다:", e);
-                  nickname = `멋진${row['이름']}`;
+                const studentPromises = results.data.map(async (row: any, index: number) => {
+                  if (!row['학년'] || !row['반'] || !row['번호'] || !row['이름']) {
+                    throw new Error(`CSV 파일의 ${index + 2}번째 줄 형식을 확인해주세요. 필수 항목(학년,반,번호,이름)이 모두 필요합니다.`);
+                  }
+                  
+                  let nickname = row['별명'];
+                  if (!nickname || nickname.trim() === '') {
+                    try {
+                        const result = await generateNickname({ name: row['이름'] });
+                        nickname = result.nickname;
+                    } catch(e) {
+                        console.error("AI 별명 생성에 실패했습니다:", e);
+                        nickname = `멋진${row['이름']}`;
+                    }
+                  }
+      
+                  return {
+                    grade: parseInt(row['학년'], 10),
+                    class: parseInt(row['반'], 10),
+                    studentId: parseInt(row['번호'], 10),
+                    name: row['이름'],
+                    nickname: nickname,
+                  };
+                });
+      
+                const newStudentData = await Promise.all(studentPromises);
+
+                const addedStudents = [];
+                for (const studentData of newStudentData) {
+                    const newU = await addUser(studentData);
+                    addedStudents.push(newU);
+                }
+                
+                setStudents(prev => [...prev, ...addedStudents]);
+
+                toast({ title: "성공!", description: `${addedStudents.length}명의 학생이 추가되었습니다.` });
+                
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                }
+      
+              } catch (error: any) {
+                toast({ variant: "destructive", title: "업로드 실패", description: error.message || "CSV 파일 처리 중 오류가 발생했습니다." });
               }
+            },
+            error: (error: any) => {
+              toast({ variant: "destructive", title: "파싱 오류", description: error.message });
             }
-
-            return {
-              id: new Date().getTime().toString() + Math.random(),
-              grade: parseInt(row['학년'], 10),
-              class: parseInt(row['반'], 10),
-              studentId: parseInt(row['번호'], 10),
-              name: row['이름'],
-              nickname: nickname,
-              pin: Math.floor(1000 + Math.random() * 9000).toString(),
-              isApproved: true,
-            };
           });
-
-          const newStudents = await Promise.all(studentPromises);
-          
-          setStudents(prev => [...prev, ...newStudents]);
-          toast({ title: "성공!", description: `${newStudents.length}명의 학생이 추가되었습니다.` });
-          
-          if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-          }
-
-        } catch (error: any) {
-          toast({ variant: "destructive", title: "업로드 실패", description: error.message || "CSV 파일 처리 중 오류가 발생했습니다." });
-        }
-      },
-      error: (error: any) => {
-        toast({ variant: "destructive", title: "파싱 오류", description: error.message });
-      }
     });
   };
 
@@ -216,7 +233,7 @@ export default function TeacherDashboard() {
   const filteredStudentIds = useMemo(() => {
     return new Set(students
       .filter(student => {
-        if (student.grade === 0) return false; // Always exclude AI user
+        if (student.grade <= 0) return false;
         if (selectedGrade === 'all') return true;
         if (student.grade !== parseInt(selectedGrade)) return false;
         if (selectedClass === 'all') return true;
@@ -229,7 +246,7 @@ export default function TeacherDashboard() {
     return students
         .filter(s => filteredStudentIds.has(s.id))
         .map(user => {
-            const userEntries = mockDiaryEntries
+            const userEntries = diaryEntries
               .filter(entry => entry.userId === user.id)
               .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
             
@@ -242,7 +259,7 @@ export default function TeacherDashboard() {
             if (a.class !== b.class) return a.class - b.class;
             return a.studentId - b.studentId;
         });
-  }, [students, filteredStudentIds]);
+  }, [students, diaryEntries, filteredStudentIds]);
 
   const chartConfig = {
       기쁨: { label: "기쁨", color: "hsl(var(--primary))" },
@@ -256,7 +273,7 @@ export default function TeacherDashboard() {
       const oneWeekAgo = new Date();
       oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-      const recentEntries = mockDiaryEntries.filter(entry => 
+      const recentEntries = diaryEntries.filter(entry => 
           new Date(entry.createdAt) > oneWeekAgo && filteredStudentIds.has(entry.userId)
       );
       
@@ -273,7 +290,47 @@ export default function TeacherDashboard() {
             count: emotionCounts[emotion],
             fill: chartConfig[emotion as keyof typeof chartConfig].color
         }));
-  }, [filteredStudentIds]);
+  }, [diaryEntries, filteredStudentIds]);
+
+  const handleSeedDatabase = () => {
+    startSeeding(async () => {
+        const result = await seedDatabase();
+        if (result.success) {
+            toast({ title: "성공!", description: result.message });
+            // Refetch data
+            const [fetchedStudents, fetchedEntries] = await Promise.all([
+                getAllStudents(),
+                getAllEntries()
+            ]);
+            setStudents(fetchedStudents);
+            setDiaryEntries(fetchedEntries);
+        } else {
+            toast({ variant: "destructive", title: "실패", description: result.message });
+        }
+    });
+  }
+
+  if (!isFirebaseConfigured()) {
+    return (
+        <div className="p-8">
+             <Card className="mx-auto max-w-2xl w-full">
+                <CardHeader>
+                    <CardTitle className="text-2xl font-headline text-destructive">설정 필요</CardTitle>
+                    <CardDescription>앱을 사용하기 전에 Firebase 설정이 필요합니다.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Alert variant="destructive">
+                        <AlertTitle>Firebase 미설정</AlertTitle>
+                        <AlertDescription>
+                            <p>Firestore 데이터베이스 연동을 위한 환경 변수 설정이 필요합니다.</p>
+                            <p className="mt-2">프로젝트의 `README.md` 파일을 참고하여 설정을 완료해주세요.</p>
+                        </AlertDescription>
+                    </Alert>
+                </CardContent>
+            </Card>
+        </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -292,6 +349,38 @@ export default function TeacherDashboard() {
         </div>
       </header>
       <main className="p-4 sm:p-6 md:p-8 space-y-8">
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline">데이터베이스 관리</CardTitle>
+                <CardDescription>데이터베이스를 샘플 데이터로 초기화합니다. 기존 데이터는 유지됩니다.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="secondary" disabled={isSeeding}>
+                            <Database className="mr-2 h-4 w-4" />
+                            {isSeeding && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            초기 데이터 설정
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>데이터베이스를 초기화하시겠습니까?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                이 작업은 샘플 학생 및 맘풍선 데이터를 데이터베이스에 추가합니다. 이미 데이터가 있는 경우, 새로운 데이터가 추가되지 않습니다.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>취소</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleSeedDatabase}>
+                                확인
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </CardContent>
+        </Card>
+        
         <Card>
             <CardHeader>
                 <CardTitle className="font-headline">콘텐츠 관리</CardTitle>
@@ -348,7 +437,11 @@ export default function TeacherDashboard() {
                 <CardDescription>최근 일주일간 선택된 학생들의 감정 분포입니다.</CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center">
-                {chartData.length > 0 ? (
+                {isLoading ? (
+                     <div className="flex items-center justify-center h-64">
+                        <Loader2 className="h-8 w-8 animate-spin" />
+                    </div>
+                ) : chartData.length > 0 ? (
                     <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[350px]">
                         <PieChart>
                             <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel nameKey="emotion" />} />
@@ -409,7 +502,10 @@ export default function TeacherDashboard() {
                                 </div>
                             </div>
                             <DialogFooter>
-                                <Button type="submit" onClick={handleAddStudent}>추가하기</Button>
+                                <Button type="submit" onClick={handleAddStudent} disabled={isLoading}>
+                                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    추가하기
+                                </Button>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
@@ -449,7 +545,13 @@ export default function TeacherDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {studentsWithLatestEmotion.length > 0 ? (
+                {isLoading ? (
+                    <TableRow>
+                        <TableCell colSpan={8} className="h-24 text-center">
+                            <Loader2 className="mx-auto h-8 w-8 animate-spin" />
+                        </TableCell>
+                    </TableRow>
+                ) : studentsWithLatestEmotion.length > 0 ? (
                   studentsWithLatestEmotion.map((student) => (
                     <TableRow key={student.id}>
                       <TableCell>{student.grade}</TableCell>

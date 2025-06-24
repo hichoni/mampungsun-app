@@ -15,8 +15,11 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { mockUsers } from "@/lib/data"
-import React, { useState } from "react"
-import { ArrowLeft } from "lucide-react"
+import React, { useState, useTransition } from "react"
+import { ArrowLeft, Loader2 } from "lucide-react"
+import { loginUser } from "@/lib/actions"
+import { isFirebaseConfigured } from "@/lib/firebase"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,6 +28,7 @@ export default function LoginPage() {
   const [studentClass, setStudentClass] = useState<string>('');
   const [studentId, setStudentId] = useState<string>('');
   const [pin, setPin] = useState<string>('');
+  const [isPending, startTransition] = useTransition();
 
   const handleGradeChange = (value: string) => {
     setGrade(value);
@@ -53,46 +57,57 @@ export default function LoginPage() {
         return;
     }
 
-    const user = mockUsers.find(
-        (u) => 
-        u.grade === parseInt(grade) && 
-        u.class === parseInt(studentClass) && 
-        u.studentId === parseInt(studentId)
-    );
+    startTransition(async () => {
+        try {
+            const user = await loginUser(parseInt(grade), parseInt(studentClass), parseInt(studentId));
 
-    if (!user) {
-        toast({
-            variant: "destructive",
-            title: "로그인 실패",
-            description: "학생 정보를 찾을 수 없습니다."
-        });
-        return;
-    }
+            if (!user) {
+                toast({ variant: "destructive", title: "로그인 실패", description: "학생 정보를 찾을 수 없습니다." });
+                return;
+            }
+        
+            if (!user.isApproved) {
+                toast({ variant: "destructive", title: "로그인 실패", description: "아직 선생님의 승인을 받지 않았어요." });
+                return;
+            }
+        
+            if (user.pin !== pin) {
+                toast({ variant: "destructive", title: "로그인 실패", description: "PIN 번호가 올바르지 않습니다." });
+                return;
+            }
+        
+            localStorage.setItem('mampungsun_user_id', user.id);
 
-    if (!user.isApproved) {
-        toast({
-            variant: "destructive",
-            title: "로그인 실패",
-            description: "아직 선생님의 승인을 받지 않았어요."
-        });
-        return;
-    }
+            toast({ title: "로그인 성공!", description: `환영합니다, ${user.nickname}님!` })
+        
+            router.push('/dashboard');
+        } catch (error) {
+            console.error("Login error:", error);
+            toast({ variant: "destructive", title: "로그인 오류", description: "로그인 중 문제가 발생했습니다." });
+        }
+    });
+  }
 
-    if (user.pin !== pin) {
-        toast({
-            variant: "destructive",
-            title: "로그인 실패",
-            description: "PIN 번호가 올바르지 않습니다."
-        });
-        return;
-    }
-
-    toast({
-        title: "로그인 성공!",
-        description: `환영합니다, ${user.nickname}님!`
-    })
-
-    router.push('/dashboard');
+  if (!isFirebaseConfigured()) {
+    return (
+        <div className="flex items-center justify-center min-h-screen bg-secondary/50 p-4">
+             <Card className="mx-auto max-w-md w-full">
+                <CardHeader>
+                    <CardTitle className="text-2xl font-headline text-destructive">설정 필요</CardTitle>
+                    <CardDescription>앱을 사용하기 전에 Firebase 설정이 필요합니다.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Alert variant="destructive">
+                        <AlertTitle>Firebase 미설정</AlertTitle>
+                        <AlertDescription>
+                            <p>Firestore 데이터베이스 연동을 위한 환경 변수 설정이 필요합니다.</p>
+                            <p className="mt-2">프로젝트의 `README.md` 파일을 참고하여 설정을 완료해주세요.</p>
+                        </AlertDescription>
+                    </Alert>
+                </CardContent>
+            </Card>
+        </div>
+    )
   }
 
   return (
@@ -111,7 +126,7 @@ export default function LoginPage() {
             <div className="grid grid-cols-3 gap-4">
                 <div className="grid gap-2">
                     <Label htmlFor="grade">학년</Label>
-                    <Select name="grade" required value={grade} onValueChange={handleGradeChange}>
+                    <Select name="grade" required value={grade} onValueChange={handleGradeChange} disabled={isPending}>
                         <SelectTrigger id="grade">
                             <SelectValue placeholder="학년" />
                         </SelectTrigger>
@@ -122,7 +137,7 @@ export default function LoginPage() {
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="class">반</Label>
-                    <Select name="class" required value={studentClass} onValueChange={handleClassChange} disabled={!grade}>
+                    <Select name="class" required value={studentClass} onValueChange={handleClassChange} disabled={!grade || isPending}>
                         <SelectTrigger id="class">
                             <SelectValue placeholder="반" />
                         </SelectTrigger>
@@ -133,7 +148,7 @@ export default function LoginPage() {
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="studentId">번호</Label>
-                     <Select name="studentId" required value={studentId} onValueChange={setStudentId} disabled={!studentClass}>
+                     <Select name="studentId" required value={studentId} onValueChange={setStudentId} disabled={!studentClass || isPending}>
                         <SelectTrigger id="studentId">
                             <SelectValue placeholder="번호" />
                         </SelectTrigger>
@@ -145,9 +160,10 @@ export default function LoginPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="pin">PIN 번호</Label>
-              <Input id="pin" name="pin" type="password" required placeholder="4자리 숫자" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value)} />
+              <Input id="pin" name="pin" type="password" required placeholder="4자리 숫자" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value)} disabled={isPending}/>
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               로그인
             </Button>
           </form>
