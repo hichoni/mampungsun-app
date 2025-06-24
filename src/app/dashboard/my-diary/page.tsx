@@ -7,6 +7,8 @@ import type { DiaryEntry, User, Comment } from "@/lib/definitions"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PieChart, Pie, Cell } from "recharts"
 import { type ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { generateMyDiaryWelcomeMessage } from "@/ai/flows/generate-my-diary-welcome-flow"
+import { Lightbulb } from "lucide-react"
 
 const chartConfig = {
   기쁨: { label: "기쁨", color: "hsl(var(--primary))" },
@@ -19,10 +21,27 @@ const chartConfig = {
 
 export default function MyDiaryPage() {
   const [entries, setEntries] = useState<DiaryEntry[]>([])
+  const [welcomeMessage, setWelcomeMessage] = useState<string>('');
+  const [isLoadingWelcome, setIsLoadingWelcome] = useState<boolean>(true);
   
   useEffect(() => {
     const storedEntries = localStorage.getItem('diaryEntries');
     setEntries(storedEntries ? JSON.parse(storedEntries) : mockDiaryEntries);
+
+    const fetchWelcomeMessage = async () => {
+      setIsLoadingWelcome(true);
+      try {
+        const result = await generateMyDiaryWelcomeMessage();
+        setWelcomeMessage(result.welcomeMessage || "내가 날린 마음의 풍선들을 다시 확인해보세요.");
+      } catch (error) {
+        console.error("Failed to generate welcome message:", error);
+        setWelcomeMessage("내가 날린 마음의 풍선들을 다시 확인해보세요."); // Fallback message
+      } finally {
+        setIsLoadingWelcome(false);
+      }
+    };
+    
+    fetchWelcomeMessage();
   }, [])
   
   // In a real app, you'd fetch entries for the currently logged-in user
@@ -107,10 +126,15 @@ export default function MyDiaryPage() {
 
   return (
     <>
-      <div className="flex items-center justify-between">
+      <div className="flex items-start gap-4 p-4 rounded-lg bg-primary/10 mb-6 border border-primary/20">
+        <Lightbulb className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
         <div>
-          <h1 className="text-lg font-semibold md:text-2xl font-headline">나의 맘풍선</h1>
-          <p className="text-muted-foreground">내가 날린 마음의 풍선들을 다시 확인해보세요.</p>
+          <h1 className="text-lg font-semibold md:text-xl font-headline text-primary">나의 맘풍선</h1>
+          {isLoadingWelcome ? (
+             <p className="text-muted-foreground animate-pulse">따뜻한 격려의 말을 준비 중이에요...</p>
+          ) : (
+            <p className="text-muted-foreground">{welcomeMessage}</p>
+          )}
         </div>
       </div>
       
