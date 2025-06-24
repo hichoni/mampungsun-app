@@ -17,6 +17,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
+  const [isLoadingUser, startLoadingUser] = useTransition();
   const [isGenerating, startGenerating] = useTransition();
   const [isUpdating, startUpdating] = useTransition();
   
@@ -32,7 +33,7 @@ export default function ProfilePage() {
       return;
     }
     
-    startUpdating(async () => {
+    startLoadingUser(async () => {
         const currentUser = await getUser(userId);
         if (currentUser) {
           setUser(currentUser);
@@ -107,9 +108,9 @@ export default function ProfilePage() {
     });
   };
   
-  const isPending = isGenerating || isUpdating;
+  const isPending = isGenerating || isUpdating || isLoadingUser;
 
-  if (!user) {
+  if (isLoadingUser || !user) {
     return (
         <div className="flex items-center justify-center h-full">
             <Loader2 className="h-8 w-8 animate-spin" />

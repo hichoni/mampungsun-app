@@ -5,19 +5,15 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
-const GenerateAvatarInputSchema = z.object({
+export const GenerateAvatarInputSchema = z.object({
   nickname: z.string().describe('아바타를 생성할 학생의 별명입니다.'),
 });
 export type GenerateAvatarInput = z.infer<typeof GenerateAvatarInputSchema>;
 
-const GenerateAvatarOutputSchema = z.object({
+export const GenerateAvatarOutputSchema = z.object({
   avatarDataUri: z.string().describe('생성된 아바타 이미지의 데이터 URI입니다.'),
 });
 export type GenerateAvatarOutput = z.infer<typeof GenerateAvatarOutputSchema>;
-
-export async function generateAvatar(input: GenerateAvatarInput): Promise<GenerateAvatarOutput> {
-    return generateAvatarFlow(input);
-}
 
 const generateAvatarFlow = ai.defineFlow(
   {
@@ -41,3 +37,8 @@ const generateAvatarFlow = ai.defineFlow(
     return { avatarDataUri: media.url };
   }
 );
+
+
+export async function generateAvatar(input: GenerateAvatarInput): Promise<GenerateAvatarOutput> {
+    return generateAvatarFlow(input);
+}

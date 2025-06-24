@@ -73,31 +73,34 @@ export function DiaryCard({ entry, author, onDeleteEntry, onPinEntry, isTeacherV
   const [newCommentText, setNewCommentText] = useState('');
   const [isPending, startTransition] = useTransition();
   const [timeAgo, setTimeAgo] = useState('');
+  
+  const calculateTimeAgo = () => {
+    if (!entry.createdAt) return '';
+    const entryDate = new Date(entry.createdAt as string);
+    const seconds = Math.floor((new Date().getTime() - entryDate.getTime()) / 1000);
+    
+    if (isNaN(seconds) || seconds < 0) return '방금 전';
+    if (seconds < 60) return `${Math.floor(seconds)}초 전`;
+    
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}분 전`;
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}시간 전`;
+
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days}일 전`;
+
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months}달 전`;
+
+    return `${Math.floor(months / 12)}년 전`;
+  };
 
   useEffect(() => {
-    const calculateTimeAgo = () => {
-      const entryDate = new Date(entry.createdAt as string);
-      const seconds = Math.floor((new Date().getTime() - entryDate.getTime()) / 1000);
-      
-      if (seconds < 0) return '방금 전';
-      if (seconds < 60) return `${Math.floor(seconds)}초 전`;
-      
-      const minutes = Math.floor(seconds / 60);
-      if (minutes < 60) return `${minutes}분 전`;
-
-      const hours = Math.floor(minutes / 60);
-      if (hours < 24) return `${hours}시간 전`;
-
-      const days = Math.floor(hours / 24);
-      if (days < 30) return `${days}일 전`;
-
-      const months = Math.floor(days / 30);
-      if (months < 12) return `${months}달 전`;
-
-      return `${Math.floor(months / 12)}년 전`;
-    };
-
+    // This effect runs only on the client-side
     setTimeAgo(calculateTimeAgo());
+
     const timer = setInterval(() => setTimeAgo(calculateTimeAgo()), 60000);
     return () => clearInterval(timer);
   }, [entry.createdAt]);
@@ -153,25 +156,19 @@ export function DiaryCard({ entry, author, onDeleteEntry, onPinEntry, isTeacherV
       const moderationResult = await moderateText({ text: commentText });
 
       if (moderationResult && moderationResult.isAppropriate) {
-        const newCommentPayload: Omit<Comment, 'id'|'createdAt'> = {
-          userId: commenter.id,
-          nickname: commenter.nickname,
-          avatarUrl: commenter.avatarUrl,
-          comment: commentText,
-        };
         
         setNewCommentText('');
 
         try {
-            await addComment(entry.id, newCommentPayload, commenter.id);
-            // After successful submission, manually create the new comment to update UI
-            // A full re-fetch would be safer but less performant for this demo
-            const optimisticComment: Comment = {
-                ...newCommentPayload,
-                id: `temp-${Date.now()}`,
-                createdAt: new Date().toISOString(),
-            };
-            setComments(prev => [...prev, optimisticComment]);
+            const newComment = await addComment(entry.id, {
+                userId: commenter.id,
+                nickname: commenter.nickname,
+                avatarUrl: commenter.avatarUrl,
+                comment: commentText,
+            });
+
+            // After successful submission, update UI with the returned comment
+            setComments(prev => [...prev, newComment]);
             toast({ title: "댓글이 등록되었어요." });
         } catch(e) {
             toast({ variant: "destructive", title: "댓글 등록 실패", description: "다시 시도해주세요." });
@@ -216,10 +213,10 @@ export function DiaryCard({ entry, author, onDeleteEntry, onPinEntry, isTeacherV
           </Avatar>
           <div className="flex-1 min-w-0">
             <CardTitle className="text-base truncate">{author?.nickname || '알 수 없음'}</CardTitle>
-            <CardDescription>{timeAgo}</CardDescription>
+            <CardDescription>{timeAgo || '방금 전'}</CardDescription>
           </div>
           <div className="flex items-center gap-1">
-            <Badge variant={getEmotionBadgeVariant(entry.dominantEmotion)} className="flex-shrink-0 whitespace-nowrap">{entry.dominantEmotion}</Badge>
+            {entry.dominantEmotion && <Badge variant={getEmotionBadgeVariant(entry.dominantEmotion)} className="flex-shrink-0 whitespace-nowrap">{entry.dominantEmotion}</Badge>}
             {isTeacherView && (
               <>
                 {onPinEntry && (

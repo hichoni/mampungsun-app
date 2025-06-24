@@ -17,9 +17,8 @@ export type Comment = {
   userId: string;
   nickname: string;
   comment: string;
-  createdAt: string | Timestamp; // Allow both for client/server
+  createdAt: string | Timestamp;
   avatarUrl?: string;
-  likes?: number; // likes can be optional
 };
 
 export type DiaryEntry = {
@@ -27,11 +26,11 @@ export type DiaryEntry = {
   userId: string;
   content: string;
   isPublic: boolean;
-  createdAt: string | Timestamp; // Allow both for client/server
+  createdAt: string | Timestamp;
   dominantEmotion: string;
   suggestedResponses: string[];
   likes: number;
   comments: Comment[];
   isPinned?: boolean;
-  likedBy?: string[]; // Array of user IDs who liked the entry
+  likedBy: string[]; // Array of user IDs who liked the entry
 };

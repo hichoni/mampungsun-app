@@ -1,7 +1,5 @@
-// 'use client' is intentionally not used here. This file is for server-side and client-side configuration.
-
 import { initializeApp, getApps, getApp, FirebaseOptions } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,10 +10,14 @@ const firebaseConfig: FirebaseOptions = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+function isFirebaseConfigured() {
+    return !!firebaseConfig.projectId;
+}
+
 // Initialize Firebase
 let app;
 if (!getApps().length) {
-    if (!firebaseConfig.projectId) {
+    if (!isFirebaseConfigured()) {
         console.warn("Firebase config is not set. Firestore will not be initialized.");
         app = null;
     } else {
@@ -26,10 +28,5 @@ if (!getApps().length) {
 }
 
 const db = app ? getFirestore(app) : null;
-
-function isFirebaseConfigured() {
-    return !!firebaseConfig.projectId;
-}
-
 
 export { app, db, isFirebaseConfigured };

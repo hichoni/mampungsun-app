@@ -43,9 +43,9 @@ AI 기능을 사용하려면 Google AI Studio에서 API 키를 발급받아야 �
 
 `.env.local` 파일은 로컬 개발 환경에서만 사용됩니다. Firebase에 배포된 실제 앱에서 AI 기능을 사용하려면, 아래와 같이 API 키를 **보안 비밀(Secret)**로 딱 한 번만 등록해야 합니다.
 
-1.  **[Firebase 콘솔](https://console.firebase.google.com/)**에서 프로젝트로 이동합니다.
+1.  [**Firebase 콘솔**](https://console.firebase.google.com/)에서 프로젝트로 이동합니다.
 2.  왼쪽 메뉴의 **빌드(Build) > App Hosting** 메뉴로 이동합니다.
-3.  백엔드 목록(`mampungsun-app` 같은 이름)을 확인하고, **Google Cloud** 열에 있는 링크를 클릭하여 Google Cloud 콘솔의 서비스 페이지로 이동합니다.
+3.  백엔드 목록에서 `mampungsun-app`이라는 **이름 자체를 클릭**하여 백엔드 상세 페이지로 이동합니다.
 4.  페이지 상단에서 **보안** 탭을 클릭한 후, 왼쪽 메뉴에서 **보안 비밀**을 선택합니다.
 5.  **[+ 보안 비밀 만들기]** 버튼을 클릭합니다.
     *   **이름**: `GOOGLE_API_KEY` 라고 정확히 입력합니다. (매우 중요!)
