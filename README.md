@@ -27,7 +27,7 @@ Firebase 데이터베이스와 연동을 위해 Firebase 프로젝트 정보가 
     *   프로젝트 설정(⚙️) > 일반 탭으로 이동합니다.
     *   '내 앱' 섹션에서 웹 앱을 등록하고, Firebase SDK 스니펫에서 `firebaseConfig` 객체 값을 확인합니다.
 
-#### 1-3. `.env.local` 파일에 키 입력하기
+#### 1-3. `.env.local` 파일에 키 입력하기 (로컬 개발용)
 
 1.  프로젝트 최상위 경로에 `.env.local` 파일을 새로 만드세요. (이미 파일이 있다면 열어주세요)
 2.  아래 내용을 복사하여 붙여넣고, `your-google-api-key`와 `your-firebase-config-value` 부분을 위에서 얻은 실제 값으로 교체하세요. 이 파일은 `.gitignore`에 의해 GitHub에 올라가지 않으므로 안전합니다.
@@ -36,7 +36,7 @@ Firebase 데이터베이스와 연동을 위해 Firebase 프로젝트 정보가 
     # 1-1 단계에서 발급받은 Google AI API 키를 여기에 붙여넣으세요.
     GOOGLE_API_KEY="your-google-api-key"
 
-    # 1-2 단계에서 확인한 Firebase 설정 값을 여기에 붙여넣으세요.
+    # 1-2 단계에서 확인한 Firebase 설정 값을 여기에 붙여넣으세요. (Firestore 연동 시 필요)
     NEXT_PUBLIC_FIREBASE_API_KEY="your-api-key"
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="your-project-id.firebaseapp.com"
     NEXT_PUBLIC_FIREBASE_PROJECT_ID="your-project-id"
@@ -52,6 +52,19 @@ Firebase 데이터베이스와 연동을 위해 Firebase 프로젝트 정보가 
 2.  **GitHub 저장소 연결**: '시작하기'를 누르고 화면 안내에 따라 GitHub 계정을 인증한 후, 이 프로젝트의 저장소를 선택합니다.
 3.  **백엔드 설정**: 배포할 브랜치로 **`main`을 선택**하고, 앱의 루트 디렉토리는 `/`로 둡니다.
 4.  **자동 배포**: 설정이 완료되면 Firebase가 첫 배포를 시작합니다. 이제부터 `main` 브랜치에 코드를 푸시할 때마다 자동으로 새 버전이 배포됩니다.
+
+### Step 3: 배포된 앱에 API 키 설정하기 (AI 기능 활성화)
+
+`.env.local` 파일은 로컬 개발 환경에서만 사용됩니다. Firebase에 배포된 실제 앱에서 AI 기능을 사용하려면, 아래와 같이 API 키를 **보안 비밀(Secret)**로 등록해야 합니다.
+
+1.  **Firebase 콘솔**에서 **빌드 > 앱 호스팅** 메뉴로 이동합니다.
+2.  GitHub과 연결된 백엔드를 찾아 **관리** 링크를 클릭합니다.
+3.  페이지 상단의 **보안 비밀** 탭을 선택합니다.
+4.  **[보안 비밀 추가]** 버튼을 클릭합니다.
+    *   **보안 비밀 이름**: `GOOGLE_API_KEY` 라고 정확히 입력합니다. (매우 중요!)
+    *   **보안 비밀 값**: 1-1 단계에서 발급받은 Google AI API 키를 붙여넣습니다.
+5.  **[보안 비밀 추가]** 버튼을 눌러 저장합니다.
+6.  **새로 배포하기**: 보안 비밀은 다음 배포부터 적용됩니다. 코드를 `git push`하여 새 배포를 실행하면, AI 기능이 온라인에서 활성화됩니다.
 
 ### 다음 단계: Mock 데이터에서 Firestore로 전환하기
 
