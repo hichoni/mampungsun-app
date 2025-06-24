@@ -10,8 +10,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Alegreya', 'serif'],
-        headline: ['Belleza', 'sans-serif'],
+        body: ['"Gowun Dodum"', 'sans-serif'],
+        headline: ['Gaegu', 'cursive'],
         code: ['monospace'],
       },
       colors: {
