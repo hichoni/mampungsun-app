@@ -8,17 +8,35 @@
 
 이 가이드는 GitHub과 연동된 Firebase 앱 호스팅을 사용하여 애플리케이션을 배포하는 과정을 안내합니다.
 
-### Step 1: Firebase 프로젝트 및 환경 변수 설정
+### Step 1: API 키 및 환경 변수 설정 (매우 중요!)
+
+이 앱의 AI 기능과 Firebase 연동을 위해서는 API 키 설정이 반드시 필요합니다.
+
+#### 1-1. Google AI API 키 발급받기
+AI 기능을 사용하려면 Google AI Studio에서 API 키를 발급받아야 합니다.
+
+1.  [**Google AI Studio**](https://aistudio.google.com/app/apikey)에 방문하여 Google 계정으로 로그인하세요.
+2.  **[Create API key in new project]** 버튼을 클릭하여 새 API 키를 발급받으세요.
+3.  생성된 API 키(긴 문자열)를 복사해두세요. 이 키는 다른 사람에게 노출되면 안 됩니다.
+
+#### 1-2. Firebase 웹 앱 설정하기
+Firebase 데이터베이스와 연동을 위해 Firebase 프로젝트 정보가 필요합니다.
 
 1.  **Firebase 프로젝트 생성**: 아직 없다면 [Firebase 콘솔](https://console.firebase.google.com/)에서 새 프로젝트를 만드세요.
 2.  **웹 앱 등록 및 키 확인**:
     *   프로젝트 설정(⚙️) > 일반 탭으로 이동합니다.
     *   '내 앱' 섹션에서 웹 앱을 등록하고, Firebase SDK 스니펫에서 `firebaseConfig` 객체 값을 확인합니다.
-3.  **`.env.local` 파일 생성**:
-    *   프로젝트 최상위 경로에 `.env.local` 파일을 새로 만듭니다.
-    *   아래 내용을 복사하여 붙여넣고, `your-firebase-config-value` 부분을 2단계에서 확인한 실제 값으로 교체합니다. 이 파일은 `.gitignore`에 의해 GitHub에 올라가지 않으므로 안전합니다.
+
+#### 1-3. `.env.local` 파일에 키 입력하기
+
+1.  프로젝트 최상위 경로에 `.env.local` 파일을 새로 만드세요. (이미 파일이 있다면 열어주세요)
+2.  아래 내용을 복사하여 붙여넣고, `your-google-api-key`와 `your-firebase-config-value` 부분을 위에서 얻은 실제 값으로 교체하세요. 이 파일은 `.gitignore`에 의해 GitHub에 올라가지 않으므로 안전합니다.
 
     ```
+    # 1-1 단계에서 발급받은 Google AI API 키를 여기에 붙여넣으세요.
+    GOOGLE_API_KEY="your-google-api-key"
+
+    # 1-2 단계에서 확인한 Firebase 설정 값을 여기에 붙여넣으세요.
     NEXT_PUBLIC_FIREBASE_API_KEY="your-api-key"
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="your-project-id.firebaseapp.com"
     NEXT_PUBLIC_FIREBASE_PROJECT_ID="your-project-id"
@@ -26,6 +44,7 @@
     NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="your-sender-id"
     NEXT_PUBLIC_FIREBASE_APP_ID="your-app-id"
     ```
+**참고**: `.env.local` 파일을 수정한 후에는, 변경사항을 적용하기 위해 **개발 서버를 재시작**해야 합니다. (보통 자동으로 재시작됩니다)
 
 ### Step 2: GitHub과 앱 호스팅 연동
 
