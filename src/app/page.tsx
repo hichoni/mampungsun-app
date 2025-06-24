@@ -29,11 +29,8 @@ export default function LandingPage() {
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-headline font-bold text-gray-800 mb-4">
               마음 속 풍경을 선물하다
             </h2>
-            <p className="text-lg md:text-xl text-foreground max-w-2xl mx-auto mb-2">
+            <p className="text-lg md:text-xl text-foreground max-w-2xl mx-auto mb-8">
               맘풍선은 여러분의 마음을 표현하고, 따뜻한 응원을 주고받는 안전한 공간입니다.
-            </p>
-            <p className="text-md text-muted-foreground max-w-3xl mx-auto mb-8">
-              <span className="font-bold">맘</span>: 마음 속, <span className="font-bold">풍</span>: 풍경을, <span className="font-bold">선</span>: 선물하다
             </p>
             <Button asChild size="lg">
               <Link href="/login">지금 마음 표현하기</Link>
