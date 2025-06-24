@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Heart, MessageCircle, Shield } from 'lucide-react';
+import { Heart, MessageCircle, Shield, Users } from 'lucide-react';
 
 export default function LandingPage() {
   return (
@@ -80,6 +80,19 @@ export default function LandingPage() {
                 </CardContent>
               </Card>
             </div>
+          </div>
+        </section>
+        
+        {/* Creators Section */}
+        <section className="bg-primary/10 py-16 lg:py-24">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div className="mx-auto bg-accent/50 rounded-full p-4 w-fit mb-6">
+                <Users className="h-10 w-10 text-accent-foreground" />
+            </div>
+            <h3 className="text-3xl md:text-4xl font-headline font-bold text-primary">만든 사람들</h3>
+            <p className="text-lg text-muted-foreground mt-4 max-w-3xl mx-auto">
+                '맘풍선'은 학생들의 마음 건강을 최우선으로 생각하는 선생님들이 모여 시작된 프로젝트입니다. 저희는 모든 학생이 자신의 감정을 안전하게 표현하고, 따뜻한 지지를 받으며 성장할 수 있는 공간을 만들고 싶었습니다.
+            </p>
           </div>
         </section>
         
