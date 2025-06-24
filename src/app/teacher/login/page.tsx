@@ -2,6 +2,7 @@
 'use client'
 
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import React, { useState } from "react"
 import {
@@ -14,7 +15,6 @@ import {
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { BalloonIcon } from "@/components/icons"
 import { useToast } from "@/hooks/use-toast"
 
 const MASTER_ID = "master"
@@ -48,7 +48,7 @@ export default function TeacherLoginPage() {
       <Card className="mx-auto max-w-sm w-full">
         <CardHeader className="text-center space-y-4">
           <Link href="/" className="flex items-center justify-center">
-              <BalloonIcon className="h-10 w-10 text-primary" />
+              <Image src="/balloon2.png" alt="맘풍선 로고" width={40} height={40} />
           </Link>
           <div className="space-y-1">
             <CardTitle className="text-2xl font-headline">교사용 로그인</CardTitle>

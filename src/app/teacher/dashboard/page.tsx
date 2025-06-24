@@ -17,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { LogOut, PlusCircle, Trash2, Upload, Download, Save, Settings } from "lucide-react"
 import Link from "next/link"
-import { BalloonIcon } from "@/components/icons"
+import Image from "next/image"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -325,7 +325,7 @@ export default function TeacherDashboard() {
     <div className="min-h-screen bg-background">
       <header className="px-4 lg:px-6 h-16 flex items-center border-b">
         <Link href="/teacher/dashboard" className="flex items-center justify-center">
-          <BalloonIcon className="h-8 w-8 text-primary" />
+          <Image src="/balloon2.png" alt="맘풍선 로고" width={32} height={32} />
           <span className="ml-2 text-xl font-headline font-bold text-foreground">맘풍선 교사 페이지</span>
         </Link>
         <div className="ml-auto flex items-center gap-2">
