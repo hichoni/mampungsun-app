@@ -49,7 +49,8 @@ export default function TeacherLoginPage() {
         <CardHeader className="space-y-2 text-center">
             <div className="flex flex-col items-center justify-center gap-2 mb-2">
                 <Image src="/icon-balloon2.png" alt="맘풍선 로고" width={40} height={40} />
-                <h1 className="text-3xl font-headline">맘풍선</h1>
+                <CardTitle className="text-3xl font-headline">맘풍선</CardTitle>
+                <p className="text-sm text-muted-foreground">마음 속 풍경을 선물하다</p>
             </div>
             <CardDescription className="text-center">
                 교사용 로그인: 마스터 아이디와 비밀번호를 입력하세요.
