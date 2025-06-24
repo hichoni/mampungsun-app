@@ -27,7 +27,7 @@ export default function LandingPage() {
         <section className="text-center py-20 lg:py-32 bg-primary/10">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-headline font-bold text-gray-800 mb-4">
-              마음 속 풍경을 선물하다 (v2)
+              마음 속 풍경을 선물하다
             </h2>
             <p className="text-lg md:text-xl text-foreground max-w-2xl mx-auto mb-8">
               맘풍선은 여러분의 마음을 표현하고, 따뜻한 응원을 주고받는 안전한 공간입니다.
