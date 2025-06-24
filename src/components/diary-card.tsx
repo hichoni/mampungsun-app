@@ -92,13 +92,14 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
   }
 
   const handleCommentLikeToggle = (commentId: string) => {
+    const uniqueCommentId = `${entry.id}-${commentId}`;
     const newLikedComments = new Set(likedComments);
-    const action = newLikedComments.has(commentId) ? 'unlike' : 'like';
+    const action = newLikedComments.has(uniqueCommentId) ? 'unlike' : 'like';
 
     if (action === 'like') {
-      newLikedComments.add(commentId);
+      newLikedComments.add(uniqueCommentId);
     } else {
-      newLikedComments.delete(commentId);
+      newLikedComments.delete(uniqueCommentId);
     }
 
     setLikedComments(newLikedComments);
@@ -114,7 +115,7 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
 
       if (moderationResult && moderationResult.isAppropriate) {
         const newCommentPayload: Comment = {
-          id: Date.now().toString(),
+          id: crypto.randomUUID(),
           userId: commenter.id,
           nickname: commenter.nickname,
           comment: commentText,
@@ -216,7 +217,7 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
                                               </div>
                                               <div className="flex items-center gap-2 pl-2">
                                                   <Button variant="ghost" size="sm" className="p-1 h-auto flex items-center gap-1" onClick={() => handleCommentLikeToggle(comment.id)}>
-                                                      <Heart className={`h-3 w-3 ${likedComments.has(comment.id) ? 'text-red-500 fill-current' : ''}`} />
+                                                      <Heart className={`h-3 w-3 ${likedComments.has(`${entry.id}-${comment.id}`) ? 'text-red-500 fill-current' : ''}`} />
                                                       {comment.likes > 0 && <span className="text-xs text-muted-foreground font-normal">{comment.likes}</span>}
                                                   </Button>
                                                   {isTeacherView && (
