@@ -1,7 +1,7 @@
 
 'use client'
 
-import React, { useState, useRef, useEffect } from "react"
+import React, { useState, useRef, useEffect, useMemo } from "react"
 import Papa from 'papaparse'
 import { mockUsers as initialMockUsers, mockDiaryEntries } from "@/lib/data"
 import type { User } from "@/lib/definitions"
@@ -46,6 +46,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { PieChart, Pie, Cell } from "recharts"
 import { type ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 
 const getEmotionBadgeVariant = (emotion: string) => {
@@ -90,6 +91,9 @@ export default function TeacherDashboard() {
   
   const [headlineFont, setHeadlineFont] = useState('Gaegu');
   const [bodyFont, setBodyFont] = useState('Gowun Dodum');
+  
+  const [selectedGrade, setSelectedGrade] = useState<string>('all');
+  const [selectedClass, setSelectedClass] = useState<string>('all');
 
 
   const { toast } = useToast();
@@ -206,34 +210,49 @@ export default function TeacherDashboard() {
     });
   };
 
+  const handleGradeChange = (grade: string) => {
+    setSelectedGrade(grade);
+    setSelectedClass('all');
+  };
 
-  const studentsWithLatestEmotion = students.map(user => {
-    const userEntries = mockDiaryEntries
-      .filter(entry => entry.userId === user.id)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    
-    const latestEmotion = userEntries.length > 0 ? userEntries[0].dominantEmotion : "정보 없음";
-    
-    return {
-      ...user,
-      latestEmotion,
-    };
-  }).sort((a, b) => {
-    if (a.grade !== b.grade) return a.grade - b.grade;
-    if (a.class !== b.class) return a.class - b.class;
-    return a.studentId - b.studentId;
-  });
+  const availableGrades = useMemo(() => {
+    return [...new Set(students.filter(s => s.grade > 0).map(s => s.grade))].sort((a, b) => a - b);
+  }, [students]);
 
-  const oneWeekAgo = new Date();
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  const availableClasses = useMemo(() => {
+    if (selectedGrade === 'all') return [];
+    return [...new Set(students.filter(s => s.grade === parseInt(selectedGrade)).map(s => s.class))].sort((a, b) => a - b);
+  }, [students, selectedGrade]);
 
-  const recentEntries = mockDiaryEntries.filter(entry => new Date(entry.createdAt) > oneWeekAgo);
-
-  const emotionCounts = recentEntries.reduce((acc, entry) => {
-      const emotion = entry.dominantEmotion || '정보 없음';
-      acc[emotion] = (acc[emotion] || 0) + 1;
-      return acc;
-  }, {} as Record<string, number>);
+  const filteredStudentIds = useMemo(() => {
+    return new Set(students
+      .filter(student => {
+        if (selectedGrade === 'all') return true;
+        if (student.grade !== parseInt(selectedGrade)) return false;
+        if (selectedClass === 'all') return true;
+        return student.class === parseInt(selectedClass);
+      })
+      .map(s => s.id));
+  }, [students, selectedGrade, selectedClass]);
+  
+  const studentsWithLatestEmotion = useMemo(() => {
+    return students
+        .filter(s => filteredStudentIds.has(s.id))
+        .map(user => {
+            const userEntries = mockDiaryEntries
+              .filter(entry => entry.userId === user.id)
+              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            
+            const latestEmotion = userEntries.length > 0 ? userEntries[0].dominantEmotion : "정보 없음";
+            
+            return { ...user, latestEmotion };
+        })
+        .sort((a, b) => {
+            if (a.grade !== b.grade) return a.grade - b.grade;
+            if (a.class !== b.class) return a.class - b.class;
+            return a.studentId - b.studentId;
+        });
+  }, [students, filteredStudentIds]);
 
   const chartConfig = {
       기쁨: { label: "기쁨", color: "hsl(var(--primary))" },
@@ -243,13 +262,28 @@ export default function TeacherDashboard() {
       '정보 없음': { label: "정보 없음", color: "hsl(var(--muted))" },
   } satisfies ChartConfig;
   
-  const chartData = Object.keys(emotionCounts)
-    .filter(emotion => emotion in chartConfig)
-    .map(emotion => ({
-        emotion,
-        count: emotionCounts[emotion],
-        fill: chartConfig[emotion as keyof typeof chartConfig].color
-    }));
+  const chartData = useMemo(() => {
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+      const recentEntries = mockDiaryEntries.filter(entry => 
+          new Date(entry.createdAt) > oneWeekAgo && filteredStudentIds.has(entry.userId)
+      );
+      
+      const emotionCounts = recentEntries.reduce((acc, entry) => {
+          const emotion = entry.dominantEmotion || '정보 없음';
+          acc[emotion] = (acc[emotion] || 0) + 1;
+          return acc;
+      }, {} as Record<string, number>);
+  
+      return Object.keys(emotionCounts)
+        .filter(emotion => emotion in chartConfig)
+        .map(emotion => ({
+            emotion,
+            count: emotionCounts[emotion],
+            fill: chartConfig[emotion as keyof typeof chartConfig].color
+        }));
+  }, [filteredStudentIds]);
 
 
   return (
@@ -272,8 +306,43 @@ export default function TeacherDashboard() {
         
         <Card>
             <CardHeader>
+                <CardTitle className="font-headline">학생 보기 설정</CardTitle>
+                <CardDescription>학년과 반을 선택하여 특정 그룹의 학생 통계 및 목록을 확인하세요.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="grade-filter">학년</Label>
+                        <Select value={selectedGrade} onValueChange={handleGradeChange}>
+                            <SelectTrigger id="grade-filter">
+                                <SelectValue placeholder="학년 선택" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">전체 학년</SelectItem>
+                                {availableGrades.map(g => <SelectItem key={g} value={String(g)}>{g}학년</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="class-filter">반</Label>
+                        <Select value={selectedClass} onValueChange={setSelectedClass} disabled={selectedGrade === 'all'}>
+                             <SelectTrigger id="class-filter">
+                                <SelectValue placeholder="반 선택" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">전체 반</SelectItem>
+                                {availableClasses.map(c => <SelectItem key={c} value={String(c)}>{c}반</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
                 <CardTitle className="font-headline">학급 감정 통계</CardTitle>
-                <CardDescription>최근 일주일간 학생들의 감정 분포입니다.</CardDescription>
+                <CardDescription>최근 일주일간 선택된 학생들의 감정 분포입니다.</CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center">
                 {chartData.length > 0 ? (
@@ -290,7 +359,7 @@ export default function TeacherDashboard() {
                     </ChartContainer>
                 ) : (
                     <div className="flex items-center justify-center h-64">
-                      <p className="text-muted-foreground text-center">아직 통계를 낼 맘풍선 데이터가 없습니다.</p>
+                      <p className="text-muted-foreground text-center">선택된 그룹의 맘풍선 데이터가 없습니다.</p>
                     </div>
                 )}
             </CardContent>
@@ -302,7 +371,7 @@ export default function TeacherDashboard() {
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                     <CardTitle className="font-headline">학생 관리</CardTitle>
-                    <CardDescription>전체 학생 목록과 로그인 승인 상태입니다.</CardDescription>
+                    <CardDescription>선택된 학생 목록과 로그인 승인 상태입니다.</CardDescription>
                 </div>
                 <div className="flex gap-2">
                     <Dialog open={isAddStudentDialogOpen} onOpenChange={setAddStudentDialogOpen}>
@@ -377,56 +446,64 @@ export default function TeacherDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {studentsWithLatestEmotion.map((student) => (
-                  <TableRow key={student.id}>
-                    <TableCell>{student.grade}</TableCell>
-                    <TableCell>{student.class}</TableCell>
-                    <TableCell>{student.studentId}</TableCell>
-                    <TableCell className="font-medium">{student.name}</TableCell>
-                    <TableCell>{student.nickname}</TableCell>
-                    <TableCell>
-                      <Badge variant={getEmotionBadgeVariant(student.latestEmotion)}>
-                        {student.latestEmotion}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                       <div className="flex items-center justify-start">
-                         <Switch
-                            id={`approval-${student.id}`}
-                            checked={student.isApproved}
-                            onCheckedChange={(checked) => handleApprovalChange(student.id, checked)}
-                         />
-                         <Label htmlFor={`approval-${student.id}`} className="sr-only">
-                           {student.name} 로그인 승인
-                         </Label>
-                       </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                       <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                             <Button variant="ghost" size="icon">
-                                <Trash2 className="h-4 w-4 text-destructive"/>
-                                <span className="sr-only">삭제</span>
-                             </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>정말 삭제하시겠습니까?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                이 작업은 되돌릴 수 없습니다. {student.name} 학생의 정보가 영구적으로 삭제됩니다.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>취소</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeleteStudent(student.id)} className="bg-destructive hover:bg-destructive/90">
-                                삭제
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                       </AlertDialog>
+                {studentsWithLatestEmotion.length > 0 ? (
+                  studentsWithLatestEmotion.map((student) => (
+                    <TableRow key={student.id}>
+                      <TableCell>{student.grade}</TableCell>
+                      <TableCell>{student.class}</TableCell>
+                      <TableCell>{student.studentId}</TableCell>
+                      <TableCell className="font-medium">{student.name}</TableCell>
+                      <TableCell>{student.nickname}</TableCell>
+                      <TableCell>
+                        <Badge variant={getEmotionBadgeVariant(student.latestEmotion)}>
+                          {student.latestEmotion}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                         <div className="flex items-center justify-start">
+                           <Switch
+                              id={`approval-${student.id}`}
+                              checked={student.isApproved}
+                              onCheckedChange={(checked) => handleApprovalChange(student.id, checked)}
+                           />
+                           <Label htmlFor={`approval-${student.id}`} className="sr-only">
+                             {student.name} 로그인 승인
+                           </Label>
+                         </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                         <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                               <Button variant="ghost" size="icon">
+                                  <Trash2 className="h-4 w-4 text-destructive"/>
+                                  <span className="sr-only">삭제</span>
+                               </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>정말 삭제하시겠습니까?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  이 작업은 되돌릴 수 없습니다. {student.name} 학생의 정보가 영구적으로 삭제됩니다.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>취소</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteStudent(student.id)} className="bg-destructive hover:bg-destructive/90">
+                                  삭제
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                         </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center">
+                      선택된 그룹에 학생이 없습니다.
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </CardContent>
@@ -478,5 +555,3 @@ export default function TeacherDashboard() {
     </div>
   )
 }
-
-    
