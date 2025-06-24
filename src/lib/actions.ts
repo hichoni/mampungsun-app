@@ -5,6 +5,7 @@ import { db } from '@/lib/firebase'
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc, query, where, orderBy, deleteDoc, writeBatch, Timestamp } from 'firebase/firestore'
 import type { User, DiaryEntry, Comment } from '@/lib/definitions'
 import { mockUsers, mockDiaryEntries } from './data'
+import { randomUUID } from 'crypto'
 
 function toJSON(obj: any) {
     if (obj instanceof Timestamp) {
@@ -30,7 +31,8 @@ export async function getUser(id: string): Promise<User | null> {
     const userRef = doc(db, "users", id);
     const userSnap = await getDoc(userRef);
     if (userSnap.exists()) {
-        return toJSON(userSnap.data()) as User;
+        const userData = userSnap.data();
+        return toJSON({ id: userSnap.id, ...userData }) as User;
     }
     return null;
 }
@@ -39,7 +41,7 @@ export async function getAllStudents(): Promise<User[]> {
     if (!db) return [];
     const q = query(collection(db, "users"), where("grade", ">", 0));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => toJSON(doc.data()) as User);
+    return querySnapshot.docs.map(doc => toJSON({id: doc.id, ...doc.data()}) as User);
 }
 
 export async function loginUser(grade: number, studentClass: number, studentId: number) {
@@ -79,22 +81,23 @@ export async function deleteUser(id: string) {
     revalidatePath('/teacher/dashboard');
 }
 
-export async function addUser(studentData: Omit<User, 'id' | 'pin' | 'isApproved'>) {
+export async function addUser(studentData: Omit<User, 'id' | 'pin' | 'isApproved'>): Promise<User> {
     if (!db) throw new Error("Firestore not configured");
-    const newUser: Omit<User, 'id'> = {
+    const newUserRef = doc(collection(db, 'users'));
+    const newUser: User = {
+      id: newUserRef.id,
       ...studentData,
       pin: Math.floor(1000 + Math.random() * 9000).toString(),
       isApproved: true,
     };
-    const newUserRef = doc(collection(db, 'users'));
     await setDoc(newUserRef, newUser);
     revalidatePath('/teacher/dashboard');
-    return { ...newUser, id: newUserRef.id };
+    return newUser;
 }
 
 // --- Diary Entry Actions ---
 
-export async function getPublicEntries() {
+export async function getPublicEntries(): Promise<DiaryEntry[]> {
     if (!db) return [];
     const q = query(
         collection(db, "diaryEntries"), 
@@ -105,7 +108,7 @@ export async function getPublicEntries() {
     return querySnapshot.docs.map(doc => toJSON({ id: doc.id, ...doc.data() }) as DiaryEntry);
 }
 
-export async function getUserEntries(userId: string) {
+export async function getUserEntries(userId: string): Promise<DiaryEntry[]> {
     if (!db) return [];
     const q = query(
         collection(db, "diaryEntries"), 
@@ -116,7 +119,7 @@ export async function getUserEntries(userId: string) {
     return querySnapshot.docs.map(doc => toJSON({ id: doc.id, ...doc.data() }) as DiaryEntry);
 }
 
-export async function getAllEntries() {
+export async function getAllEntries(): Promise<DiaryEntry[]> {
     if (!db) return [];
     const q = query(
         collection(db, "diaryEntries"), 
@@ -126,12 +129,13 @@ export async function getAllEntries() {
     return querySnapshot.docs.map(doc => toJSON({ id: doc.id, ...doc.data() }) as DiaryEntry);
 }
 
-export async function addDiaryEntry(entryData: Omit<DiaryEntry, 'id' | 'createdAt' | 'likes' | 'comments'>) {
+export async function addDiaryEntry(entryData: Omit<DiaryEntry, 'id' | 'createdAt' | 'likes' | 'comments' | 'likedBy'>) {
     if (!db) throw new Error("Firestore not configured");
     const newEntry = {
         ...entryData,
         createdAt: Timestamp.now(),
         likes: 0,
+        likedBy: [],
         comments: [],
     };
     await addDoc(collection(db, "diaryEntries"), newEntry);
@@ -168,7 +172,7 @@ export async function likeEntry(entryId: string, userId: string) {
     revalidatePath('/dashboard/my-diary');
 }
 
-export async function addComment(entryId: string, commentData: Omit<Comment, 'id' | 'createdAt' | 'likes'>, commenterId: string) {
+export async function addComment(entryId: string, commentData: Omit<Comment, 'id' | 'createdAt'>, commenterId: string) {
     if (!db) throw new Error("Firestore not configured");
     const entryRef = doc(db, "diaryEntries", entryId);
     const entrySnap = await getDoc(entryRef);
@@ -178,14 +182,15 @@ export async function addComment(entryId: string, commentData: Omit<Comment, 'id
 
     const newComment: Comment = {
         ...commentData,
-        id: doc(collection(db, "dummy")).id, // Generate a unique ID
-        createdAt: Timestamp.now(),
-        likes: 0,
+        id: randomUUID(),
+        createdAt: new Date().toISOString(),
         userId: commenterId,
     };
 
+    const newComments = (entry.comments || []).map(c => ({...c, createdAt: new Date(c.createdAt as string).toISOString()}));
+
     await updateDoc(entryRef, {
-        comments: [...entry.comments, newComment]
+        comments: [...newComments, newComment]
     });
     
     revalidatePath('/dashboard');
@@ -200,7 +205,7 @@ export async function deleteComment(entryId: string, commentId: string) {
     if (!entrySnap.exists()) throw new Error("Entry not found");
     const entry = entrySnap.data() as DiaryEntry;
 
-    const updatedComments = entry.comments.filter(c => c.id !== commentId);
+    const updatedComments = (entry.comments || []).filter(c => c.id !== commentId);
     
     await updateDoc(entryRef, { comments: updatedComments });
 
@@ -213,6 +218,8 @@ export async function deleteEntry(entryId: string) {
     if (!db) throw new Error("Firestore not configured");
     await deleteDoc(doc(db, "diaryEntries", entryId));
     revalidatePath('/teacher/dashboard/content');
+    revalidatePath('/dashboard');
+    revalidatePath('/dashboard/my-diary');
 }
 
 export async function pinEntry(entryId: string, isPinned: boolean) {
@@ -223,32 +230,36 @@ export async function pinEntry(entryId: string, isPinned: boolean) {
 
 // --- Seeding Action ---
 export async function seedDatabase() {
-    if (!db) throw new Error("Firestore not configured");
+    if (!db) {
+        return { success: false, message: "Firestore is not configured. Please check your .env.local file." };
+    }
     const batch = writeBatch(db);
 
-    // Check if users collection is empty
-    const usersSnapshot = await getDocs(query(collection(db, "users")));
+    // Check if users collection is empty to prevent duplicates
+    const usersCollection = collection(db, "users");
+    const usersSnapshot = await getDocs(query(usersCollection));
     if (usersSnapshot.empty) {
         mockUsers.forEach(user => {
-            const docRef = doc(db, "users", user.id);
+            const docRef = doc(usersCollection, user.id); // Use predefined ID
             batch.set(docRef, user);
         });
     }
 
     // Check if diaryEntries collection is empty
-    const entriesSnapshot = await getDocs(query(collection(db, "diaryEntries")));
+    const entriesCollection = collection(db, "diaryEntries");
+    const entriesSnapshot = await getDocs(query(entriesCollection));
     if (entriesSnapshot.empty) {
         mockDiaryEntries.forEach(entry => {
             const { id, ...restOfEntry } = entry;
-            const docRef = doc(db, "diaryEntries", id);
+            const docRef = doc(entriesCollection, id); // Use predefined ID
             
-            // Convert createdAt string to Timestamp and comments too
+            // Convert date strings to Timestamps
             const firestoreEntry = {
                 ...restOfEntry,
-                createdAt: Timestamp.fromDate(new Date(entry.createdAt)),
+                createdAt: Timestamp.fromDate(new Date(entry.createdAt as string)),
                 comments: (entry.comments || []).map(c => ({
                     ...c,
-                    createdAt: Timestamp.now()
+                    createdAt: Timestamp.fromDate(new Date(c.createdAt as string))
                 }))
             };
 
@@ -259,9 +270,9 @@ export async function seedDatabase() {
     try {
         await batch.commit();
         revalidatePath('/teacher/dashboard');
-        return { success: true, message: "데이터베이스가 성공적으로 초기화되었습니다." };
+        return { success: true, message: "데이터베이스가 샘플 데이터로 성공적으로 초기화되었습니다." };
     } catch (error) {
         console.error("Seeding failed: ", error);
-        return { success: false, message: "데이터베이스 초기화에 실패했습니다." };
+        return { success: false, message: "데이터베이스 초기화 중 오류가 발생했습니다." };
     }
 }

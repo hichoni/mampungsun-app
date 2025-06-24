@@ -17,9 +17,9 @@ export type Comment = {
   userId: string;
   nickname: string;
   comment: string;
-  likes: number;
-  avatarUrl?: string;
   createdAt: string | Timestamp; // Allow both for client/server
+  avatarUrl?: string;
+  likes?: number; // likes can be optional
 };
 
 export type DiaryEntry = {

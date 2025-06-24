@@ -76,7 +76,9 @@ export function DiaryCard({ entry, author, onDeleteEntry, onPinEntry, isTeacherV
 
   useEffect(() => {
     const calculateTimeAgo = () => {
-      const seconds = Math.floor((new Date().getTime() - new Date(entry.createdAt).getTime()) / 1000);
+      const entryDate = new Date(entry.createdAt as string);
+      const seconds = Math.floor((new Date().getTime() - entryDate.getTime()) / 1000);
+      
       if (seconds < 0) return '방금 전';
       if (seconds < 60) return `${Math.floor(seconds)}초 전`;
       
@@ -99,23 +101,21 @@ export function DiaryCard({ entry, author, onDeleteEntry, onPinEntry, isTeacherV
     const timer = setInterval(() => setTimeAgo(calculateTimeAgo()), 60000);
     return () => clearInterval(timer);
   }, [entry.createdAt]);
-
+  
   useEffect(() => {
-    const fetchCommenter = async (id: string) => {
-      const user = await getUser(id);
-      setCommenter(user);
-    };
-
     const userId = localStorage.getItem(isTeacherView ? 'mampungsun_teacher_id' : 'mampungsun_user_id');
     setCurrentUserId(userId);
-    if(userId) fetchCommenter(userId);
+    
+    const fetchCommenter = async (id: string) => {
+        const user = await getUser(id);
+        setCommenter(user);
+    };
+    if (userId) fetchCommenter(userId);
 
     setIsLiked(!!userId && !!entry.likedBy && entry.likedBy.includes(userId));
     setLikeCount(entry.likes || 0);
     setComments(entry.comments || []);
-
-  }, [isTeacherView, entry]);
-
+  }, [entry, isTeacherView]);
 
   const handleLikeToggle = () => {
     if (!currentUserId) {
@@ -140,8 +140,12 @@ export function DiaryCard({ entry, author, onDeleteEntry, onPinEntry, isTeacherV
   }
 
   const handlePostComment = (commentText: string) => {
-    if (!commentText.trim() || !commenter) {
-        toast({variant: "destructive", title: "댓글을 입력하거나 로그인 해주세요."});
+    if (!commentText.trim()) {
+        toast({variant: "destructive", title: "댓글을 입력해주세요."});
+        return;
+    }
+    if (!commenter || !currentUserId) {
+        toast({variant: "destructive", title: "로그인이 필요합니다."});
         return;
     }
 
@@ -149,30 +153,27 @@ export function DiaryCard({ entry, author, onDeleteEntry, onPinEntry, isTeacherV
       const moderationResult = await moderateText({ text: commentText });
 
       if (moderationResult && moderationResult.isAppropriate) {
-        const newCommentPayload: Omit<Comment, 'id'|'createdAt'|'likes'> = {
+        const newCommentPayload: Omit<Comment, 'id'|'createdAt'> = {
           userId: commenter.id,
           nickname: commenter.nickname,
           avatarUrl: commenter.avatarUrl,
           comment: commentText,
         };
         
-        // Optimistic update
-        const tempComment: Comment = {
-            ...newCommentPayload,
-            id: `temp-${Date.now()}`,
-            createdAt: new Date().toISOString(),
-            likes: 0
-        };
-        setComments(prev => [...prev, tempComment]);
         setNewCommentText('');
 
         try {
             await addComment(entry.id, newCommentPayload, commenter.id);
+            // After successful submission, manually create the new comment to update UI
+            // A full re-fetch would be safer but less performant for this demo
+            const optimisticComment: Comment = {
+                ...newCommentPayload,
+                id: `temp-${Date.now()}`,
+                createdAt: new Date().toISOString(),
+            };
+            setComments(prev => [...prev, optimisticComment]);
             toast({ title: "댓글이 등록되었어요." });
-            // In a real app, you'd re-fetch or get the new comment from the server action
-            // For now, the optimistic update is fine.
         } catch(e) {
-            setComments(prev => prev.filter(c => c.id !== tempComment.id)); // Revert
             toast({ variant: "destructive", title: "댓글 등록 실패", description: "다시 시도해주세요." });
         }
 
@@ -215,7 +216,7 @@ export function DiaryCard({ entry, author, onDeleteEntry, onPinEntry, isTeacherV
           </Avatar>
           <div className="flex-1 min-w-0">
             <CardTitle className="text-base truncate">{author?.nickname || '알 수 없음'}</CardTitle>
-            <CardDescription>{timeAgo || '계산 중...'}</CardDescription>
+            <CardDescription>{timeAgo}</CardDescription>
           </div>
           <div className="flex items-center gap-1">
             <Badge variant={getEmotionBadgeVariant(entry.dominantEmotion)} className="flex-shrink-0 whitespace-nowrap">{entry.dominantEmotion}</Badge>
@@ -284,7 +285,7 @@ export function DiaryCard({ entry, author, onDeleteEntry, onPinEntry, isTeacherV
                         <ScrollArea className="h-full pr-6">
                             <div className="space-y-4">
                                 {comments.length > 0 ? (
-                                    comments.map((comment, index) => (
+                                    comments.map((comment) => (
                                       <div key={comment.id} className="flex items-start gap-2">
                                           <Avatar className="w-8 h-8 border">
                                               <AvatarImage src={comment.avatarUrl} alt={comment.nickname} />

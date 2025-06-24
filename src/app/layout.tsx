@@ -1,22 +1,34 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
 
+const APP_NAME = '맘풍선';
+const APP_DEFAULT_TITLE = '맘풍선';
+const APP_TITLE_TEMPLATE = '%s | 맘풍선';
+const APP_DESCRIPTION = '마음 속 풍경을 선물하는 공간, 맘풍선입니다. 당신의 마음을 표현하고, 따뜻한 응원을 받아보세요.';
+
 export const metadata: Metadata = {
-  applicationName: '맘풍선',
+  applicationName: APP_NAME,
   title: {
-    default: '맘풍선',
-    template: '%s | 맘풍선',
+    default: APP_DEFAULT_TITLE,
+    template: APP_TITLE_TEMPLATE,
   },
-  description: '마음 속 풍경을 선물하는 공간, 맘풍선입니다. 당신의 마음을 표현하고, 따뜻한 응원을 받아보세요.',
+  description: APP_DESCRIPTION,
   manifest: '/manifest.json',
-  themeColor: '#A0D2EB',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: '맘풍선',
+    title: APP_DEFAULT_TITLE,
+  },
+  formatDetection: {
+    telephone: false,
   },
 };
+
+export const viewport: Viewport = {
+  themeColor: '#A0D2EB',
+};
+
 
 export default function RootLayout({
   children,
