@@ -28,6 +28,9 @@ body {
     --input: 200 50% 92%;
     --ring: 200 80% 55%;
     --radius: 0.8rem;
+
+    --font-body: 'Gowun Dodum';
+    --font-headline: 'Gaegu';
   }
   .dark {
     --background: 224 71% 4%;
@@ -57,5 +60,6 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-body), sans-serif;
   }
 }

@@ -6,6 +6,7 @@ import {
   PlusCircle,
   LogOut,
   User,
+  MessageSquare,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -48,6 +49,13 @@ export default function DashboardLayout({
               >
                 <BookUser className="h-4 w-4" />
                 나의 일기
+              </Link>
+              <Link
+                href="/dashboard/chat"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+              >
+                <MessageSquare className="h-4 w-4" />
+                마음 대화
               </Link>
               <Link
                 href="/dashboard/profile"

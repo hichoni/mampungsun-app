@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import Papa from 'papaparse'
 import { mockUsers as initialMockUsers, mockDiaryEntries } from "@/lib/data"
 import type { User } from "@/lib/definitions"
@@ -15,7 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { LogOut, PlusCircle, Trash2, Upload, Download } from "lucide-react"
+import { LogOut, PlusCircle, Trash2, Upload, Download, Save } from "lucide-react"
 import Link from "next/link"
 import { BalloonIcon } from "@/components/icons"
 import { Switch } from "@/components/ui/switch"
@@ -42,6 +42,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 
 const getEmotionBadgeVariant = (emotion: string) => {
@@ -57,6 +58,18 @@ const getEmotionBadgeVariant = (emotion: string) => {
   }
 };
 
+const headlineFonts = [
+  { name: 'Gaegu', value: 'Gaegu', family: 'Gaegu, cursive' },
+  { name: 'Nanum Pen Script', value: 'Nanum Pen Script', family: '"Nanum Pen Script", cursive' },
+  { name: 'Do Hyeon', value: 'Do Hyeon', family: '"Do Hyeon", sans-serif' },
+]
+
+const bodyFonts = [
+  { name: 'Gowun Dodum', value: 'Gowun Dodum', family: '"Gowun Dodum", sans-serif' },
+  { name: 'Noto Sans KR', value: 'Noto Sans KR', family: '"Noto Sans KR", sans-serif' },
+  { name: 'Nanum Gothic', value: 'Nanum Gothic', family: '"Nanum Gothic", sans-serif' },
+]
+
 
 export default function TeacherDashboard() {
   const [students, setStudents] = useState<User[]>(initialMockUsers);
@@ -65,8 +78,31 @@ export default function TeacherDashboard() {
   const [isBatchUploadDialogOpen, setBatchUploadDialogOpen] = useState(false);
   const [newStudent, setNewStudent] = useState({ grade: '', studentClass: '', studentId: '', name: '', nickname: '' });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [headlineFont, setHeadlineFont] = useState('Gaegu');
+  const [bodyFont, setBodyFont] = useState('Gowun Dodum');
+
 
   const { toast } = useToast();
+
+  useEffect(() => {
+    const savedHeadline = localStorage.getItem('app-font-headline') || 'Gaegu';
+    const savedBody = localStorage.getItem('app-font-body') || 'Gowun Dodum';
+    setHeadlineFont(savedHeadline);
+    setBodyFont(savedBody);
+  }, []);
+
+  const handleFontSave = () => {
+    localStorage.setItem('app-font-headline', headlineFont);
+    localStorage.setItem('app-font-body', bodyFont);
+    document.documentElement.style.setProperty('--font-headline', headlineFont);
+    document.documentElement.style.setProperty('--font-body', bodyFont);
+    toast({
+      title: '성공',
+      description: '폰트 설정이 저장되었습니다. 앱 전체에 적용됩니다.'
+    });
+  }
+
 
   const handleApprovalChange = (studentId: string, isApproved: boolean) => {
     setStudents(currentStudents => 
@@ -74,7 +110,6 @@ export default function TeacherDashboard() {
             student.id === studentId ? { ...student, isApproved } : student
         )
     );
-    // In a real app, you would make an API call here to update the database.
   }
 
   const handleAddStudent = () => {
@@ -196,7 +231,7 @@ export default function TeacherDashboard() {
             </Button>
         </div>
       </header>
-      <main className="p-4 sm:p-6 md:p-8">
+      <main className="p-4 sm:p-6 md:p-8 space-y-8">
         <Card>
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-4">
@@ -329,6 +364,49 @@ export default function TeacherDashboard() {
                 ))}
               </TableBody>
             </Table>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline">디자인 설정</CardTitle>
+            <CardDescription>앱 전체의 폰트를 변경할 수 있습니다.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <Label className="text-base font-semibold">제목 폰트</Label>
+              <RadioGroup value={headlineFont} onValueChange={setHeadlineFont}>
+                {headlineFonts.map(font => (
+                  <div key={font.value} className="flex items-center space-x-4">
+                    <RadioGroupItem value={font.value} id={`h-font-${font.value}`} />
+                    <Label htmlFor={`h-font-${font.value}`} className="flex-1">
+                      <p style={{ fontFamily: font.family }} className="text-lg">
+                        {font.name} - 맘풍선 이야기
+                      </p>
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+            <div className="space-y-4">
+              <Label className="text-base font-semibold">본문 폰트</Label>
+              <RadioGroup value={bodyFont} onValueChange={setBodyFont}>
+                {bodyFonts.map(font => (
+                  <div key={font.value} className="flex items-center space-x-4">
+                    <RadioGroupItem value={font.value} id={`b-font-${font.value}`} />
+                    <Label htmlFor={`b-font-${font.value}`} className="flex-1">
+                       <p style={{ fontFamily: font.family }} className="text-base">
+                        {font.name} - 오늘 어떤 마음이었나요?
+                      </p>
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+            <Button onClick={handleFontSave}>
+              <Save className="mr-2 h-4 w-4" />
+              폰트 설정 저장
+            </Button>
           </CardContent>
         </Card>
       </main>
