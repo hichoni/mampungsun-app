@@ -47,6 +47,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { PieChart, Pie, Cell } from "recharts"
 import { type ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { generateNickname } from "@/ai/flows/generate-nickname-flow"
 
 
 const getEmotionBadgeVariant = (emotion: string) => {
@@ -171,31 +172,51 @@ export default function TeacherDashboard() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    setBatchUploadDialogOpen(false);
+    toast({
+      title: '학생 목록 처리 중...',
+      description: 'AI 별명 생성 등 학생 정보를 처리하고 있습니다. 잠시만 기다려주세요.',
+    });
+
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
       encoding: "UTF-8",
-      complete: (results) => {
+      complete: async (results) => {
         try {
-          const newStudents: User[] = results.data.map((row: any, index: number) => {
-            if (!row['학년'] || !row['반'] || !row['번호'] || !row['이름'] || !row['별명']) {
-              throw new Error(`CSV 파일의 ${index + 2}번째 줄 형식을 확인해주세요. 모든 헤더(학년,반,번호,이름,별명)가 필요합니다.`);
+          const studentPromises = results.data.map(async (row: any, index: number) => {
+            if (!row['학년'] || !row['반'] || !row['번호'] || !row['이름']) {
+              throw new Error(`CSV 파일의 ${index + 2}번째 줄 형식을 확인해주세요. 필수 항목(학년,반,번호,이름)이 모두 필요합니다.`);
             }
+            
+            let nickname = row['별명'];
+            if (!nickname || nickname.trim() === '') {
+              try {
+                  const result = await generateNickname({ name: row['이름'] });
+                  nickname = result.nickname;
+              } catch(e) {
+                  console.error("AI 별명 생성에 실패했습니다:", e);
+                  nickname = `멋진${row['이름']}`;
+              }
+            }
+
             return {
               id: new Date().getTime().toString() + Math.random(),
               grade: parseInt(row['학년'], 10),
               class: parseInt(row['반'], 10),
               studentId: parseInt(row['번호'], 10),
               name: row['이름'],
-              nickname: row['별명'],
+              nickname: nickname,
               pin: Math.floor(1000 + Math.random() * 9000).toString(),
               isApproved: true,
             };
           });
 
+          const newStudents = await Promise.all(studentPromises);
+          
           setStudents(prev => [...prev, ...newStudents]);
-          toast({ title: "성공", description: `${newStudents.length}명의 학생이 추가되었습니다.` });
-          setBatchUploadDialogOpen(false);
+          toast({ title: "성공!", description: `${newStudents.length}명의 학생이 추가되었습니다.` });
+          
           if (fileInputRef.current) {
             fileInputRef.current.value = "";
           }
@@ -418,7 +439,7 @@ export default function TeacherDashboard() {
                         <DialogContent className="sm:max-w-[425px]">
                             <DialogHeader>
                                 <DialogTitle>학생 일괄 등록</DialogTitle>
-                                <DialogDescription>CSV 파일을 사용하여 여러 학생을 한번에 등록할 수 있습니다.</DialogDescription>
+                                <DialogDescription>CSV 파일을 사용하여 여러 학생을 한번에 등록할 수 있습니다. 별명 칸을 비워두면 AI가 자동으로 생성합니다.</DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-4 py-4">
                                <p className="text-sm text-muted-foreground">1. 먼저 샘플 양식을 다운로드하여 학생 정보를 입력하세요.</p>
