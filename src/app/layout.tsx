@@ -26,7 +26,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Belleza&family=Gaegu:wght@400;700&family=Gowun+Dodum&family=Nanum+Pen+Script&family=Do+Hyeon&family=Noto+Sans+KR:wght@400;700&family=Nanum+Gothic:wght@400;700&family=Black+Han+Sans&family=East+Sea+Dokdo&family=Gugi&family=IBM+Plex+Sans+KR:wght@400;700&family=Sunflower:wght@300;500;700&family=Hi+Melody&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body antialiased">
+      <body className="antialiased">
         {children}
         <Toaster />
       </body>

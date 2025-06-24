@@ -4,6 +4,9 @@
 
 @layer base {
   :root {
+    --font-headline: 'Belleza';
+    --font-body: 'Alegreya';
+    
     --background: 210 100% 98%; /* #F0F8FF */
     --foreground: 215 30% 30%;
     --card: 0 0% 100%;
@@ -56,8 +59,11 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
-    font-family: var(--font-body), serif;
+    @apply bg-background text-foreground font-body;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-headline;
   }
 
   /* Overriding Tailwind's font sizes to make them dynamic */
@@ -69,13 +75,4 @@
   .text-2xl { font-size: 1.5rem; line-height: 2rem; }
   .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
   .text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
-}
-
-@layer base {
-  body {
-    @apply font-body;
-  }
-  h1, h2, h3, h4, h5, h6, .font-headline {
-    @apply font-headline;
-  }
 }
