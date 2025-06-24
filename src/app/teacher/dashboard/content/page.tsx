@@ -48,11 +48,11 @@ export default function ContentManagementPage() {
   const handleLikeComment = (entryId: string, commentIndex: number, action: 'like' | 'unlike') => {
     setEntries(currentEntries => {
       const newEntries = JSON.parse(JSON.stringify(currentEntries));
-      const entry = newEntries.find((e: DiaryEntry) => e.id === entryId);
+      const entryIndex = newEntries.findIndex((e: DiaryEntry) => e.id === entryId);
       
-      if (!entry || !entry.comments[commentIndex]) return currentEntries;
-
-      const comment = entry.comments[commentIndex];
+      if (entryIndex === -1 || !newEntries[entryIndex].comments[commentIndex]) return currentEntries;
+      
+      const comment = newEntries[entryIndex].comments[commentIndex];
       comment.likes = action === 'like' ? comment.likes + 1 : Math.max(0, comment.likes - 1);
   
       localStorage.setItem('diaryEntries', JSON.stringify(newEntries));
@@ -61,21 +61,28 @@ export default function ContentManagementPage() {
   };
 
   const handleDeleteComment = (entryId: string, commentIndex: number) => {
+    let commentDeleted = false;
     setEntries(currentEntries => {
       const newEntries = JSON.parse(JSON.stringify(currentEntries));
-      const entry = newEntries.find((e: DiaryEntry) => e.id === entryId);
+      const entryIndex = newEntries.findIndex((e: DiaryEntry) => e.id === entryId);
 
-      if (!entry || !entry.comments[commentIndex]) return currentEntries;
+      if (entryIndex === -1 || !newEntries[entryIndex].comments[commentIndex]) {
+        return currentEntries;
+      }
 
-      entry.comments.splice(commentIndex, 1);
+      newEntries[entryIndex].comments.splice(commentIndex, 1);
+      commentDeleted = true;
       
       localStorage.setItem('diaryEntries', JSON.stringify(newEntries));
+      return newEntries;
+    });
+
+    if (commentDeleted) {
       toast({
         title: "성공",
         description: "댓글이 삭제되었습니다."
       });
-      return newEntries;
-    });
+    }
   };
 
   const findUserById = (userId: string): User | undefined => {
