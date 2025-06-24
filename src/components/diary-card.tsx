@@ -1,4 +1,3 @@
-
 'use client'
 
 import type { DiaryEntry, User } from "@/lib/definitions"
@@ -123,11 +122,11 @@ export function DiaryCard({ entry, author, onComment }: DiaryCardProps) {
             <AvatarImage src={`https://placehold.co/40x40.png?text=${author?.nickname.charAt(0)}`} />
             <AvatarFallback>{author?.nickname.charAt(0)}</AvatarFallback>
           </Avatar>
-          <div>
-            <CardTitle className="text-base">{author?.nickname}</CardTitle>
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-base truncate">{author?.nickname}</CardTitle>
             <CardDescription>{timeAgo(entry.createdAt)}</CardDescription>
           </div>
-          <Badge variant={getEmotionBadgeVariant(entry.dominantEmotion)} className="ml-auto">{entry.dominantEmotion}</Badge>
+          <Badge variant={getEmotionBadgeVariant(entry.dominantEmotion)} className="flex-shrink-0 whitespace-nowrap">{entry.dominantEmotion}</Badge>
         </div>
       </CardHeader>
       <CardContent>
