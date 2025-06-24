@@ -173,8 +173,8 @@ export function DiaryCard({ entry, author, onComment, onLikeComment, onDeleteCom
                         <ScrollArea className="h-full pr-6">
                             <div className="space-y-4">
                                 {entry.comments.length > 0 ? (
-                                    entry.comments.map((comment) => (
-                                      <div key={comment.id} className="flex items-start gap-2">
+                                    entry.comments.map((comment, index) => (
+                                      <div key={`${comment.id}-${index}`} className="flex items-start gap-2">
                                           <Avatar className="w-8 h-8 border">
                                               <AvatarImage src={`https://placehold.co/40x40.png?text=${comment.nickname.charAt(0)}`} />
                                               <AvatarFallback>{comment.nickname.charAt(0)}</AvatarFallback>
@@ -230,7 +230,7 @@ export function DiaryCard({ entry, author, onComment, onLikeComment, onDeleteCom
                             <p className="text-sm font-medium mb-2 text-foreground">AI 추천 응원 메시지</p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {entry.suggestedResponses.map((res, index) => (
-                                    <Button key={index} variant="outline" onClick={() => handlePostComment(res)} disabled={isPending}>
+                                    <Button key={`sugg-${entry.id}-${index}`} variant="outline" onClick={() => handlePostComment(res)} disabled={isPending}>
                                         {res}
                                     </Button>
                                 ))}
