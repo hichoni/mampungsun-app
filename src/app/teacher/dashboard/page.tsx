@@ -73,6 +73,7 @@ const getEmotionBadgeVariant = (emotion: string) => {
 };
 
 const headlineFonts = [
+  { name: 'Belleza', value: 'Belleza', family: 'Belleza, sans-serif' },
   { name: 'Gaegu', value: 'Gaegu', family: 'Gaegu, cursive' },
   { name: 'Nanum Pen Script', value: 'Nanum Pen Script', family: '"Nanum Pen Script", cursive' },
   { name: 'Do Hyeon', value: 'Do Hyeon', family: '"Do Hyeon", sans-serif' },
@@ -82,6 +83,7 @@ const headlineFonts = [
 ]
 
 const bodyFonts = [
+  { name: 'Alegreya', value: 'Alegreya', family: 'Alegreya, serif' },
   { name: 'Gowun Dodum', value: 'Gowun Dodum', family: '"Gowun Dodum", sans-serif' },
   { name: 'Noto Sans KR', value: 'Noto Sans KR', family: '"Noto Sans KR", sans-serif' },
   { name: 'Nanum Gothic', value: 'Nanum Gothic', family: '"Nanum Gothic", sans-serif' },
@@ -99,8 +101,8 @@ export default function TeacherDashboard() {
   const [newStudent, setNewStudent] = useState({ grade: '', studentClass: '', studentId: '', name: '', nickname: '' });
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const [headlineFont, setHeadlineFont] = useState('Gaegu');
-  const [bodyFont, setBodyFont] = useState('Gowun Dodum');
+  const [headlineFont, setHeadlineFont] = useState('Belleza');
+  const [bodyFont, setBodyFont] = useState('Alegreya');
   const [headlineFontSize, setHeadlineFontSize] = useState(100);
   const [bodyFontSize, setBodyFontSize] = useState(100);
   
@@ -113,8 +115,8 @@ export default function TeacherDashboard() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const savedHeadline = localStorage.getItem('app-font-headline') || 'Gaegu';
-    const savedBody = localStorage.getItem('app-font-body') || 'Gowun Dodum';
+    const savedHeadline = localStorage.getItem('app-font-headline') || 'Belleza';
+    const savedBody = localStorage.getItem('app-font-body') || 'Alegreya';
     const savedHeadlineSize = localStorage.getItem('app-font-headline-size') || '100';
     const savedBodySize = localStorage.getItem('app-font-body-size') || '100';
 
@@ -131,8 +133,9 @@ export default function TeacherDashboard() {
     localStorage.setItem('app-font-body-size', String(bodyFontSize));
     
     // Also apply them immediately
-    document.documentElement.style.setProperty('--font-headline', headlineFont);
-    document.documentElement.style.setProperty('--font-body', bodyFont);
+    const quoteFont = (font: string) => font.includes(' ') ? `'${font}'` : font;
+    document.documentElement.style.setProperty('--font-headline', quoteFont(headlineFont));
+    document.documentElement.style.setProperty('--font-body', quoteFont(bodyFont));
     document.documentElement.style.setProperty('--font-size-headline-scale', String(headlineFontSize / 100));
     document.documentElement.style.setProperty('--font-size-body-scale', String(bodyFontSize / 100));
 
@@ -340,8 +343,8 @@ export default function TeacherDashboard() {
     <div className="min-h-screen bg-background">
       <header className="px-4 lg:px-6 h-16 flex items-center border-b">
         <Link href="/teacher/dashboard" className="flex items-center gap-2 font-semibold">
-          <Image src="/icon-balloon2.png" alt="맘풍선 로고" width={32} height={32} />
-          <span className="font-headline text-xl text-foreground">맘풍선 교사 페이지</span>
+          <Image src="/icon-balloon2.png" alt="맘톡톡 로고" width={32} height={32} />
+          <span className="font-headline text-xl text-foreground">맘톡톡 교사 페이지</span>
         </Link>
         <div className="ml-auto flex items-center gap-2">
             <Sheet open={isSettingsOpen} onOpenChange={setSettingsOpen}>
@@ -365,7 +368,7 @@ export default function TeacherDashboard() {
                                     <RadioGroupItem value={font.value} id={`h-font-${font.value}`} />
                                     <Label htmlFor={`h-font-${font.value}`} className="flex-1">
                                     <p style={{ fontFamily: font.family }} className="text-lg">
-                                        {font.name} - 맘풍선 이야기
+                                        {font.name} - 맘톡톡 이야기
                                     </p>
                                     </Label>
                                 </div>

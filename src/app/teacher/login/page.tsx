@@ -4,7 +4,6 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import React, { useState } from "react"
-import Image from "next/image"
 import {
   Card,
   CardContent,
@@ -16,6 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
+import { ArrowLeft } from "lucide-react"
 
 const MASTER_ID = "master"
 const MASTER_PASSWORD = "password123"
@@ -45,15 +45,15 @@ export default function TeacherLoginPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary/50">
+       <Link href="/" className="absolute top-8 left-8 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="w-4 h-4" />
+        홈으로 돌아가기
+      </Link>
       <Card className="mx-auto max-w-sm w-full">
-        <CardHeader className="space-y-2 text-center">
-            <div className="flex flex-col items-center justify-center gap-2 mb-2">
-                <Image src="/icon-balloon2.png" alt="맘풍선 로고" width={40} height={40} />
-                <CardTitle className="text-3xl font-headline">맘풍선</CardTitle>
-                <p className="text-sm text-muted-foreground">마음 속 풍경을 선물하다</p>
-            </div>
-            <CardDescription className="text-center">
-                교사용 로그인: 마스터 아이디와 비밀번호를 입력하세요.
+        <CardHeader>
+            <CardTitle className="text-2xl font-headline">교사 로그인</CardTitle>
+            <CardDescription>
+                마스터 아이디와 비밀번호를 입력하세요.
             </CardDescription>
         </CardHeader>
         <CardContent>

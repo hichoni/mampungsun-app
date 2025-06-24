@@ -3,8 +3,8 @@
 import { useEffect } from 'react';
 
 const defaultFonts = {
-    headline: 'Gaegu',
-    body: 'Gowun Dodum',
+    headline: 'Belleza',
+    body: 'Alegreya',
 }
 
 export default function FontManager() {
@@ -14,8 +14,10 @@ export default function FontManager() {
     const headlineSize = localStorage.getItem('app-font-headline-size') || '100';
     const bodySize = localStorage.getItem('app-font-body-size') || '100';
 
-    document.documentElement.style.setProperty('--font-headline', headlineFont);
-    document.documentElement.style.setProperty('--font-body', bodyFont);
+    const quoteFont = (font: string) => font.includes(' ') ? `'${font}'` : font;
+
+    document.documentElement.style.setProperty('--font-headline', quoteFont(headlineFont));
+    document.documentElement.style.setProperty('--font-body', quoteFont(bodyFont));
     document.documentElement.style.setProperty('--font-size-headline-scale', String(parseInt(headlineSize, 10) / 100));
     document.documentElement.style.setProperty('--font-size-body-scale', String(parseInt(bodySize, 10) / 100));
   }, []);
