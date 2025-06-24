@@ -66,22 +66,24 @@ export default function MyDiaryPage() {
   };
 
   const handleLikeComment = (entryId: string, commentId: string, action: 'like' | 'unlike') => {
-    const updatedEntries = entries.map(entry => {
-      if (entry.id === entryId) {
-        return {
-          ...entry,
-          comments: entry.comments.map(comment => {
-            if (comment.id === commentId) {
-              const newLikes = action === 'like' ? comment.likes + 1 : Math.max(0, comment.likes - 1);
-              return { ...comment, likes: newLikes };
-            }
-            return comment;
-          }),
-        };
+    const newEntries = [...entries];
+    const entryIndex = newEntries.findIndex(e => e.id === entryId);
+
+    if (entryIndex > -1) {
+      const entryToUpdate = { ...newEntries[entryIndex] };
+      const newComments = [...entryToUpdate.comments];
+      const commentIndex = newComments.findIndex(c => c.id === commentId);
+
+      if (commentIndex > -1) {
+        const commentToUpdate = { ...newComments[commentIndex] };
+        const newLikes = action === 'like' ? commentToUpdate.likes + 1 : Math.max(0, commentToUpdate.likes - 1);
+        commentToUpdate.likes = newLikes;
+        newComments[commentIndex] = commentToUpdate;
+        entryToUpdate.comments = newComments;
+        newEntries[entryIndex] = entryToUpdate;
+        updateAndStoreEntries(newEntries);
       }
-      return entry;
-    });
-    updateAndStoreEntries(updatedEntries);
+    }
   };
 
   const handleDeleteComment = (entryId: string, commentId: string) => {

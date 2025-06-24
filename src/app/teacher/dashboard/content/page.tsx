@@ -46,39 +46,47 @@ export default function ContentManagementPage() {
   };
 
   const handleLikeComment = (entryId: string, commentId: string, action: 'like' | 'unlike') => {
-    const updatedEntries = entries.map(entry => {
-      if (entry.id === entryId) {
-        return {
-          ...entry,
-          comments: entry.comments.map(comment => {
-            if (comment.id === commentId) {
-              const newLikes = action === 'like' ? comment.likes + 1 : Math.max(0, comment.likes - 1);
-              return { ...comment, likes: newLikes };
-            }
-            return comment;
-          }),
-        };
+    const newEntries = [...entries];
+    const entryIndex = newEntries.findIndex(e => e.id === entryId);
+
+    if (entryIndex > -1) {
+      const entryToUpdate = { ...newEntries[entryIndex] };
+      const newComments = [...entryToUpdate.comments];
+      const commentIndex = newComments.findIndex(c => c.id === commentId);
+
+      if (commentIndex > -1) {
+        const commentToUpdate = { ...newComments[commentIndex] };
+        const newLikes = action === 'like' ? commentToUpdate.likes + 1 : Math.max(0, commentToUpdate.likes - 1);
+        commentToUpdate.likes = newLikes;
+        newComments[commentIndex] = commentToUpdate;
+        entryToUpdate.comments = newComments;
+        newEntries[entryIndex] = entryToUpdate;
+        updateAndStoreEntries(newEntries);
       }
-      return entry;
-    });
-    updateAndStoreEntries(updatedEntries);
+    }
   };
 
   const handleDeleteComment = (entryId: string, commentId: string) => {
-    const updatedEntries = entries.map(entry => {
-      if (entry.id === entryId) {
-        return {
-          ...entry,
-          comments: entry.comments.filter(comment => comment.id !== commentId),
-        };
+    const newEntries = [...entries];
+    const entryIndex = newEntries.findIndex(e => e.id === entryId);
+
+    if (entryIndex > -1) {
+      const entryToUpdate = { ...newEntries[entryIndex] };
+      const commentIndexToDelete = entryToUpdate.comments.findIndex(c => c.id === commentId);
+
+      if (commentIndexToDelete > -1) {
+        const newComments = [...entryToUpdate.comments];
+        newComments.splice(commentIndexToDelete, 1);
+        entryToUpdate.comments = newComments;
+        newEntries[entryIndex] = entryToUpdate;
+
+        updateAndStoreEntries(newEntries);
+        toast({
+            title: "성공",
+            description: "댓글이 삭제되었습니다."
+        });
       }
-      return entry;
-    });
-    updateAndStoreEntries(updatedEntries);
-    toast({
-        title: "성공",
-        description: "댓글이 삭제되었습니다."
-    });
+    }
   };
 
   const findUserById = (userId: string): User | undefined => {
