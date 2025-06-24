@@ -20,7 +20,7 @@ AI 기능을 사용하려면 Google AI Studio에서 API 키를 발급받아야 �
 
 사용자님의 컴퓨터에서 앱을 개발하고 테스트할 때 필요한 설정입니다.
 
-1.  프로젝트 최상위 경로에 있는 `.env.local` 파일을 열어주세요.
+1.  프로젝트 최상위 경로에 `.env.local` 이라는 이름의 파일을 생성해주세요.
 2.  아래 내용을 복사하여 붙여넣고, **실제 값으로 모두 교체**하세요.
     *   **Google AI API 키**: Step 1에서 발급받은 키를 입력합니다.
     *   **Firebase 설정 값**: Firebase 콘솔의 **프로젝트 설정(⚙️) > 일반** 탭 > '내 앱' 섹션에서 **구성(Config)**을 선택하면 나오는 `firebaseConfig` 객체에서 값을 찾아 복사합니다.
@@ -43,14 +43,16 @@ AI 기능을 사용하려면 Google AI Studio에서 API 키를 발급받아야 �
 
 `.env.local` 파일은 로컬 개발 환경에서만 사용됩니다. Firebase에 배포된 실제 앱에서 AI 기능을 사용하려면, 아래와 같이 API 키를 **보안 비밀(Secret)**로 딱 한 번만 등록해야 합니다.
 
-1.  [**Firebase 콘솔**](https://console.firebase.google.com/)에서 프로젝트로 이동합니다.
-2.  왼쪽 메뉴의 **빌드(Build) > App Hosting** 메뉴로 이동합니다.
-3.  백엔드 목록에서 `mampungsun-app`이라는 **백엔드 이름 자체를 클릭**하여 백엔드 상세 페이지로 이동합니다.
-4.  페이지 상단에서 **설정** 탭을 클릭합니다.
-5.  **환경 변수(Environment variables)** 섹션에서 **'비밀 추가(Add secret)'** 버튼을 클릭합니다.
-    *   **비밀 이름(Secret name)**: `GOOGLE_API_KEY` 라고 정확히 입력합니다. (매우 중요!)
-    *   **값(Value)**: Step 1에서 발급받은 Google AI API 키를 붙여넣습니다.
-6.  **[저장]** 버튼을 눌러 완료합니다.
+1.  [**Google Cloud Secret Manager 페이지**](https://console.cloud.google.com/security/secret-manager)로 직접 이동합니다.
+    *   만약 프로젝트를 선택하라는 화면이 나오면, 현재 작업 중인 Firebase 프로젝트(`mind-balloon`)를 선택해주세요.
+
+2.  페이지 상단에 있는 **[+ 보안 비밀 만들기]** 버튼을 클릭합니다.
+
+3.  정보를 입력하는 창이 뜨면 아래와 같이 입력합니다.
+    *   **이름:** `GOOGLE_API_KEY` 라고 **반드시 똑같이** 입력해야 합니다. (이 이름은 `apphosting.yaml` 파일에 미리 설정되어 있습니다.)
+    *   **보안 비밀 값:** Step 1에서 발급받아 `.env.local`에 넣어두었던 **실제 API 키**를 복사해서 붙여넣습니다. (따옴표는 제외하고, `AIza...`로 시작하는 긴 문자열 전체)
+
+4.  다른 설정은 변경할 필요 없이, 페이지 맨 아래의 **[보안 비밀 만들기]** 버튼을 클릭하여 저장을 완료합니다.
 
 **모든 설정이 끝났습니다!** 이제 `git push origin main` 명령어로 코드를 배포하면, AI 기능이 온라인에서 완벽하게 활성화됩니다.
 
