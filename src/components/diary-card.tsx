@@ -44,8 +44,8 @@ interface DiaryCardProps {
   author: User | undefined
   onComment: (entryId: string, comment: Comment) => void;
   onLikeEntry: (entryId: string, action: 'like' | 'unlike') => void;
-  onLikeComment: (entryId: string, commentId: string, action: 'like' | 'unlike') => void;
-  onDeleteComment: (entryId: string, commentId: string) => void;
+  onLikeComment: (entryId: string, commentIndex: number, action: 'like' | 'unlike') => void;
+  onDeleteComment: (entryId: string, commentIndex: number) => void;
   isTeacherView?: boolean;
 }
 
@@ -91,7 +91,7 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
     onLikeEntry(entry.id, newIsLiked ? 'like' : 'unlike');
   }
 
-  const handleCommentLikeToggle = (commentId: string) => {
+  const handleCommentLikeToggle = (commentId: string, commentIndex: number) => {
     const uniqueCommentId = `${entry.id}-${commentId}`;
     const newLikedComments = new Set(likedComments);
     const action = newLikedComments.has(uniqueCommentId) ? 'unlike' : 'like';
@@ -104,7 +104,7 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
 
     setLikedComments(newLikedComments);
     localStorage.setItem('likedComments', JSON.stringify(Array.from(newLikedComments)));
-    onLikeComment(entry.id, commentId, action);
+    onLikeComment(entry.id, commentIndex, action);
   };
 
   const handlePostComment = (commentText: string) => {
@@ -216,7 +216,7 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
                                                   <p className="text-sm text-muted-foreground">{comment.comment}</p>
                                               </div>
                                               <div className="flex items-center gap-2 pl-2">
-                                                  <Button variant="ghost" size="sm" className="p-1 h-auto flex items-center gap-1" onClick={() => handleCommentLikeToggle(comment.id)}>
+                                                  <Button variant="ghost" size="sm" className="p-1 h-auto flex items-center gap-1" onClick={() => handleCommentLikeToggle(comment.id, index)}>
                                                       <Heart className={`h-3 w-3 ${likedComments.has(`${entry.id}-${comment.id}`) ? 'text-red-500 fill-current' : ''}`} />
                                                       {comment.likes > 0 && <span className="text-xs text-muted-foreground font-normal">{comment.likes}</span>}
                                                   </Button>
@@ -236,7 +236,7 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
                                                             </AlertDialogHeader>
                                                             <AlertDialogFooter>
                                                               <AlertDialogCancel>취소</AlertDialogCancel>
-                                                              <AlertDialogAction onClick={() => onDeleteComment(entry.id, comment.id)} className="bg-destructive hover:bg-destructive/90">
+                                                              <AlertDialogAction onClick={() => onDeleteComment(entry.id, index)} className="bg-destructive hover:bg-destructive/90">
                                                                 삭제
                                                               </AlertDialogAction>
                                                             </AlertDialogFooter>

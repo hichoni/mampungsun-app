@@ -45,15 +45,14 @@ export default function ContentManagementPage() {
     });
   };
 
-  const handleLikeComment = (entryId: string, commentId: string, action: 'like' | 'unlike') => {
+  const handleLikeComment = (entryId: string, commentIndex: number, action: 'like' | 'unlike') => {
     setEntries(currentEntries => {
       const newEntries = JSON.parse(JSON.stringify(currentEntries));
       const entry = newEntries.find((e: DiaryEntry) => e.id === entryId);
-      if (!entry) return currentEntries;
-  
-      const comment = entry.comments.find((c: Comment) => c.id === commentId);
-      if (!comment) return currentEntries;
-  
+      
+      if (!entry || !entry.comments[commentIndex]) return currentEntries;
+
+      const comment = entry.comments[commentIndex];
       comment.likes = action === 'like' ? comment.likes + 1 : Math.max(0, comment.likes - 1);
   
       localStorage.setItem('diaryEntries', JSON.stringify(newEntries));
@@ -61,15 +60,13 @@ export default function ContentManagementPage() {
     });
   };
 
-  const handleDeleteComment = (entryId: string, commentId: string) => {
+  const handleDeleteComment = (entryId: string, commentIndex: number) => {
     setEntries(currentEntries => {
       const newEntries = JSON.parse(JSON.stringify(currentEntries));
       const entry = newEntries.find((e: DiaryEntry) => e.id === entryId);
-      if (!entry) return currentEntries;
-  
-      const commentIndex = entry.comments.findIndex((c: Comment) => c.id === commentId);
-      if (commentIndex === -1) return currentEntries;
-  
+
+      if (!entry || !entry.comments[commentIndex]) return currentEntries;
+
       entry.comments.splice(commentIndex, 1);
       
       localStorage.setItem('diaryEntries', JSON.stringify(newEntries));
