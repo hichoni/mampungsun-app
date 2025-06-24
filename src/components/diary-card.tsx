@@ -25,6 +25,8 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { useState } from "react"
 import { mockUsers } from "@/lib/data"
+import { ScrollArea } from "./ui/scroll-area"
+import { Input } from "./ui/input"
 
 interface DiaryCardProps {
   entry: DiaryEntry
@@ -46,6 +48,9 @@ export function DiaryCard({ entry, author, onComment }: DiaryCardProps) {
   const [likes, setLikes] = useState(entry.likes);
   const [isLiked, setIsLiked] = useState(false);
   const [isDialogOpen, setDialogOpen] = useState(false);
+  const [newCommentText, setNewCommentText] = useState('');
+
+  const commenter = mockUsers.find(u => u.id === '4');
 
   const handleLike = () => {
     if (isLiked) {
@@ -56,34 +61,31 @@ export function DiaryCard({ entry, author, onComment }: DiaryCardProps) {
     setIsLiked(!isLiked);
   }
 
-  const commenter = mockUsers.find(u => u.id === '4');
-
-  const handleComment = (commentText: string) => {
-    if (!commenter) {
-        toast({
-            variant: "destructive",
-            title: "오류",
-            description: "댓글을 달 사용자를 찾을 수 없습니다."
-        });
-        return;
-    }
+  const handlePostComment = (commentText: string) => {
+    if (!commentText.trim() || !commenter) return;
     
-    const newComment = {
+    const newCommentPayload = {
         userId: commenter.id,
         nickname: commenter.nickname,
-        comment: commentText
+        comment: commentText,
     };
 
-    onComment(entry.id, newComment);
+    onComment(entry.id, newCommentPayload);
     
     toast({
       title: "댓글이 등록되었어요.",
       description: `"${commentText}"`,
     })
 
-    setDialogOpen(false);
+    setNewCommentText('');
   }
-  
+
+  const handleSubmitCustomComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    handlePostComment(newCommentText);
+  };
+
+
   const timeAgo = (date: string) => {
     const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
     let interval = seconds / 31536000;
@@ -130,19 +132,60 @@ export function DiaryCard({ entry, author, onComment }: DiaryCardProps) {
                         {entry.comments.length}
                     </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-h-[80vh] flex flex-col">
                     <DialogHeader>
-                        <DialogTitle>따뜻한 응원 보내기</DialogTitle>
+                        <DialogTitle>응원 보내기 및 댓글 보기</DialogTitle>
                         <DialogDescription>
-                            아래 응원/칭찬 메시지 중 하나를 선택해 마음을 전해보세요.
+                            따뜻한 응원의 말을 보내거나, 다른 친구들의 댓글을 확인해보세요.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="grid grid-cols-1 gap-2 mt-4">
-                        {entry.suggestedResponses.map((res, index) => (
-                            <Button key={index} variant="outline" onClick={() => handleComment(res)}>
-                                {res}
-                            </Button>
-                        ))}
+                    
+                    <div className="flex-1 my-4 overflow-hidden">
+                        <ScrollArea className="h-full pr-6">
+                            <div className="space-y-4">
+                                {entry.comments.length > 0 ? (
+                                    entry.comments.map((comment, index) => (
+                                        <div key={index} className="flex items-start gap-3">
+                                            <Avatar className="w-8 h-8 border">
+                                                <AvatarImage src={`https://placehold.co/40x40.png?text=${comment.nickname.charAt(0)}`} />
+                                                <AvatarFallback>{comment.nickname.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="bg-muted p-3 rounded-lg rounded-tl-none max-w-full">
+                                                <p className="font-semibold text-sm text-foreground">{comment.nickname}</p>
+                                                <p className="text-sm text-muted-foreground">{comment.comment}</p>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-center text-sm text-muted-foreground py-4">
+                                        아직 응원의 댓글이 없어요. <br/> 첫 번째로 따뜻한 마음을 전해보세요!
+                                    </p>
+                                )}
+                            </div>
+                        </ScrollArea>
+                    </div>
+
+                    <div className="mt-auto space-y-4 border-t pt-4">
+                        <div>
+                            <p className="text-sm font-medium mb-2 text-foreground">AI 추천 응원 메시지</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {entry.suggestedResponses.map((res, index) => (
+                                    <Button key={index} variant="outline" onClick={() => handlePostComment(res)}>
+                                        {res}
+                                    </Button>
+                                ))}
+                            </div>
+                        </div>
+                        
+                        <form onSubmit={handleSubmitCustomComment} className="flex items-center gap-2">
+                            <Input
+                                value={newCommentText}
+                                onChange={(e) => setNewCommentText(e.target.value)}
+                                placeholder="직접 응원 메시지를 입력할 수도 있어요."
+                                className="flex-1"
+                            />
+                            <Button type="submit" disabled={!newCommentText.trim()}>전송</Button>
+                        </form>
                     </div>
                 </DialogContent>
             </Dialog>
