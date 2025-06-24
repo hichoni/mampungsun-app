@@ -23,6 +23,21 @@ export default function MyDiaryPage() {
   
   const currentUser = mockUsers.find(user => user.id === loggedInUserId);
 
+  const handleComment = (entryId: string, newComment: { userId: string; nickname: string; comment: string }) => {
+    const updatedEntries = entries.map(entry => {
+      if (entry.id === entryId) {
+        return {
+          ...entry,
+          comments: [...entry.comments, newComment],
+        };
+      }
+      return entry;
+    });
+    setEntries(updatedEntries);
+    localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
+  };
+
+
   return (
     <>
       <div className="flex items-center justify-between">
@@ -34,7 +49,7 @@ export default function MyDiaryPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {myEntries.length > 0 ? (
           myEntries.map(entry => (
-            <DiaryCard key={entry.id} entry={entry} author={currentUser} />
+            <DiaryCard key={entry.id} entry={entry} author={currentUser} onComment={handleComment} />
           ))
         ) : (
           <p className="col-span-full text-center text-muted-foreground">아직 날린 맘풍선이 없어요.</p>

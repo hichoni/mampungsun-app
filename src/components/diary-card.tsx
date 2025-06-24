@@ -24,10 +24,12 @@ import {
 } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { useState } from "react"
+import { mockUsers } from "@/lib/data"
 
 interface DiaryCardProps {
   entry: DiaryEntry
   author: User | undefined
+  onComment: (entryId: string, comment: { userId: string; nickname: string; comment: string }) => void;
 }
 
 const getEmotionBadgeVariant = (emotion: string): 'default' | 'secondary' | 'destructive' | 'outline' => {
@@ -39,10 +41,11 @@ const getEmotionBadgeVariant = (emotion: string): 'default' | 'secondary' | 'des
   }
 }
 
-export function DiaryCard({ entry, author }: DiaryCardProps) {
+export function DiaryCard({ entry, author, onComment }: DiaryCardProps) {
   const { toast } = useToast();
   const [likes, setLikes] = useState(entry.likes);
   const [isLiked, setIsLiked] = useState(false);
+  const [isDialogOpen, setDialogOpen] = useState(false);
 
   const handleLike = () => {
     if (isLiked) {
@@ -53,11 +56,32 @@ export function DiaryCard({ entry, author }: DiaryCardProps) {
     setIsLiked(!isLiked);
   }
 
-  const handleComment = (comment: string) => {
+  const commenter = mockUsers.find(u => u.id === '4');
+
+  const handleComment = (commentText: string) => {
+    if (!commenter) {
+        toast({
+            variant: "destructive",
+            title: "오류",
+            description: "댓글을 달 사용자를 찾을 수 없습니다."
+        });
+        return;
+    }
+    
+    const newComment = {
+        userId: commenter.id,
+        nickname: commenter.nickname,
+        comment: commentText
+    };
+
+    onComment(entry.id, newComment);
+    
     toast({
       title: "댓글이 등록되었어요.",
-      description: `"${comment}"`,
+      description: `"${commentText}"`,
     })
+
+    setDialogOpen(false);
   }
   
   const timeAgo = (date: string) => {
@@ -99,7 +123,7 @@ export function DiaryCard({ entry, author }: DiaryCardProps) {
                 <Heart className={`h-4 w-4 ${isLiked ? 'text-red-500 fill-current' : ''}`} />
                 {likes}
             </Button>
-            <Dialog>
+            <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
                     <Button variant="ghost" size="sm" className="flex items-center gap-2">
                         <MessageCircle className="h-4 w-4" />
