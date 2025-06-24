@@ -98,14 +98,14 @@ export default function LoginPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary/50">
       <Card className="mx-auto max-w-sm w-full">
-        <CardHeader className="text-center space-y-4">
-            <Image src="/icon-balloon2.png" alt="맘풍선 로고" width={40} height={40} className="mx-auto" />
-            <div className="space-y-1">
-                <CardTitle className="text-2xl font-headline">학생 로그인</CardTitle>
-                <CardDescription>
-                    학년, 반, 번호를 선택하고 PIN 번호를 입력하세요.
-                </CardDescription>
+        <CardHeader className="text-center space-y-2">
+            <div className="flex justify-center items-center gap-3 mb-2">
+                <Image src="/icon-balloon2.png" alt="맘풍선 로고" width={40} height={40} />
+                <CardTitle className="text-3xl font-headline">맘풍선</CardTitle>
             </div>
+            <CardDescription>
+                학생 로그인: 학년, 반, 번호를 선택하고 PIN 번호를 입력하세요.
+            </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="grid gap-4">
