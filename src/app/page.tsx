@@ -7,10 +7,10 @@ import { Heart, MessageCircle, Shield, Users } from 'lucide-react';
 export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background font-body">
-      <header className="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-20">
-        <Link href="/" className="flex items-center gap-2">
-          <Image src="/icon-balloon2.png" data-ai-hint="blue balloon" alt="맘풍선 로고" width={32} height={32} />
-          <h1 className="text-2xl font-headline font-bold text-primary">맘풍선</h1>
+      <header className="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-24">
+        <Link href="/" className="flex items-center gap-4">
+          <Image src="/icon-balloon2.png" data-ai-hint="blue balloon" alt="맘풍선 로고" width={64} height={64} />
+          <h1 className="text-4xl font-headline font-bold text-primary">맘풍선</h1>
         </Link>
         <nav className="flex gap-2">
           <Button asChild variant="ghost">
@@ -48,8 +48,8 @@ export default function LandingPage() {
             <div className="grid md:grid-cols-3 gap-8">
               <Card className="text-center">
                 <CardHeader>
-                  <div className="mx-auto bg-accent/50 rounded-full p-3 w-fit">
-                    <Heart className="h-8 w-8 text-accent-foreground" />
+                  <div className="mx-auto bg-destructive/10 rounded-full p-3 w-fit">
+                    <Heart className="h-8 w-8 text-destructive" />
                   </div>
                   <CardTitle className="font-headline mt-4">감정 일기 (맘풍선)</CardTitle>
                 </CardHeader>
@@ -59,8 +59,8 @@ export default function LandingPage() {
               </Card>
               <Card className="text-center">
                 <CardHeader>
-                  <div className="mx-auto bg-accent/50 rounded-full p-3 w-fit">
-                    <MessageCircle className="h-8 w-8 text-accent-foreground" />
+                  <div className="mx-auto bg-primary/20 rounded-full p-3 w-fit">
+                    <MessageCircle className="h-8 w-8 text-primary" />
                   </div>
                   <CardTitle className="font-headline mt-4">따뜻한 응원</CardTitle>
                 </CardHeader>
