@@ -91,7 +91,7 @@ export default function LandingPage() {
             </div>
             <h3 className="text-3xl md:text-4xl font-headline font-bold text-primary">만든 사람들</h3>
             <p className="text-lg text-muted-foreground mt-4 max-w-3xl mx-auto">
-                '맘풍선'은 학생들의 마음 건강을 최우선으로 생각하는 선생님들이 모여 시작된 프로젝트입니다. 저희는 모든 학생이 자신의 감정을 안전하게 표현하고, 따뜻한 지지를 받으며 성장할 수 있는 공간을 만들고 싶었습니다.
+                '맘풍선'은 학생들의 마음 건강을 최우선으로 생각하는 풍천풍서초등학교 선생님들이 모여 시작된 프로젝트입니다. 저희는 모든 학생이 자신의 감정을 안전하게 표현하고, 따뜻한 지지를 받으며 성장할 수 있는 공간을 만들고 싶었습니다.
             </p>
           </div>
         </section>
