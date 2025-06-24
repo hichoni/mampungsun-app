@@ -50,19 +50,19 @@ export default function ContentManagementPage() {
     const entryIndex = newEntries.findIndex(e => e.id === entryId);
 
     if (entryIndex > -1) {
-      const entryToUpdate = { ...newEntries[entryIndex] };
-      const newComments = [...entryToUpdate.comments];
-      const commentIndex = newComments.findIndex(c => c.id === commentId);
+        let alreadyUpdated = false;
+        const newComments = newEntries[entryIndex].comments.map(comment => {
+            if (comment.id === commentId && !alreadyUpdated) {
+                alreadyUpdated = true;
+                const newLikes = action === 'like' ? comment.likes + 1 : Math.max(0, comment.likes - 1);
+                return { ...comment, likes: newLikes };
+            }
+            return comment;
+        });
 
-      if (commentIndex > -1) {
-        const commentToUpdate = { ...newComments[commentIndex] };
-        const newLikes = action === 'like' ? commentToUpdate.likes + 1 : Math.max(0, commentToUpdate.likes - 1);
-        commentToUpdate.likes = newLikes;
-        newComments[commentIndex] = commentToUpdate;
-        entryToUpdate.comments = newComments;
+        const entryToUpdate = { ...newEntries[entryIndex], comments: newComments };
         newEntries[entryIndex] = entryToUpdate;
         updateAndStoreEntries(newEntries);
-      }
     }
   };
 
@@ -71,21 +71,27 @@ export default function ContentManagementPage() {
     const entryIndex = newEntries.findIndex(e => e.id === entryId);
 
     if (entryIndex > -1) {
-      const entryToUpdate = { ...newEntries[entryIndex] };
-      const commentIndexToDelete = entryToUpdate.comments.findIndex(c => c.id === commentId);
-
-      if (commentIndexToDelete > -1) {
-        const newComments = [...entryToUpdate.comments];
-        newComments.splice(commentIndexToDelete, 1);
-        entryToUpdate.comments = newComments;
-        newEntries[entryIndex] = entryToUpdate;
-
-        updateAndStoreEntries(newEntries);
-        toast({
-            title: "성공",
-            description: "댓글이 삭제되었습니다."
+        let commentRemoved = false;
+        const originalComments = newEntries[entryIndex].comments;
+        
+        const newComments = originalComments.filter(comment => {
+            if(comment.id === commentId && !commentRemoved) {
+                commentRemoved = true;
+                return false;
+            }
+            return true;
         });
-      }
+
+        if (originalComments.length > newComments.length) {
+            const entryToUpdate = { ...newEntries[entryIndex], comments: newComments };
+            newEntries[entryIndex] = entryToUpdate;
+
+            updateAndStoreEntries(newEntries);
+            toast({
+                title: "성공",
+                description: "댓글이 삭제되었습니다."
+            });
+        }
     }
   };
 

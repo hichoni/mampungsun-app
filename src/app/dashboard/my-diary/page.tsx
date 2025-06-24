@@ -70,19 +70,19 @@ export default function MyDiaryPage() {
     const entryIndex = newEntries.findIndex(e => e.id === entryId);
 
     if (entryIndex > -1) {
-      const entryToUpdate = { ...newEntries[entryIndex] };
-      const newComments = [...entryToUpdate.comments];
-      const commentIndex = newComments.findIndex(c => c.id === commentId);
+      let alreadyUpdated = false;
+      const newComments = newEntries[entryIndex].comments.map(comment => {
+        if (comment.id === commentId && !alreadyUpdated) {
+          alreadyUpdated = true;
+          const newLikes = action === 'like' ? comment.likes + 1 : Math.max(0, comment.likes - 1);
+          return { ...comment, likes: newLikes };
+        }
+        return comment;
+      });
 
-      if (commentIndex > -1) {
-        const commentToUpdate = { ...newComments[commentIndex] };
-        const newLikes = action === 'like' ? commentToUpdate.likes + 1 : Math.max(0, commentToUpdate.likes - 1);
-        commentToUpdate.likes = newLikes;
-        newComments[commentIndex] = commentToUpdate;
-        entryToUpdate.comments = newComments;
-        newEntries[entryIndex] = entryToUpdate;
-        updateAndStoreEntries(newEntries);
-      }
+      const entryToUpdate = { ...newEntries[entryIndex], comments: newComments };
+      newEntries[entryIndex] = entryToUpdate;
+      updateAndStoreEntries(newEntries);
     }
   };
 
