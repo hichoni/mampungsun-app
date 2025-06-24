@@ -56,6 +56,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { Slider } from "@/components/ui/slider"
 
 
 const getEmotionBadgeVariant = (emotion: string) => {
@@ -100,6 +101,8 @@ export default function TeacherDashboard() {
   
   const [headlineFont, setHeadlineFont] = useState('Gaegu');
   const [bodyFont, setBodyFont] = useState('Gowun Dodum');
+  const [headlineFontSize, setHeadlineFontSize] = useState(100);
+  const [bodyFontSize, setBodyFontSize] = useState(100);
   
   const [selectedGrade, setSelectedGrade] = useState<string>('all');
   const [selectedClass, setSelectedClass] = useState<string>('all');
@@ -112,15 +115,27 @@ export default function TeacherDashboard() {
   useEffect(() => {
     const savedHeadline = localStorage.getItem('app-font-headline') || 'Gaegu';
     const savedBody = localStorage.getItem('app-font-body') || 'Gowun Dodum';
+    const savedHeadlineSize = localStorage.getItem('app-font-headline-size') || '100';
+    const savedBodySize = localStorage.getItem('app-font-body-size') || '100';
+
     setHeadlineFont(savedHeadline);
     setBodyFont(savedBody);
+    setHeadlineFontSize(parseInt(savedHeadlineSize, 10));
+    setBodyFontSize(parseInt(savedBodySize, 10));
   }, []);
 
   const handleFontSave = () => {
     localStorage.setItem('app-font-headline', headlineFont);
     localStorage.setItem('app-font-body', bodyFont);
+    localStorage.setItem('app-font-headline-size', String(headlineFontSize));
+    localStorage.setItem('app-font-body-size', String(bodyFontSize));
+    
+    // Also apply them immediately
     document.documentElement.style.setProperty('--font-headline', headlineFont);
     document.documentElement.style.setProperty('--font-body', bodyFont);
+    document.documentElement.style.setProperty('--font-size-headline-scale', String(headlineFontSize / 100));
+    document.documentElement.style.setProperty('--font-size-body-scale', String(bodyFontSize / 100));
+
     toast({
       title: '성공',
       description: '폰트 설정이 저장되었습니다. 앱 전체에 적용됩니다.'
@@ -339,7 +354,7 @@ export default function TeacherDashboard() {
                 <SheetContent>
                     <SheetHeader>
                         <SheetTitle className="font-headline">디자인 설정</SheetTitle>
-                        <SheetDescription>앱 전체의 폰트를 변경할 수 있습니다. 저장하면 앱 전체에 즉시 적용됩니다.</SheetDescription>
+                        <SheetDescription>앱 전체의 폰트와 크기를 변경할 수 있습니다. 저장하면 앱 전체에 즉시 적용됩니다.</SheetDescription>
                     </SheetHeader>
                     <div className="py-4 space-y-6 h-[calc(100vh-8rem)] overflow-y-auto pr-4">
                         <div className="space-y-4">
@@ -371,6 +386,34 @@ export default function TeacherDashboard() {
                                 </div>
                                 ))}
                             </RadioGroup>
+                        </div>
+                        <div className="space-y-4 pt-4 border-t">
+                            <Label className="text-base font-semibold">제목 폰트 크기</Label>
+                            <div className="flex items-center gap-4">
+                                <Slider
+                                    value={[headlineFontSize]}
+                                    onValueChange={(value) => setHeadlineFontSize(value[0])}
+                                    min={80}
+                                    max={130}
+                                    step={10}
+                                    aria-label="제목 폰트 크기"
+                                />
+                                <span className="w-16 text-right text-sm text-muted-foreground">{headlineFontSize}%</span>
+                            </div>
+                        </div>
+                        <div className="space-y-4">
+                            <Label className="text-base font-semibold">본문 폰트 크기</Label>
+                            <div className="flex items-center gap-4">
+                                <Slider
+                                    value={[bodyFontSize]}
+                                    onValueChange={(value) => setBodyFontSize(value[0])}
+                                    min={80}
+                                    max={130}
+                                    step={10}
+                                    aria-label="본문 폰트 크기"
+                                />
+                                <span className="w-16 text-right text-sm text-muted-foreground">{bodyFontSize}%</span>
+                            </div>
                         </div>
                     </div>
                     <SheetFooter>

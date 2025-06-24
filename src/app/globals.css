@@ -2,13 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer base {
   :root {
-    --background: 210 60% 98%;
+    --background: 205 95% 96%;
     --foreground: 215 30% 30%;
     --card: 0 0% 100%;
     --card-foreground: 215 30% 30%;
@@ -31,6 +27,9 @@ body {
 
     --font-body: 'Gowun Dodum';
     --font-headline: 'Gaegu';
+
+    --font-size-headline-scale: 1;
+    --font-size-body-scale: 1;
   }
   .dark {
     --background: 215 30% 12%;
@@ -62,4 +61,14 @@ body {
     @apply bg-background text-foreground;
     font-family: var(--font-body), sans-serif;
   }
+
+  /* Overriding Tailwind's font sizes to make them dynamic */
+  .text-xs { font-size: calc(0.75rem * var(--font-size-body-scale)); line-height: calc(1rem * var(--font-size-body-scale)); }
+  .text-sm { font-size: calc(0.875rem * var(--font-size-body-scale)); line-height: calc(1.25rem * var(--font-size-body-scale)); }
+  .text-base { font-size: calc(1rem * var(--font-size-body-scale)); line-height: calc(1.5rem * var(--font-size-body-scale)); }
+  .text-lg { font-size: calc(1.125rem * var(--font-size-headline-scale)); line-height: calc(1.75rem * var(--font-size-headline-scale)); }
+  .text-xl { font-size: calc(1.25rem * var(--font-size-headline-scale)); line-height: calc(1.75rem * var(--font-size-headline-scale)); }
+  .text-2xl { font-size: calc(1.5rem * var(--font-size-headline-scale)); line-height: calc(2rem * var(--font-size-headline-scale)); }
+  .text-3xl { font-size: calc(1.875rem * var(--font-size-headline-scale)); line-height: calc(2.25rem * var(--font-size-headline-scale)); }
+  .text-4xl { font-size: calc(2.25rem * var(--font-size-headline-scale)); line-height: calc(2.5rem * var(--font-size-headline-scale)); }
 }
