@@ -68,22 +68,22 @@ export default function MyDiaryPage() {
   const handleLikeComment = (entryId: string, commentId: string, action: 'like' | 'unlike') => {
     const newEntries = [...entries];
     const entryIndex = newEntries.findIndex(e => e.id === entryId);
+    if (entryIndex === -1) return;
 
-    if (entryIndex > -1) {
-      let alreadyUpdated = false;
-      const newComments = newEntries[entryIndex].comments.map(comment => {
-        if (comment.id === commentId && !alreadyUpdated) {
-          alreadyUpdated = true;
-          const newLikes = action === 'like' ? comment.likes + 1 : Math.max(0, comment.likes - 1);
-          return { ...comment, likes: newLikes };
-        }
-        return comment;
-      });
+    const entryToUpdate = newEntries[entryIndex];
+    const commentIndex = entryToUpdate.comments.findIndex(c => c.id === commentId);
+    if (commentIndex === -1) return;
 
-      const entryToUpdate = { ...newEntries[entryIndex], comments: newComments };
-      newEntries[entryIndex] = entryToUpdate;
-      updateAndStoreEntries(newEntries);
-    }
+    const newComments = [...entryToUpdate.comments];
+    const commentToUpdate = newComments[commentIndex];
+    const newLikes = action === 'like' ? commentToUpdate.likes + 1 : Math.max(0, commentToUpdate.likes - 1);
+
+    newComments[commentIndex] = { ...commentToUpdate, likes: newLikes };
+    
+    const updatedEntry = { ...entryToUpdate, comments: newComments };
+    newEntries[entryIndex] = updatedEntry;
+
+    updateAndStoreEntries(newEntries);
   };
 
   const handleDeleteComment = (entryId: string, commentId: string) => {
