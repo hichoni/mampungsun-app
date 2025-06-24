@@ -68,7 +68,7 @@ export default function TeacherDashboard() {
       <header className="px-4 lg:px-6 h-16 flex items-center border-b">
         <Link href="/" className="flex items-center justify-center" prefetch={false}>
           <BalloonIcon className="h-8 w-8 text-primary" />
-          <span className="ml-2 text-xl font-headline font-bold text-foreground">맘톡톡 교사 페이지</span>
+          <span className="ml-2 text-xl font-headline font-bold text-foreground">맘풍선 교사 페이지</span>
         </Link>
         <div className="ml-auto">
             <Button variant="ghost" size="icon" asChild>

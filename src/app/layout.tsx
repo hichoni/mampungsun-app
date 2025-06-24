@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: '맘톡톡 (MomTalkTalk)',
+  title: '맘풍선 (Mampungseon)',
   description: '당신의 마음을 표현하고, 따뜻한 응원을 받아보세요.',
 };
 
