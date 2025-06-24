@@ -5,7 +5,8 @@ export type User = {
   grade: number;
   class: number;
   studentId: number;
-  email: string;
+  pin: string;
+  isApproved: boolean;
 };
 
 export type DiaryEntry = {

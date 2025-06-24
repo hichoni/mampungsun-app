@@ -1,9 +1,9 @@
 import type { User, DiaryEntry } from './definitions';
 
 export const mockUsers: User[] = [
-  { id: '1', name: '김민준', nickname: '행복한 토끼', grade: 1, class: 2, studentId: 3, email: 'minjun@example.com' },
-  { id: '2', name: '이서연', nickname: '꿈꾸는 돌고래', grade: 1, class: 3, studentId: 12, email: 'seoyeon@example.com' },
-  { id: '3', name: '박하은', nickname: '용감한 사자', grade: 2, class: 1, studentId: 5, email: 'haeun@example.com' },
+  { id: '1', name: '김민준', nickname: '행복한 토끼', grade: 1, class: 2, studentId: 3, pin: '1234', isApproved: true },
+  { id: '2', name: '이서연', nickname: '꿈꾸는 돌고래', grade: 1, class: 3, studentId: 12, pin: '5678', isApproved: true },
+  { id: '3', name: '박하은', nickname: '용감한 사자', grade: 2, class: 1, studentId: 5, pin: '9012', isApproved: false },
 ];
 
 export const mockDiaryEntries: DiaryEntry[] = [

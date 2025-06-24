@@ -1,4 +1,8 @@
-import { mockUsers, mockDiaryEntries } from "@/lib/data"
+'use client'
+
+import React, { useState } from "react"
+import { mockUsers as initialMockUsers, mockDiaryEntries } from "@/lib/data"
+import type { User } from "@/lib/definitions"
 import {
   Table,
   TableBody,
@@ -13,6 +17,8 @@ import { Button } from "@/components/ui/button"
 import { LogOut } from "lucide-react"
 import Link from "next/link"
 import { BalloonIcon } from "@/components/icons"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 
 const getEmotionBadgeVariant = (emotion: string) => {
   switch (emotion) {
@@ -29,7 +35,18 @@ const getEmotionBadgeVariant = (emotion: string) => {
 
 
 export default function TeacherDashboard() {
-  const studentsWithLatestEmotion = mockUsers.map(user => {
+  const [students, setStudents] = useState<User[]>(initialMockUsers);
+
+  const handleApprovalChange = (studentId: string, isApproved: boolean) => {
+    setStudents(currentStudents => 
+        currentStudents.map(student => 
+            student.id === studentId ? { ...student, isApproved } : student
+        )
+    );
+    // In a real app, you would make an API call here to update the database.
+  }
+
+  const studentsWithLatestEmotion = students.map(user => {
     const userEntries = mockDiaryEntries
       .filter(entry => entry.userId === user.id)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -40,6 +57,10 @@ export default function TeacherDashboard() {
       ...user,
       latestEmotion,
     };
+  }).sort((a, b) => {
+    if (a.grade !== b.grade) return a.grade - b.grade;
+    if (a.class !== b.class) return a.class - b.class;
+    return a.studentId - b.studentId;
   });
 
   return (
@@ -61,8 +82,8 @@ export default function TeacherDashboard() {
       <main className="p-4 sm:p-6 md:p-8">
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline">학생 현황</CardTitle>
-            <CardDescription>전체 학생 목록과 최근 감정 상태입니다.</CardDescription>
+            <CardTitle className="font-headline">학생 관리</CardTitle>
+            <CardDescription>전체 학생 목록과 로그인 승인 상태입니다.</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -73,7 +94,8 @@ export default function TeacherDashboard() {
                   <TableHead>번호</TableHead>
                   <TableHead>이름</TableHead>
                   <TableHead>별명</TableHead>
-                  <TableHead className="text-right">최근 감정</TableHead>
+                  <TableHead>최근 감정</TableHead>
+                  <TableHead className="text-right">로그인 승인</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -84,10 +106,22 @@ export default function TeacherDashboard() {
                     <TableCell>{student.studentId}</TableCell>
                     <TableCell className="font-medium">{student.name}</TableCell>
                     <TableCell>{student.nickname}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell>
                       <Badge variant={getEmotionBadgeVariant(student.latestEmotion)}>
                         {student.latestEmotion}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                       <div className="flex items-center justify-end space-x-2">
+                         <Switch
+                            id={`approval-${student.id}`}
+                            checked={student.isApproved}
+                            onCheckedChange={(checked) => handleApprovalChange(student.id, checked)}
+                         />
+                         <Label htmlFor={`approval-${student.id}`} className="sr-only">
+                           {student.name} 로그인 승인
+                         </Label>
+                       </div>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -1,4 +1,7 @@
+'use client'
+
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   Card,
   CardContent,
@@ -10,8 +13,73 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { BalloonIcon } from "@/components/icons"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
+import { mockUsers } from "@/lib/data"
+import React, { useState } from "react"
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [grade, setGrade] = useState<string>('');
+  const [studentClass, setStudentClass] = useState<string>('');
+  const [studentId, setStudentId] = useState<string>('');
+  const [pin, setPin] = useState<string>('');
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!grade || !studentClass || !studentId || !pin) {
+        toast({
+            variant: "destructive",
+            title: "오류",
+            description: "모든 정보를 입력해주세요."
+        });
+        return;
+    }
+
+    const user = mockUsers.find(
+        (u) => 
+        u.grade === parseInt(grade) && 
+        u.class === parseInt(studentClass) && 
+        u.studentId === parseInt(studentId)
+    );
+
+    if (!user) {
+        toast({
+            variant: "destructive",
+            title: "로그인 실패",
+            description: "학생 정보를 찾을 수 없습니다."
+        });
+        return;
+    }
+
+    if (!user.isApproved) {
+        toast({
+            variant: "destructive",
+            title: "로그인 실패",
+            description: "아직 선생님의 승인을 받지 않았어요."
+        });
+        return;
+    }
+
+    if (user.pin !== pin) {
+        toast({
+            variant: "destructive",
+            title: "로그인 실패",
+            description: "PIN 번호가 올바르지 않습니다."
+        });
+        return;
+    }
+
+    toast({
+        title: "로그인 성공!",
+        description: `환영합니다, ${user.nickname}님!`
+    })
+
+    router.push('/dashboard');
+  }
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary/50">
       <Card className="mx-auto max-w-sm w-full">
@@ -23,37 +91,55 @@ export default function LoginPage() {
             </div>
           <CardTitle className="text-2xl font-headline">학생 로그인</CardTitle>
           <CardDescription>
-            이메일과 비밀번호를 입력하여 로그인하세요.
+            학년, 반, 번호를 선택하고 PIN 번호를 입력하세요.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="email">이메일</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-              />
+          <form onSubmit={handleSubmit} className="grid gap-4">
+            <div className="grid grid-cols-3 gap-4">
+                <div className="grid gap-2">
+                    <Label htmlFor="grade">학년</Label>
+                    <Select name="grade" required onValueChange={setGrade}>
+                        <SelectTrigger id="grade">
+                            <SelectValue placeholder="학년" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {[...new Set(mockUsers.map(u => u.grade))].sort((a,b) => a-b).map(g => <SelectItem key={g} value={String(g)}>{g}학년</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="class">반</Label>
+                    <Select name="class" required onValueChange={setStudentClass}>
+                        <SelectTrigger id="class">
+                            <SelectValue placeholder="반" />
+                        </SelectTrigger>
+                        <SelectContent>
+                             {[...new Set(mockUsers.map(u => u.class))].sort((a,b) => a-b).map(c => <SelectItem key={c} value={String(c)}>{c}반</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="studentId">번호</Label>
+                     <Select name="studentId" required onValueChange={setStudentId}>
+                        <SelectTrigger id="studentId">
+                            <SelectValue placeholder="번호" />
+                        </SelectTrigger>
+                        <SelectContent>
+                             {[...new Set(mockUsers.map(u => u.studentId))].sort((a,b) => a-b).map(s => <SelectItem key={s} value={String(s)}>{s}번</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
             <div className="grid gap-2">
-              <div className="flex items-center">
-                <Label htmlFor="password">비밀번호</Label>
-              </div>
-              <Input id="password" type="password" required />
+              <Label htmlFor="pin">PIN 번호</Label>
+              <Input id="pin" name="pin" type="password" required placeholder="4자리 숫자" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value)} />
             </div>
             <Button type="submit" className="w-full">
               로그인
             </Button>
-          </div>
+          </form>
           <div className="mt-4 text-center text-sm">
-            계정이 없으신가요?{" "}
-            <Link href="/signup" className="underline" prefetch={false}>
-              회원가입
-            </Link>
-          </div>
-           <div className="mt-2 text-center text-sm">
             교사이신가요?{" "}
             <Link href="/teacher/login" className="underline" prefetch={false}>
               교사용 로그인
