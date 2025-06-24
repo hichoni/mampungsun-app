@@ -1,4 +1,3 @@
-
 'use client'
 
 import React, { useState, useRef, useEffect, useMemo } from "react"
@@ -16,7 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { LogOut, PlusCircle, Trash2, Upload, Download, Save } from "lucide-react"
+import { LogOut, PlusCircle, Trash2, Upload, Download, Save, Settings } from "lucide-react"
 import Link from "next/link"
 import { BalloonIcon } from "@/components/icons"
 import { Switch } from "@/components/ui/switch"
@@ -48,6 +47,15 @@ import { PieChart, Pie, Cell } from "recharts"
 import { type ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { generateNickname } from "@/ai/flows/generate-nickname-flow"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 
 
 const getEmotionBadgeVariant = (emotion: string) => {
@@ -95,6 +103,8 @@ export default function TeacherDashboard() {
   
   const [selectedGrade, setSelectedGrade] = useState<string>('all');
   const [selectedClass, setSelectedClass] = useState<string>('all');
+  
+  const [isSettingsOpen, setSettingsOpen] = useState(false);
 
 
   const { toast } = useToast();
@@ -306,6 +316,10 @@ export default function TeacherDashboard() {
         }));
   }, [filteredStudentIds]);
 
+  const handleSaveAndClose = () => {
+    handleFontSave();
+    setSettingsOpen(false);
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -314,7 +328,59 @@ export default function TeacherDashboard() {
           <BalloonIcon className="h-8 w-8 text-primary" />
           <span className="ml-2 text-xl font-headline font-bold text-foreground">맘풍선 교사 페이지</span>
         </Link>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+            <Sheet open={isSettingsOpen} onOpenChange={setSettingsOpen}>
+                <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                        <Settings className="h-5 w-5"/>
+                        <span className="sr-only">디자인 설정</span>
+                    </Button>
+                </SheetTrigger>
+                <SheetContent>
+                    <SheetHeader>
+                        <SheetTitle className="font-headline">디자인 설정</SheetTitle>
+                        <SheetDescription>앱 전체의 폰트를 변경할 수 있습니다. 저장하면 앱 전체에 즉시 적용됩니다.</SheetDescription>
+                    </SheetHeader>
+                    <div className="py-4 space-y-6 h-[calc(100vh-8rem)] overflow-y-auto pr-4">
+                        <div className="space-y-4">
+                            <Label className="text-base font-semibold">제목 폰트</Label>
+                            <RadioGroup value={headlineFont} onValueChange={setHeadlineFont}>
+                                {headlineFonts.map(font => (
+                                <div key={font.value} className="flex items-center space-x-4">
+                                    <RadioGroupItem value={font.value} id={`h-font-${font.value}`} />
+                                    <Label htmlFor={`h-font-${font.value}`} className="flex-1">
+                                    <p style={{ fontFamily: font.family }} className="text-lg">
+                                        {font.name} - 맘풍선 이야기
+                                    </p>
+                                    </Label>
+                                </div>
+                                ))}
+                            </RadioGroup>
+                        </div>
+                        <div className="space-y-4">
+                            <Label className="text-base font-semibold">본문 폰트</Label>
+                            <RadioGroup value={bodyFont} onValueChange={setBodyFont}>
+                                {bodyFonts.map(font => (
+                                <div key={font.value} className="flex items-center space-x-4">
+                                    <RadioGroupItem value={font.value} id={`b-font-${font.value}`} />
+                                    <Label htmlFor={`b-font-${font.value}`} className="flex-1">
+                                    <p style={{ fontFamily: font.family }} className="text-base">
+                                        {font.name} - 오늘 어떤 마음이었나요?
+                                    </p>
+                                    </Label>
+                                </div>
+                                ))}
+                            </RadioGroup>
+                        </div>
+                    </div>
+                    <SheetFooter>
+                        <Button onClick={handleSaveAndClose} className="w-full">
+                            <Save className="mr-2 h-4 w-4" />
+                            폰트 설정 저장
+                        </Button>
+                    </SheetFooter>
+                </SheetContent>
+            </Sheet>
             <Button variant="ghost" size="icon" asChild>
                 <Link href="/">
                     <LogOut className="h-5 w-5"/>
@@ -527,49 +593,6 @@ export default function TeacherDashboard() {
                 )}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline">디자인 설정</CardTitle>
-            <CardDescription>앱 전체의 폰트를 변경할 수 있습니다.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <Label className="text-base font-semibold">제목 폰트</Label>
-              <RadioGroup value={headlineFont} onValueChange={setHeadlineFont}>
-                {headlineFonts.map(font => (
-                  <div key={font.value} className="flex items-center space-x-4">
-                    <RadioGroupItem value={font.value} id={`h-font-${font.value}`} />
-                    <Label htmlFor={`h-font-${font.value}`} className="flex-1">
-                      <p style={{ fontFamily: font.family }} className="text-lg">
-                        {font.name} - 맘풍선 이야기
-                      </p>
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-            </div>
-            <div className="space-y-4">
-              <Label className="text-base font-semibold">본문 폰트</Label>
-              <RadioGroup value={bodyFont} onValueChange={setBodyFont}>
-                {bodyFonts.map(font => (
-                  <div key={font.value} className="flex items-center space-x-4">
-                    <RadioGroupItem value={font.value} id={`b-font-${font.value}`} />
-                    <Label htmlFor={`b-font-${font.value}`} className="flex-1">
-                       <p style={{ fontFamily: font.family }} className="text-base">
-                        {font.name} - 오늘 어떤 마음이었나요?
-                      </p>
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-            </div>
-            <Button onClick={handleFontSave}>
-              <Save className="mr-2 h-4 w-4" />
-              폰트 설정 저장
-            </Button>
           </CardContent>
         </Card>
       </main>
