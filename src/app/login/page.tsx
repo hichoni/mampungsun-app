@@ -104,9 +104,6 @@ export default function LoginPage() {
                 <CardTitle className="text-3xl font-headline">맘풍선</CardTitle>
                 <p className="text-sm text-muted-foreground">마음 속 풍경을 선물하다</p>
             </div>
-            <CardDescription className="text-center">
-                학년, 반, 번호를 선택하고 PIN 번호를 입력하세요.
-            </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="grid gap-4">
