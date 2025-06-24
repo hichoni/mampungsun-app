@@ -105,7 +105,6 @@ export default function TeacherDashboard() {
   const [bodyFont, setBodyFont] = useState('Alegreya');
   const [headlineFontSize, setHeadlineFontSize] = useState(100);
   const [bodyFontSize, setBodyFontSize] = useState(100);
-  const [uiScale, setUiScale] = useState(100);
 
   
   const [selectedGrade, setSelectedGrade] = useState<string>('all');
@@ -121,18 +120,15 @@ export default function TeacherDashboard() {
     const savedBody = localStorage.getItem('app-font-body') || 'Alegreya';
     const savedHeadlineSize = localStorage.getItem('app-font-headline-size') || '100';
     const savedBodySize = localStorage.getItem('app-font-body-size') || '100';
-    const savedUiScale = localStorage.getItem('app-ui-scale') || '100';
 
     setHeadlineFont(savedHeadline);
     setBodyFont(savedBody);
     setHeadlineFontSize(parseInt(savedHeadlineSize, 10));
     setBodyFontSize(parseInt(savedBodySize, 10));
-    setUiScale(parseInt(savedUiScale, 10));
   }, []);
 
   const applyDesignSettings = () => {
     const quoteFont = (font: string) => font.includes(' ') ? `'${font}'` : font;
-    document.documentElement.style.fontSize = `${uiScale}%`;
     document.documentElement.style.setProperty('--font-headline', quoteFont(headlineFont));
     document.documentElement.style.setProperty('--font-body', quoteFont(bodyFont));
     document.documentElement.style.setProperty('--font-size-headline-scale', String(headlineFontSize / 100));
@@ -144,7 +140,6 @@ export default function TeacherDashboard() {
     localStorage.setItem('app-font-body', bodyFont);
     localStorage.setItem('app-font-headline-size', String(headlineFontSize));
     localStorage.setItem('app-font-body-size', String(bodyFontSize));
-    localStorage.setItem('app-ui-scale', String(uiScale));
     
     applyDesignSettings();
 
@@ -365,21 +360,6 @@ export default function TeacherDashboard() {
                         <SheetDescription>앱 전체의 폰트와 크기를 변경할 수 있습니다. 저장하면 앱 전체에 즉시 적용됩니다.</SheetDescription>
                     </SheetHeader>
                     <div className="py-4 space-y-6 h-[calc(100vh-8rem)] overflow-y-auto pr-4">
-                        <div className="space-y-4">
-                            <Label className="text-base font-semibold">전체 UI 크기</Label>
-                             <div className="flex items-center gap-4">
-                                <Slider
-                                    value={[uiScale]}
-                                    onValueChange={(value) => setUiScale(value[0])}
-                                    min={80}
-                                    max={120}
-                                    step={5}
-                                    aria-label="UI 크기"
-                                />
-                                <span className="w-16 text-right text-sm text-muted-foreground">{uiScale}%</span>
-                            </div>
-                        </div>
-
                         <div className="space-y-4 pt-4 border-t">
                             <Label className="text-base font-semibold">제목 폰트</Label>
                             <RadioGroup value={headlineFont} onValueChange={setHeadlineFont}>

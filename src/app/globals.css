@@ -52,8 +52,12 @@
     --input: 215 30% 25%;
     --ring: 205 68% 75%;
   }
-}
-@layer base {
+
+  html {
+    /* Set a fluid root font size */
+    font-size: clamp(14px, 1.5vw, 16px);
+  }
+
   * {
     @apply border-border;
   }
