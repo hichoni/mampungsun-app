@@ -343,8 +343,8 @@ export default function TeacherDashboard() {
     <div className="min-h-screen bg-background">
       <header className="px-4 lg:px-6 h-16 flex items-center border-b">
         <Link href="/teacher/dashboard" className="flex items-center gap-2 font-semibold">
-          <Image src="/icon-balloon2.png" alt="맘톡톡 로고" width={32} height={32} />
-          <span className="font-headline text-xl text-foreground">맘톡톡 교사 페이지</span>
+          <Image src="/icon-balloon2.png" alt="맘풍선 로고" width={32} height={32} />
+          <span className="font-headline text-xl text-foreground">맘풍선 교사 페이지</span>
         </Link>
         <div className="ml-auto flex items-center gap-2">
             <Sheet open={isSettingsOpen} onOpenChange={setSettingsOpen}>
@@ -368,7 +368,7 @@ export default function TeacherDashboard() {
                                     <RadioGroupItem value={font.value} id={`h-font-${font.value}`} />
                                     <Label htmlFor={`h-font-${font.value}`} className="flex-1">
                                     <p style={{ fontFamily: font.family }} className="text-lg">
-                                        {font.name} - 맘톡톡 이야기
+                                        {font.name} - 맘풍선 이야기
                                     </p>
                                     </Label>
                                 </div>

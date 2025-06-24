@@ -9,8 +9,8 @@ export default function LandingPage() {
     <div className="flex flex-col min-h-screen bg-background font-body">
       <header className="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-20">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/icon-balloon2.png" data-ai-hint="blue balloon" alt="맘톡톡 로고" width={32} height={32} />
-          <h1 className="text-2xl font-headline font-bold text-primary">맘톡톡</h1>
+          <Image src="/icon-balloon2.png" data-ai-hint="blue balloon" alt="맘풍선 로고" width={32} height={32} />
+          <h1 className="text-2xl font-headline font-bold text-primary">맘풍선</h1>
         </Link>
         <nav className="flex gap-2">
           <Button asChild variant="ghost">
@@ -30,7 +30,7 @@ export default function LandingPage() {
               마음 속 풍경을 선물하다
             </h2>
             <p className="text-lg md:text-xl text-foreground max-w-2xl mx-auto mb-2">
-              맘톡톡은 여러분의 마음을 표현하고, 따뜻한 응원을 주고받는 안전한 공간입니다.
+              맘풍선은 여러분의 마음을 표현하고, 따뜻한 응원을 주고받는 안전한 공간입니다.
             </p>
             <p className="text-md text-muted-foreground max-w-3xl mx-auto mb-8">
               <span className="font-bold">맘</span>: 마음 속, <span className="font-bold">풍</span>: 풍경을, <span className="font-bold">선</span>: 선물하다
@@ -46,7 +46,7 @@ export default function LandingPage() {
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h3 className="text-3xl md:text-4xl font-headline font-bold text-primary">주요 기능</h3>
-              <p className="text-muted-foreground mt-2">맘톡톡은 이런 멋진 기능들을 제공해요.</p>
+              <p className="text-muted-foreground mt-2">맘풍선은 이런 멋진 기능들을 제공해요.</p>
             </div>
             <div className="grid md:grid-cols-3 gap-8">
               <Card className="text-center">
@@ -93,7 +93,7 @@ export default function LandingPage() {
               당신의 마음을 들려주세요
             </h3>
             <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-              지금 바로 맘톡톡에 참여하여 마음을 나누고, 따뜻한 위로와 응원을 경험해보세요.
+              지금 바로 맘풍선에 참여하여 마음을 나누고, 따뜻한 위로와 응원을 경험해보세요.
             </p>
             <div className="flex justify-center gap-4">
                <Button asChild size="lg">
@@ -109,7 +109,7 @@ export default function LandingPage() {
 
       <footer className="bg-background border-t">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-muted-foreground text-sm">
-          <p>&copy; {new Date().getFullYear()} 맘톡톡. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} 맘풍선. All rights reserved.</p>
         </div>
       </footer>
     </div>

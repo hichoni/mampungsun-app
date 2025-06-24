@@ -4,14 +4,14 @@ import './globals.css';
 import FontManager from '@/components/font-manager';
 
 export const metadata: Metadata = {
-  title: '맘톡톡 (MomTalkTalk)',
-  description: '마음 속 풍경을 선물하는 공간, 맘톡톡입니다. 당신의 마음을 표현하고, 따뜻한 응원을 받아보세요.',
+  title: '맘풍선',
+  description: '마음 속 풍경을 선물하는 공간, 맘풍선입니다. 당신의 마음을 표현하고, 따뜻한 응원을 받아보세요.',
   manifest: '/manifest.json',
   themeColor: '#A0D2EB',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: '맘톡톡',
+    title: '맘풍선',
   },
 };
 
