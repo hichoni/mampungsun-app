@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Heart, MessageCircle, Loader2, Trash2 } from "lucide-react"
+import { Heart, MessageCircle, Loader2, Trash2, Pin } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
@@ -38,6 +38,7 @@ import { mockUsers } from "@/lib/data"
 import { ScrollArea } from "./ui/scroll-area"
 import { Input } from "./ui/input"
 import { moderateText } from "@/ai/flows/moderate-text-flow"
+import { cn } from "@/lib/utils"
 
 interface DiaryCardProps {
   entry: DiaryEntry
@@ -47,6 +48,7 @@ interface DiaryCardProps {
   onLikeComment: (entryId: string, commentIndex: number, action: 'like' | 'unlike') => void;
   onDeleteComment: (entryId: string, commentIndex: number) => void;
   onDeleteEntry?: (entryId: string) => void;
+  onPinEntry?: (entryId: string) => void;
   isTeacherView?: boolean;
 }
 
@@ -59,7 +61,7 @@ const getEmotionBadgeVariant = (emotion: string): 'default' | 'secondary' | 'des
   }
 }
 
-export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment, onDeleteComment, onDeleteEntry, isTeacherView = false }: DiaryCardProps) {
+export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment, onDeleteComment, onDeleteEntry, onPinEntry, isTeacherView = false }: DiaryCardProps) {
   const { toast } = useToast();
   const [isLiked, setIsLiked] = useState(false);
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
@@ -176,29 +178,39 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
           </div>
           <div className="flex items-center gap-1">
             <Badge variant={getEmotionBadgeVariant(entry.dominantEmotion)} className="flex-shrink-0 whitespace-nowrap">{entry.dominantEmotion}</Badge>
-            {isTeacherView && onDeleteEntry && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                      <span className="sr-only">맘풍선 삭제</span>
+            {isTeacherView && (
+              <>
+                {onPinEntry && (
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => onPinEntry(entry.id)}>
+                    <Pin className={cn("h-4 w-4", entry.isPinned && "fill-primary text-primary")} />
+                    <span className="sr-only">고정하기</span>
                   </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>정말 이 맘풍선을 삭제하시겠습니까?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      이 작업은 되돌릴 수 없습니다. 이 맘풍선과 모든 댓글이 영구적으로 삭제됩니다.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>취소</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => onDeleteEntry(entry.id)} className="bg-destructive hover:bg-destructive/90">
-                      삭제
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                )}
+                {onDeleteEntry && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">맘풍선 삭제</span>
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>정말 이 맘풍선을 삭제하시겠습니까?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          이 작업은 되돌릴 수 없습니다. 이 맘풍선과 모든 댓글이 영구적으로 삭제됩니다.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>취소</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onDeleteEntry(entry.id)} className="bg-destructive hover:bg-destructive/90">
+                          삭제
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </>
             )}
           </div>
         </div>

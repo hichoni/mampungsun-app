@@ -18,15 +18,36 @@ export default function ContentManagementPage() {
     setEntries(storedEntriesStr ? JSON.parse(storedEntriesStr) : mockDiaryEntries);
   }, []);
 
+  const handlePinEntry = (entryId: string) => {
+    setEntries(currentEntries => {
+      const entryToPin = currentEntries.find(e => e.id === entryId);
+      if (entryToPin) {
+        toast({
+          title: !entryToPin.isPinned ? "상단에 고정됨" : "고정 해제됨",
+          description: "맘풍선 순서가 변경되었습니다.",
+        });
+      }
+      
+      const updatedEntries = currentEntries.map(entry => {
+        if (entry.id === entryId) {
+          return { ...entry, isPinned: !entry.isPinned };
+        }
+        return entry;
+      });
+      localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
+      return updatedEntries;
+    });
+  };
+
   const handleDeleteEntry = (entryId: string) => {
     setEntries(currentEntries => {
       const updatedEntries = currentEntries.filter(entry => entry.id !== entryId);
       localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
+      toast({
+        title: "성공",
+        description: "맘풍선이 삭제되었습니다."
+      });
       return updatedEntries;
-    });
-    toast({
-      title: "성공",
-      description: "맘풍선이 삭제되었습니다."
     });
   };
 
@@ -45,15 +66,16 @@ export default function ContentManagementPage() {
 
   const handleLikeEntry = (entryId: string, action: 'like' | 'unlike') => {
     setEntries(currentEntries => {
-        const updatedEntries = currentEntries.map(entry => {
-          if (entry.id === entryId) {
-            const newLikes = action === 'like' ? entry.likes + 1 : Math.max(0, entry.likes - 1);
-            return { ...entry, likes: newLikes };
-          }
-          return entry;
-        });
-        localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
-        return updatedEntries;
+        const newEntries = JSON.parse(JSON.stringify(currentEntries));
+        const entryIndex = newEntries.findIndex((e: DiaryEntry) => e.id === entryId);
+        
+        if (entryIndex === -1) return currentEntries;
+
+        const entry = newEntries[entryIndex];
+        entry.likes = action === 'like' ? entry.likes + 1 : Math.max(0, entry.likes - 1);
+        
+        localStorage.setItem('diaryEntries', JSON.stringify(newEntries));
+        return newEntries;
     });
   };
 
@@ -83,12 +105,12 @@ export default function ContentManagementPage() {
 
       newEntries[entryIndex].comments.splice(commentIndex, 1);
       localStorage.setItem('diaryEntries', JSON.stringify(newEntries));
+      
+      toast({
+        title: "성공",
+        description: "댓글이 삭제되었습니다."
+      });
       return newEntries;
-    });
-
-    toast({
-      title: "성공",
-      description: "댓글이 삭제되었습니다."
     });
   };
 
@@ -118,18 +140,21 @@ export default function ContentManagementPage() {
         </header>
         <main className="p-4 sm:p-6 md:p-8">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {entries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(entry => (
-                <DiaryCard 
-                    key={entry.id} 
-                    entry={entry} 
-                    author={findUserById(entry.userId)} 
-                    onComment={handleComment}
-                    onLikeEntry={handleLikeEntry}
-                    onLikeComment={handleLikeComment}
-                    onDeleteComment={handleDeleteComment}
-                    onDeleteEntry={handleDeleteEntry}
-                    isTeacherView={true} 
-                />
+                {entries
+                  .sort((a, b) => Number(b.isPinned ?? false) - Number(a.isPinned ?? false) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                  .map(entry => (
+                  <DiaryCard 
+                      key={entry.id} 
+                      entry={entry} 
+                      author={findUserById(entry.userId)} 
+                      onComment={handleComment}
+                      onLikeEntry={handleLikeEntry}
+                      onLikeComment={handleLikeComment}
+                      onDeleteComment={handleDeleteComment}
+                      onDeleteEntry={handleDeleteEntry}
+                      onPinEntry={handlePinEntry}
+                      isTeacherView={true} 
+                  />
                 ))}
             </div>
         </main>

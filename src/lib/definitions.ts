@@ -27,4 +27,5 @@ export type DiaryEntry = {
   suggestedResponses: string[];
   likes: number;
   comments: Comment[];
+  isPinned?: boolean;
 };
