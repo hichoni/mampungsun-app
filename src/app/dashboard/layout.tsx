@@ -48,7 +48,7 @@ export default function DashboardLayout({
                 className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
               >
                 <BookUser className="h-4 w-4" />
-                나의 일기
+                나의 맘풍선
               </Link>
               <Link
                 href="/dashboard/chat"

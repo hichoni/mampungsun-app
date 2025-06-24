@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -10,9 +11,12 @@ import { Lightbulb, Loader2 } from 'lucide-react';
 import { analyzeStudentEmotions, type AnalyzeStudentEmotionsOutput } from '@/ai/flows/analyze-student-emotions';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import type { DiaryEntry } from '@/lib/definitions';
+import { mockDiaryEntries } from '@/lib/data';
 
 export function NewDiaryForm() {
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
   const { toast } = useToast();
   const [diaryEntry, setDiaryEntry] = useState('');
   const [analysis, setAnalysis] = useState<AnalyzeStudentEmotionsOutput | null>(null);
@@ -43,8 +47,6 @@ export function NewDiaryForm() {
   };
 
   const handleSubmit = () => {
-    // In a real app, this would save the diary entry to a database.
-    // For now, we'll just show a success toast.
     if (diaryEntry.trim().length === 0) {
          toast({
             variant: "destructive",
@@ -53,12 +55,40 @@ export function NewDiaryForm() {
          });
          return;
     }
+    
+    // Create a new diary entry object
+    const newEntry: DiaryEntry = {
+      id: Date.now().toString(),
+      userId: '4', // Hardcoded test user ID
+      content: diaryEntry,
+      isPublic: isPublic,
+      createdAt: new Date().toISOString(),
+      dominantEmotion: analysis?.dominantEmotion || '평온',
+      suggestedResponses: analysis?.suggestedResponses || ['오늘 하루도 수고했어.', '평범한 날도 소중해.', '내일은 더 좋은 일이 있을 거야.'],
+      likes: 0,
+      comments: [],
+    };
+
+    // Retrieve existing entries from localStorage, add the new one, and save back
+    try {
+      const storedEntries = localStorage.getItem('diaryEntries');
+      const entries = storedEntries ? JSON.parse(storedEntries) : mockDiaryEntries;
+      const updatedEntries = [newEntry, ...entries];
+      localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
+    } catch (error) {
+      console.error("Failed to save to localStorage", error);
+    }
+    
     toast({
       title: "맘풍선을 날렸어요!",
       description: "당신의 마음이 잘 전달되었을 거예요.",
     });
+
     setDiaryEntry('');
     setAnalysis(null);
+    
+    // Redirect to the diary page to see the new entry
+    router.push('/dashboard/my-diary');
   };
 
   return (

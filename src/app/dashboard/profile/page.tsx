@@ -10,9 +10,8 @@ import React, { useState } from "react"
 
 export default function ProfilePage() {
   const { toast } = useToast();
-  // In a real app, you'd fetch the current user's data from context or session
-  // For now, let's assume user '1' is logged in
-  const [user, setUser] = useState(mockUsers[0]);
+  // Set user to the test user ('4')
+  const [user, setUser] = useState(mockUsers[3]);
 
   const [nickname, setNickname] = useState(user.nickname);
   const [currentPin, setCurrentPin] = useState('');

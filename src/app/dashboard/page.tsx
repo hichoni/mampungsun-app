@@ -1,12 +1,25 @@
+'use client'
+
+import { useState, useEffect } from "react"
 import { DiaryCard } from "@/components/diary-card"
 import { mockDiaryEntries, mockUsers } from "@/lib/data"
 import type { DiaryEntry, User } from "@/lib/definitions"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
 
 export default function DashboardPage() {
+  const [entries, setEntries] = useState<DiaryEntry[]>(mockDiaryEntries);
+
+  useEffect(() => {
+    const storedEntries = localStorage.getItem('diaryEntries');
+    if (storedEntries) {
+      setEntries(JSON.parse(storedEntries));
+    } else {
+      // Initialize localStorage if it's empty
+      localStorage.setItem('diaryEntries', JSON.stringify(mockDiaryEntries));
+    }
+  }, []);
+
   // In a real app, you would fetch this data
-  const publicEntries = mockDiaryEntries.filter(entry => entry.isPublic)
+  const publicEntries = entries.filter(entry => entry.isPublic)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const findUserById = (userId: string): User | undefined => {
