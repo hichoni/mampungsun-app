@@ -5,6 +5,7 @@ export const mockUsers: User[] = [
   { id: '2', name: '이서연', nickname: '꿈꾸는 돌고래', grade: 1, class: 3, studentId: 12, pin: '5678', isApproved: true },
   { id: '3', name: '박하은', nickname: '용감한 사자', grade: 2, class: 1, studentId: 5, pin: '9012', isApproved: false },
   { id: '4', name: '김테스트', nickname: '테스트다람쥐', grade: 1, class: 1, studentId: 1, pin: '0000', isApproved: true },
+  { id: 'ai-cheerer', name: '응원 요정', nickname: '응원 요정', grade: 0, class: 0, studentId: 0, pin: '', isApproved: true },
 ];
 
 export const mockDiaryEntries: DiaryEntry[] = [
@@ -40,10 +41,10 @@ export const mockDiaryEntries: DiaryEntry[] = [
     userId: '3',
     content: '내일 있을 발표 때문에 너무 떨린다. 잘할 수 있을지 걱정된다. 실수하면 어떡하지?',
     isPublic: true,
-    createdAt: '2024-05-22T09:00:00Z',
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // Make this post 2 hours old for demo
     dominantEmotion: '불안',
     suggestedResponses: ['넌 잘할 수 있어!', '연습한 만큼만 하면 돼.', '실수해도 괜찮아, 누구나 그래.'],
-    likes: 8,
+    likes: 0,
     comments: [],
   },
   {

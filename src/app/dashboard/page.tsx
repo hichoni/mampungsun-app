@@ -4,19 +4,81 @@ import { useState, useEffect } from "react"
 import { DiaryCard } from "@/components/diary-card"
 import { mockDiaryEntries, mockUsers } from "@/lib/data"
 import type { DiaryEntry, User } from "@/lib/definitions"
+import { generateAiComment } from "@/ai/flows/generate-ai-comment-flow"
+
+const AI_CHEERER_ID = 'ai-cheerer';
+// For demonstration, any post older than 1 hour without engagement gets a comment.
+const AI_COMMENT_THRESHOLD_HOURS = 1;
 
 export default function DashboardPage() {
   const [entries, setEntries] = useState<DiaryEntry[]>(mockDiaryEntries);
 
   useEffect(() => {
-    const storedEntries = localStorage.getItem('diaryEntries');
-    if (storedEntries) {
-      setEntries(JSON.parse(storedEntries));
-    } else {
-      // Initialize localStorage if it's empty
+    const storedEntriesStr = localStorage.getItem('diaryEntries');
+    const initialEntries = storedEntriesStr ? JSON.parse(storedEntriesStr) : mockDiaryEntries;
+    
+    if (storedEntriesStr === null) {
       localStorage.setItem('diaryEntries', JSON.stringify(mockDiaryEntries));
     }
-  }, []);
+    
+    setEntries(initialEntries);
+
+    const addAutoComments = async () => {
+      let currentEntries: DiaryEntry[] = JSON.parse(localStorage.getItem('diaryEntries') || '[]');
+      let entriesWereUpdated = false;
+      const aiUser = mockUsers.find(u => u.id === AI_CHEERER_ID);
+
+      if (!aiUser) return;
+      
+      const updatedEntries = [...currentEntries];
+
+      for (let i = 0; i < updatedEntries.length; i++) {
+        const entry = updatedEntries[i];
+        const hasEngagement = entry.likes > 0 || entry.comments.length > 0;
+        const hasAiComment = entry.comments.some((c: any) => c.userId === AI_CHEERER_ID);
+        
+        if (hasEngagement || hasAiComment) {
+          continue;
+        }
+
+        const entryDate = new Date(entry.createdAt);
+        const hoursDiff = (new Date().getTime() - entryDate.getTime()) / (1000 * 60 * 60);
+
+        if (hoursDiff > AI_COMMENT_THRESHOLD_HOURS) {
+          try {
+            const result = await generateAiComment({ diaryEntryContent: entry.content });
+            
+            if (result.comment) {
+              const aiComment = {
+                userId: AI_CHEERER_ID,
+                nickname: aiUser.nickname,
+                comment: result.comment,
+              };
+              updatedEntries[i].comments.push(aiComment);
+              entriesWereUpdated = true;
+            }
+          } catch (error) {
+            console.error("Failed to generate AI comment for entry:", entry.id, error);
+          }
+        }
+      }
+
+      if (entriesWereUpdated) {
+        setEntries(updatedEntries);
+        localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
+      }
+    };
+    
+    // Set a small timeout to avoid running this on very fast re-renders
+    // and to allow the initial state to settle.
+    const timer = setTimeout(() => {
+      addAutoComments();
+    }, 1000); // Wait 1 second before checking
+    
+    return () => clearTimeout(timer);
+
+  }, []); // Run only on mount
+
 
   const handleComment = (entryId: string, newComment: { userId: string; nickname: string; comment: string }) => {
     const updatedEntries = entries.map(entry => {
