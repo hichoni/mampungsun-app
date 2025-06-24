@@ -18,6 +18,18 @@ export default function ContentManagementPage() {
     setEntries(storedEntriesStr ? JSON.parse(storedEntriesStr) : mockDiaryEntries);
   }, []);
 
+  const handleDeleteEntry = (entryId: string) => {
+    setEntries(currentEntries => {
+      const updatedEntries = currentEntries.filter(entry => entry.id !== entryId);
+      localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
+      return updatedEntries;
+    });
+    toast({
+      title: "성공",
+      description: "맘풍선이 삭제되었습니다."
+    });
+  };
+
   const handleComment = (entryId: string, newComment: Comment) => {
     setEntries(currentEntries => {
         const updatedEntries = currentEntries.map(entry => {
@@ -61,7 +73,6 @@ export default function ContentManagementPage() {
   };
 
   const handleDeleteComment = (entryId: string, commentIndex: number) => {
-    let commentDeleted = false;
     setEntries(currentEntries => {
       const newEntries = JSON.parse(JSON.stringify(currentEntries));
       const entryIndex = newEntries.findIndex((e: DiaryEntry) => e.id === entryId);
@@ -71,18 +82,14 @@ export default function ContentManagementPage() {
       }
 
       newEntries[entryIndex].comments.splice(commentIndex, 1);
-      commentDeleted = true;
-      
       localStorage.setItem('diaryEntries', JSON.stringify(newEntries));
       return newEntries;
     });
 
-    if (commentDeleted) {
-      toast({
-        title: "성공",
-        description: "댓글이 삭제되었습니다."
-      });
-    }
+    toast({
+      title: "성공",
+      description: "댓글이 삭제되었습니다."
+    });
   };
 
   const findUserById = (userId: string): User | undefined => {
@@ -120,6 +127,7 @@ export default function ContentManagementPage() {
                     onLikeEntry={handleLikeEntry}
                     onLikeComment={handleLikeComment}
                     onDeleteComment={handleDeleteComment}
+                    onDeleteEntry={handleDeleteEntry}
                     isTeacherView={true} 
                 />
                 ))}

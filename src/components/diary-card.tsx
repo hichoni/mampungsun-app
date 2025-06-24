@@ -46,6 +46,7 @@ interface DiaryCardProps {
   onLikeEntry: (entryId: string, action: 'like' | 'unlike') => void;
   onLikeComment: (entryId: string, commentIndex: number, action: 'like' | 'unlike') => void;
   onDeleteComment: (entryId: string, commentIndex: number) => void;
+  onDeleteEntry?: (entryId: string) => void;
   isTeacherView?: boolean;
 }
 
@@ -58,7 +59,7 @@ const getEmotionBadgeVariant = (emotion: string): 'default' | 'secondary' | 'des
   }
 }
 
-export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment, onDeleteComment, isTeacherView = false }: DiaryCardProps) {
+export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment, onDeleteComment, onDeleteEntry, isTeacherView = false }: DiaryCardProps) {
   const { toast } = useToast();
   const [isLiked, setIsLiked] = useState(false);
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
@@ -91,8 +92,8 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
     onLikeEntry(entry.id, newIsLiked ? 'like' : 'unlike');
   }
 
-  const handleCommentLikeToggle = (commentId: string, commentIndex: number) => {
-    const uniqueCommentKey = `${entry.id}-${commentId}-${commentIndex}`;
+  const handleCommentLikeToggle = (commentIndex: number) => {
+    const uniqueCommentKey = `${entry.id}-comment-${commentIndex}`;
     const newLikedComments = new Set(likedComments);
     const action = newLikedComments.has(uniqueCommentKey) ? 'unlike' : 'like';
 
@@ -162,9 +163,9 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
   }
 
   return (
-    <Card>
+    <Card className="flex flex-col h-full">
       <CardHeader>
-        <div className="flex items-center gap-4">
+        <div className="flex items-start gap-4">
           <Avatar>
             <AvatarImage src={`https://placehold.co/40x40.png?text=${author?.nickname.charAt(0)}`} />
             <AvatarFallback>{author?.nickname.charAt(0)}</AvatarFallback>
@@ -173,13 +174,39 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
             <CardTitle className="text-base truncate">{author?.nickname}</CardTitle>
             <CardDescription>{timeAgo(entry.createdAt)}</CardDescription>
           </div>
-          <Badge variant={getEmotionBadgeVariant(entry.dominantEmotion)} className="flex-shrink-0 whitespace-nowrap">{entry.dominantEmotion}</Badge>
+          <div className="flex items-center gap-1">
+            <Badge variant={getEmotionBadgeVariant(entry.dominantEmotion)} className="flex-shrink-0 whitespace-nowrap">{entry.dominantEmotion}</Badge>
+            {isTeacherView && onDeleteEntry && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive">
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">맘풍선 삭제</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>정말 이 맘풍선을 삭제하시겠습니까?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      이 작업은 되돌릴 수 없습니다. 이 맘풍선과 모든 댓글이 영구적으로 삭제됩니다.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>취소</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => onDeleteEntry(entry.id)} className="bg-destructive hover:bg-destructive/90">
+                      삭제
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-grow">
         <p className="text-base">{entry.content}</p>
       </CardContent>
-      <CardFooter className="flex justify-between">
+      <CardFooter className="flex justify-between mt-auto">
         <div className="flex gap-4">
             <Button variant="ghost" size="sm" onClick={handleLikeToggle} className="flex items-center gap-2">
                 <Heart className={`h-4 w-4 ${isLiked ? 'text-red-500 fill-current' : ''}`} />
@@ -205,7 +232,7 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
                             <div className="space-y-4">
                                 {entry.comments.length > 0 ? (
                                     entry.comments.map((comment, index) => (
-                                      <div key={`${comment.id}-${index}`} className="flex items-start gap-2">
+                                      <div key={`${entry.id}-comment-${index}`} className="flex items-start gap-2">
                                           <Avatar className="w-8 h-8 border">
                                               <AvatarImage src={`https://placehold.co/40x40.png?text=${comment.nickname.charAt(0)}`} />
                                               <AvatarFallback>{comment.nickname.charAt(0)}</AvatarFallback>
@@ -216,8 +243,8 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
                                                   <p className="text-sm text-muted-foreground">{comment.comment}</p>
                                               </div>
                                               <div className="flex items-center gap-2 pl-2">
-                                                  <Button variant="ghost" size="sm" className="p-1 h-auto flex items-center gap-1" onClick={() => handleCommentLikeToggle(comment.id, index)}>
-                                                      <Heart className={`h-3 w-3 ${likedComments.has(`${entry.id}-${comment.id}-${index}`) ? 'text-red-500 fill-current' : ''}`} />
+                                                  <Button variant="ghost" size="sm" className="p-1 h-auto flex items-center gap-1" onClick={() => handleCommentLikeToggle(index)}>
+                                                      <Heart className={`h-3 w-3 ${likedComments.has(`${entry.id}-comment-${index}`) ? 'text-red-500 fill-current' : ''}`} />
                                                       {comment.likes > 0 && <span className="text-xs text-muted-foreground font-normal">{comment.likes}</span>}
                                                   </Button>
                                                   {isTeacherView && (
