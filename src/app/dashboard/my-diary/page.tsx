@@ -35,17 +35,14 @@ export default function MyDiaryPage() {
 
   const handleComment = (entryId: string, newComment: Comment) => {
     setEntries(currentEntries => {
-      const updatedEntries = currentEntries.map(entry => {
-        if (entry.id === entryId) {
-          return {
-            ...entry,
-            comments: [...entry.comments, newComment],
-          };
-        }
-        return entry;
-      });
-      localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
-      return updatedEntries;
+      const newEntries = JSON.parse(JSON.stringify(currentEntries));
+      const entryIndex = newEntries.findIndex((e: DiaryEntry) => e.id === entryId);
+      if (entryIndex !== -1) {
+        newEntries[entryIndex].comments.push(newComment);
+        localStorage.setItem('diaryEntries', JSON.stringify(newEntries));
+        return newEntries;
+      }
+      return currentEntries;
     });
   };
   
@@ -66,11 +63,13 @@ export default function MyDiaryPage() {
   const handleLikeComment = (entryId: string, commentIndex: number, action: 'like' | 'unlike') => {
     setEntries(currentEntries => {
       const newEntries = JSON.parse(JSON.stringify(currentEntries));
-      const entry = newEntries.find((e: DiaryEntry) => e.id === entryId);
+      const entryIndex = newEntries.findIndex((e: DiaryEntry) => e.id === entryId);
       
-      if (!entry || !entry.comments[commentIndex]) return currentEntries;
+      if (entryIndex === -1 || !newEntries[entryIndex].comments[commentIndex]) {
+        return currentEntries;
+      }
       
-      const comment = entry.comments[commentIndex];
+      const comment = newEntries[entryIndex].comments[commentIndex];
       comment.likes = action === 'like' ? comment.likes + 1 : Math.max(0, comment.likes - 1);
   
       localStorage.setItem('diaryEntries', JSON.stringify(newEntries));

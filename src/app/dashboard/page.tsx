@@ -5,6 +5,8 @@ import { DiaryCard } from "@/components/diary-card"
 import { mockDiaryEntries, mockUsers } from "@/lib/data"
 import type { DiaryEntry, User, Comment } from "@/lib/definitions"
 import { generateAiComment } from "@/ai/flows/generate-ai-comment-flow"
+import { generateWelcomeMessage } from "@/ai/flows/generate-welcome-message-flow"
+import { Lightbulb } from "lucide-react"
 
 const AI_CHEERER_ID = 'ai-cheerer';
 // For demonstration, any post older than 1 hour without engagement gets a comment.
@@ -12,9 +14,25 @@ const AI_COMMENT_THRESHOLD_HOURS = 1;
 
 export default function DashboardPage() {
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
+  const [welcomeMessage, setWelcomeMessage] = useState<string>('');
+  const [isLoadingWelcome, setIsLoadingWelcome] = useState<boolean>(true);
 
-  // Load entries from localStorage on mount and run AI check
+  // Load entries from localStorage on mount and run AI checks
   useEffect(() => {
+    // Fetch welcome message
+    const fetchWelcomeMessage = async () => {
+      setIsLoadingWelcome(true);
+      try {
+        const result = await generateWelcomeMessage();
+        setWelcomeMessage(result.welcomeMessage || "친구들의 마음에 귀를 기울이고, 따뜻한 응원을 보내보세요!");
+      } catch (error) {
+        console.error("Failed to generate welcome message:", error);
+        setWelcomeMessage("친구들의 마음에 귀를 기울이고, 따뜻한 응원을 보내보세요!"); // Fallback message
+      } finally {
+        setIsLoadingWelcome(false);
+      }
+    };
+    
     const storedEntriesStr = localStorage.getItem('diaryEntries');
     let initialEntries = storedEntriesStr ? JSON.parse(storedEntriesStr) : mockDiaryEntries;
 
@@ -68,23 +86,21 @@ export default function DashboardPage() {
       }
     };
     
+    fetchWelcomeMessage();
     addAutoComments();
   }, []);
 
 
   const handleComment = (entryId: string, newComment: Comment) => {
     setEntries(currentEntries => {
-      const updatedEntries = currentEntries.map(entry => {
-        if (entry.id === entryId) {
-          return {
-            ...entry,
-            comments: [...entry.comments, newComment],
-          };
-        }
-        return entry;
-      });
-      localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
-      return updatedEntries;
+      const newEntries = JSON.parse(JSON.stringify(currentEntries));
+      const entryIndex = newEntries.findIndex((e: DiaryEntry) => e.id === entryId);
+      if (entryIndex !== -1) {
+        newEntries[entryIndex].comments.push(newComment);
+        localStorage.setItem('diaryEntries', JSON.stringify(newEntries));
+        return newEntries;
+      }
+      return currentEntries;
     });
   };
   
@@ -105,11 +121,13 @@ export default function DashboardPage() {
   const handleLikeComment = (entryId: string, commentIndex: number, action: 'like' | 'unlike') => {
     setEntries(currentEntries => {
       const newEntries = JSON.parse(JSON.stringify(currentEntries));
-      const entry = newEntries.find((e: DiaryEntry) => e.id === entryId);
+      const entryIndex = newEntries.findIndex((e: DiaryEntry) => e.id === entryId);
 
-      if (!entry || !entry.comments[commentIndex]) return currentEntries;
-
-      const comment = entry.comments[commentIndex];
+      if (entryIndex === -1 || !newEntries[entryIndex].comments[commentIndex]) {
+        return currentEntries;
+      }
+      
+      const comment = newEntries[entryIndex].comments[commentIndex];
       comment.likes = action === 'like' ? comment.likes + 1 : Math.max(0, comment.likes - 1);
   
       localStorage.setItem('diaryEntries', JSON.stringify(newEntries));
@@ -133,10 +151,15 @@ export default function DashboardPage() {
 
   return (
     <>
-      <div className="flex items-center justify-between">
+      <div className="flex items-start gap-4 p-4 rounded-lg bg-primary/10 mb-6 border border-primary/20">
+        <Lightbulb className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
         <div>
-          <h1 className="text-lg font-semibold md:text-2xl font-headline">모두의 맘풍선</h1>
-          <p className="text-muted-foreground">다른 친구들의 마음 이야기를 들어보세요.</p>
+          <h1 className="text-lg font-semibold md:text-xl font-headline text-primary">모두의 맘풍선</h1>
+          {isLoadingWelcome ? (
+             <p className="text-muted-foreground animate-pulse">따뜻한 환영 인사를 준비 중이에요...</p>
+          ) : (
+            <p className="text-muted-foreground">{welcomeMessage}</p>
+          )}
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
