@@ -33,7 +33,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
-import { useState, useTransition } from "react"
+import { useState, useTransition, useEffect } from "react"
 import { mockUsers } from "@/lib/data"
 import { ScrollArea } from "./ui/scroll-area"
 import { Input } from "./ui/input"
@@ -43,7 +43,8 @@ interface DiaryCardProps {
   entry: DiaryEntry
   author: User | undefined
   onComment: (entryId: string, comment: Comment) => void;
-  onLikeComment: (entryId: string, commentId: string) => void;
+  onLikeEntry: (entryId: string, action: 'like' | 'unlike') => void;
+  onLikeComment: (entryId: string, commentId: string, action: 'like' | 'unlike') => void;
   onDeleteComment: (entryId: string, commentId: string) => void;
   isTeacherView?: boolean;
 }
@@ -57,24 +58,53 @@ const getEmotionBadgeVariant = (emotion: string): 'default' | 'secondary' | 'des
   }
 }
 
-export function DiaryCard({ entry, author, onComment, onLikeComment, onDeleteComment, isTeacherView = false }: DiaryCardProps) {
+export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment, onDeleteComment, isTeacherView = false }: DiaryCardProps) {
   const { toast } = useToast();
-  const [likes, setLikes] = useState(entry.likes);
   const [isLiked, setIsLiked] = useState(false);
+  const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [newCommentText, setNewCommentText] = useState('');
   const [isPending, startTransition] = useTransition();
 
   const commenter = mockUsers.find(u => u.id === '4');
 
-  const handleLike = () => {
-    if (isLiked) {
-        setLikes(likes - 1);
+  useEffect(() => {
+    const likedEntryIds = new Set<string>(JSON.parse(localStorage.getItem('likedEntries') || '[]'));
+    setIsLiked(likedEntryIds.has(entry.id));
+
+    const likedCommentIds = new Set<string>(JSON.parse(localStorage.getItem('likedComments') || '[]'));
+    setLikedComments(likedCommentIds);
+  }, [entry.id]);
+
+  const handleLikeToggle = () => {
+    const newIsLiked = !isLiked;
+    setIsLiked(newIsLiked);
+    
+    const likedEntryIds = new Set<string>(JSON.parse(localStorage.getItem('likedEntries') || '[]'));
+    if (newIsLiked) {
+      likedEntryIds.add(entry.id);
     } else {
-        setLikes(likes + 1);
+      likedEntryIds.delete(entry.id);
     }
-    setIsLiked(!isLiked);
+    localStorage.setItem('likedEntries', JSON.stringify(Array.from(likedEntryIds)));
+    
+    onLikeEntry(entry.id, newIsLiked ? 'like' : 'unlike');
   }
+
+  const handleCommentLikeToggle = (commentId: string) => {
+    const newLikedComments = new Set(likedComments);
+    const action = newLikedComments.has(commentId) ? 'unlike' : 'like';
+
+    if (action === 'like') {
+      newLikedComments.add(commentId);
+    } else {
+      newLikedComments.delete(commentId);
+    }
+
+    setLikedComments(newLikedComments);
+    localStorage.setItem('likedComments', JSON.stringify(Array.from(newLikedComments)));
+    onLikeComment(entry.id, commentId, action);
+  };
 
   const handlePostComment = (commentText: string) => {
     if (!commentText.trim() || !commenter) return;
@@ -150,9 +180,9 @@ export function DiaryCard({ entry, author, onComment, onLikeComment, onDeleteCom
       </CardContent>
       <CardFooter className="flex justify-between">
         <div className="flex gap-4">
-            <Button variant="ghost" size="sm" onClick={handleLike} className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={handleLikeToggle} className="flex items-center gap-2">
                 <Heart className={`h-4 w-4 ${isLiked ? 'text-red-500 fill-current' : ''}`} />
-                {likes}
+                {entry.likes}
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
@@ -185,8 +215,8 @@ export function DiaryCard({ entry, author, onComment, onLikeComment, onDeleteCom
                                                   <p className="text-sm text-muted-foreground">{comment.comment}</p>
                                               </div>
                                               <div className="flex items-center gap-2 pl-2">
-                                                  <Button variant="ghost" size="sm" className="p-1 h-auto flex items-center gap-1" onClick={() => onLikeComment(entry.id, comment.id)}>
-                                                      <Heart className="h-3 w-3" />
+                                                  <Button variant="ghost" size="sm" className="p-1 h-auto flex items-center gap-1" onClick={() => handleCommentLikeToggle(comment.id)}>
+                                                      <Heart className={`h-3 w-3 ${likedComments.has(comment.id) ? 'text-red-500 fill-current' : ''}`} />
                                                       {comment.likes > 0 && <span className="text-xs text-muted-foreground font-normal">{comment.likes}</span>}
                                                   </Button>
                                                   {isTeacherView && (

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, LogOut } from "lucide-react"
 import { DiaryCard } from "@/components/diary-card"
 import { mockDiaryEntries, mockUsers } from "@/lib/data"
 import type { DiaryEntry, User, Comment } from "@/lib/definitions"
@@ -34,14 +34,26 @@ export default function ContentManagementPage() {
     updateAndStoreEntries(updatedEntries);
   };
 
-  const handleLikeComment = (entryId: string, commentId: string) => {
+  const handleLikeEntry = (entryId: string, action: 'like' | 'unlike') => {
+    const updatedEntries = entries.map(entry => {
+      if (entry.id === entryId) {
+        const newLikes = action === 'like' ? entry.likes + 1 : Math.max(0, entry.likes - 1);
+        return { ...entry, likes: newLikes };
+      }
+      return entry;
+    });
+    updateAndStoreEntries(updatedEntries);
+  };
+
+  const handleLikeComment = (entryId: string, commentId: string, action: 'like' | 'unlike') => {
     const updatedEntries = entries.map(entry => {
       if (entry.id === entryId) {
         return {
           ...entry,
           comments: entry.comments.map(comment => {
             if (comment.id === commentId) {
-              return { ...comment, likes: comment.likes + 1 };
+              const newLikes = action === 'like' ? comment.likes + 1 : Math.max(0, comment.likes - 1);
+              return { ...comment, likes: newLikes };
             }
             return comment;
           }),
@@ -101,6 +113,7 @@ export default function ContentManagementPage() {
                     entry={entry} 
                     author={findUserById(entry.userId)} 
                     onComment={handleComment}
+                    onLikeEntry={handleLikeEntry}
                     onLikeComment={handleLikeComment}
                     onDeleteComment={handleDeleteComment}
                     isTeacherView={true} 
