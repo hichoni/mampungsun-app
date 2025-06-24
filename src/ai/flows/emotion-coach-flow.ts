@@ -15,13 +15,13 @@ const messageSchema = z.object({
   parts: z.array(z.object({ text: z.string() })),
 });
 
-export const EmotionCoachInputSchema = z.object({
+const EmotionCoachInputSchema = z.object({
   history: z.array(messageSchema).describe("The history of the conversation so far."),
   message: z.string().describe("The user's latest message."),
 });
 export type EmotionCoachInput = z.infer<typeof EmotionCoachInputSchema>;
 
-export const EmotionCoachOutputSchema = z.object({
+const EmotionCoachOutputSchema = z.object({
     response: z.string().describe("The AI coach's response."),
 });
 export type EmotionCoachOutput = z.infer<typeof EmotionCoachOutputSchema>;
