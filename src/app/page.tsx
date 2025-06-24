@@ -30,7 +30,7 @@ export default function LandingPage() {
               마음 속 풍경을 선물하다
             </h2>
             <p className="text-lg md:text-xl text-foreground max-w-2xl mx-auto mb-8">
-              맘풍선은 여러분의 마음을 표현하고, 따뜻한 응원을 주고받는 안전한 공간입니다.
+              맘풍선은 여러분의 마음을 표현하고,<br />따뜻한 응원을 주고받는 안전한 공간입니다.
             </p>
             <Button asChild size="lg">
               <Link href="/login">지금 마음 표현하기</Link>
