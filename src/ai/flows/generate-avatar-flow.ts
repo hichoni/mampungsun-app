@@ -5,12 +5,12 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
-export const GenerateAvatarInputSchema = z.object({
+const GenerateAvatarInputSchema = z.object({
   nickname: z.string().describe('아바타를 생성할 학생의 별명입니다.'),
 });
 export type GenerateAvatarInput = z.infer<typeof GenerateAvatarInputSchema>;
 
-export const GenerateAvatarOutputSchema = z.object({
+const GenerateAvatarOutputSchema = z.object({
   avatarDataUri: z.string().describe('생성된 아바타 이미지의 데이터 URI입니다.'),
 });
 export type GenerateAvatarOutput = z.infer<typeof GenerateAvatarOutputSchema>;
