@@ -99,7 +99,7 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-secondary/50">
       <Card className="mx-auto max-w-sm w-full">
         <CardHeader className="text-center space-y-4">
-            <Image src="/balloon2.png" alt="맘풍선 로고" width={40} height={40} className="mx-auto" />
+            <Image src="/icon-balloon2.png" alt="맘풍선 로고" width={40} height={40} className="mx-auto" />
             <div className="space-y-1">
                 <CardTitle className="text-2xl font-headline">학생 로그인</CardTitle>
                 <CardDescription>

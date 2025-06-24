@@ -30,7 +30,7 @@ export default function DashboardLayout({
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-              <Image src="/balloon2.png" alt="맘풍선 로고" width={28} height={28} />
+              <Image src="/icon-balloon2.png" alt="맘풍선 로고" width={28} height={28} />
               <span className="font-headline text-lg">맘풍선</span>
             </Link>
           </div>
