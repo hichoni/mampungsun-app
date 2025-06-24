@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Heart, MessageCircle } from "lucide-react"
+import { Heart, MessageCircle, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
@@ -23,10 +23,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { mockUsers } from "@/lib/data"
 import { ScrollArea } from "./ui/scroll-area"
 import { Input } from "./ui/input"
+import { moderateText } from "@/ai/flows/moderate-text-flow"
 
 interface DiaryCardProps {
   entry: DiaryEntry
@@ -49,6 +50,7 @@ export function DiaryCard({ entry, author, onComment }: DiaryCardProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [newCommentText, setNewCommentText] = useState('');
+  const [isPending, startTransition] = useTransition();
 
   const commenter = mockUsers.find(u => u.id === '4');
 
@@ -63,21 +65,33 @@ export function DiaryCard({ entry, author, onComment }: DiaryCardProps) {
 
   const handlePostComment = (commentText: string) => {
     if (!commentText.trim() || !commenter) return;
-    
-    const newCommentPayload = {
-        userId: commenter.id,
-        nickname: commenter.nickname,
-        comment: commentText,
-    };
 
-    onComment(entry.id, newCommentPayload);
-    
-    toast({
-      title: "댓글이 등록되었어요.",
-      description: `"${commentText}"`,
-    })
+    startTransition(async () => {
+      const moderationResult = await moderateText({ text: commentText });
 
-    setNewCommentText('');
+      if (moderationResult && moderationResult.isAppropriate) {
+        const newCommentPayload = {
+          userId: commenter.id,
+          nickname: commenter.nickname,
+          comment: commentText,
+        };
+    
+        onComment(entry.id, newCommentPayload);
+        
+        toast({
+          title: "댓글이 등록되었어요.",
+          description: `"${commentText}"`,
+        });
+
+        setNewCommentText('');
+      } else {
+        toast({
+            variant: "destructive",
+            title: "부적절한 내용 감지",
+            description: moderationResult?.reason || "따뜻하고 고운 말을 사용해주세요.",
+        });
+      }
+    });
   }
 
   const handleSubmitCustomComment = (e: React.FormEvent) => {
@@ -170,7 +184,7 @@ export function DiaryCard({ entry, author, onComment }: DiaryCardProps) {
                             <p className="text-sm font-medium mb-2 text-foreground">AI 추천 응원 메시지</p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {entry.suggestedResponses.map((res, index) => (
-                                    <Button key={index} variant="outline" onClick={() => handlePostComment(res)}>
+                                    <Button key={index} variant="outline" onClick={() => handlePostComment(res)} disabled={isPending}>
                                         {res}
                                     </Button>
                                 ))}
@@ -183,8 +197,11 @@ export function DiaryCard({ entry, author, onComment }: DiaryCardProps) {
                                 onChange={(e) => setNewCommentText(e.target.value)}
                                 placeholder="직접 응원 메시지를 입력할 수도 있어요."
                                 className="flex-1"
+                                disabled={isPending}
                             />
-                            <Button type="submit" disabled={!newCommentText.trim()}>전송</Button>
+                            <Button type="submit" disabled={!newCommentText.trim() || isPending}>
+                                {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "전송"}
+                            </Button>
                         </form>
                     </div>
                 </DialogContent>
