@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { LogOut, PlusCircle, Trash2, Upload, Download, Save, Settings, MessageSquareText } from "lucide-react"
+import { LogOut, PlusCircle, Trash2, Upload, Download, MessageSquareText } from "lucide-react"
 import Link from "next/link"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
@@ -42,21 +42,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { PieChart, Pie, Cell } from "recharts"
 import { type ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { generateNickname } from "@/ai/flows/generate-nickname-flow"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
-import { Slider } from "@/components/ui/slider"
 
 
 const getEmotionBadgeVariant = (emotion: string) => {
@@ -72,27 +61,6 @@ const getEmotionBadgeVariant = (emotion: string) => {
   }
 };
 
-const headlineFonts = [
-  { name: 'Belleza', value: 'Belleza', family: 'Belleza, sans-serif' },
-  { name: 'Gaegu', value: 'Gaegu', family: 'Gaegu, cursive' },
-  { name: 'Nanum Pen Script', value: 'Nanum Pen Script', family: '"Nanum Pen Script", cursive' },
-  { name: 'Do Hyeon', value: 'Do Hyeon', family: '"Do Hyeon", sans-serif' },
-  { name: 'Black Han Sans', value: 'Black Han Sans', family: '"Black Han Sans", sans-serif' },
-  { name: 'East Sea Dokdo', value: 'East Sea Dokdo', family: '"East Sea Dokdo", cursive' },
-  { name: 'Gugi', value: 'Gugi', family: '"Gugi", cursive' },
-]
-
-const bodyFonts = [
-  { name: 'Alegreya', value: 'Alegreya', family: 'Alegreya, serif' },
-  { name: 'Gowun Dodum', value: 'Gowun Dodum', family: '"Gowun Dodum", sans-serif' },
-  { name: 'Noto Sans KR', value: 'Noto Sans KR', family: '"Noto Sans KR", sans-serif' },
-  { name: 'Nanum Gothic', value: 'Nanum Gothic', family: '"Nanum Gothic", sans-serif' },
-  { name: 'IBM Plex Sans KR', value: 'IBM Plex Sans KR', family: '"IBM Plex Sans KR", sans-serif' },
-  { name: 'Sunflower', value: 'Sunflower', family: '"Sunflower", sans-serif' },
-  { name: 'Hi Melody', value: 'Hi Melody', family: '"Hi Melody", cursive' },
-]
-
-
 export default function TeacherDashboard() {
   const [students, setStudents] = useState<User[]>(initialMockUsers);
   const [studentToDelete, setStudentToDelete] = useState<User | null>(null);
@@ -100,56 +68,11 @@ export default function TeacherDashboard() {
   const [isBatchUploadDialogOpen, setBatchUploadDialogOpen] = useState(false);
   const [newStudent, setNewStudent] = useState({ grade: '', studentClass: '', studentId: '', name: '', nickname: '' });
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const [headlineFont, setHeadlineFont] = useState('Belleza');
-  const [bodyFont, setBodyFont] = useState('Alegreya');
-  const [headlineFontSize, setHeadlineFontSize] = useState(100);
-  const [bodyFontSize, setBodyFontSize] = useState(100);
-
-  
+    
   const [selectedGrade, setSelectedGrade] = useState<string>('all');
   const [selectedClass, setSelectedClass] = useState<string>('all');
   
-  const [isSettingsOpen, setSettingsOpen] = useState(false);
-
-
   const { toast } = useToast();
-
-  useEffect(() => {
-    const savedHeadline = localStorage.getItem('app-font-headline') || 'Belleza';
-    const savedBody = localStorage.getItem('app-font-body') || 'Alegreya';
-    const savedHeadlineSize = localStorage.getItem('app-font-headline-size') || '100';
-    const savedBodySize = localStorage.getItem('app-font-body-size') || '100';
-
-    setHeadlineFont(savedHeadline);
-    setBodyFont(savedBody);
-    setHeadlineFontSize(parseInt(savedHeadlineSize, 10));
-    setBodyFontSize(parseInt(savedBodySize, 10));
-  }, []);
-
-  const applyDesignSettings = () => {
-    const quoteFont = (font: string) => font.includes(' ') ? `'${font}'` : font;
-    document.documentElement.style.setProperty('--font-headline', quoteFont(headlineFont));
-    document.documentElement.style.setProperty('--font-body', quoteFont(bodyFont));
-    document.documentElement.style.setProperty('--font-size-headline-scale', String(headlineFontSize / 100));
-    document.documentElement.style.setProperty('--font-size-body-scale', String(bodyFontSize / 100));
-  };
-
-  const handleSaveSettings = () => {
-    localStorage.setItem('app-font-headline', headlineFont);
-    localStorage.setItem('app-font-body', bodyFont);
-    localStorage.setItem('app-font-headline-size', String(headlineFontSize));
-    localStorage.setItem('app-font-body-size', String(bodyFontSize));
-    
-    applyDesignSettings();
-
-    toast({
-      title: '성공',
-      description: '디자인 설정이 저장되었습니다. 앱 전체에 적용됩니다.'
-    });
-    setSettingsOpen(false);
-  }
-
 
   const handleApprovalChange = (studentId: string, isApproved: boolean) => {
     setStudents(currentStudents => 
@@ -347,86 +270,6 @@ export default function TeacherDashboard() {
           <span className="font-headline text-xl text-foreground">맘풍선 교사 페이지</span>
         </Link>
         <div className="ml-auto flex items-center gap-2">
-            <Sheet open={isSettingsOpen} onOpenChange={setSettingsOpen}>
-                <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                        <Settings className="h-5 w-5"/>
-                        <span className="sr-only">디자인 설정</span>
-                    </Button>
-                </SheetTrigger>
-                <SheetContent>
-                    <SheetHeader>
-                        <SheetTitle className="font-headline">디자인 설정</SheetTitle>
-                        <SheetDescription>앱 전체의 폰트와 크기를 변경할 수 있습니다. 저장하면 앱 전체에 즉시 적용됩니다.</SheetDescription>
-                    </SheetHeader>
-                    <div className="py-4 space-y-6 h-[calc(100vh-8rem)] overflow-y-auto pr-4">
-                        <div className="space-y-4 pt-4 border-t">
-                            <Label className="text-base font-semibold">제목 폰트</Label>
-                            <RadioGroup value={headlineFont} onValueChange={setHeadlineFont}>
-                                {headlineFonts.map(font => (
-                                <div key={font.value} className="flex items-center space-x-4">
-                                    <RadioGroupItem value={font.value} id={`h-font-${font.value}`} />
-                                    <Label htmlFor={`h-font-${font.value}`} className="flex-1">
-                                    <p style={{ fontFamily: font.family }} className="text-lg">
-                                        {font.name} - 맘풍선 이야기
-                                    </p>
-                                    </Label>
-                                </div>
-                                ))}
-                            </RadioGroup>
-                        </div>
-                        <div className="space-y-4">
-                            <Label className="text-base font-semibold">본문 폰트</Label>
-                            <RadioGroup value={bodyFont} onValueChange={setBodyFont}>
-                                {bodyFonts.map(font => (
-                                <div key={font.value} className="flex items-center space-x-4">
-                                    <RadioGroupItem value={font.value} id={`b-font-${font.value}`} />
-                                    <Label htmlFor={`b-font-${font.value}`} className="flex-1">
-                                    <p style={{ fontFamily: font.family }} className="text-base">
-                                        {font.name} - 오늘 어떤 마음이었나요?
-                                    </p>
-                                    </Label>
-                                </div>
-                                ))}
-                            </RadioGroup>
-                        </div>
-                        <div className="space-y-4 pt-4 border-t">
-                            <Label className="text-base font-semibold">제목 폰트 크기</Label>
-                            <div className="flex items-center gap-4">
-                                <Slider
-                                    value={[headlineFontSize]}
-                                    onValueChange={(value) => setHeadlineFontSize(value[0])}
-                                    min={80}
-                                    max={130}
-                                    step={10}
-                                    aria-label="제목 폰트 크기"
-                                />
-                                <span className="w-16 text-right text-sm text-muted-foreground">{headlineFontSize}%</span>
-                            </div>
-                        </div>
-                        <div className="space-y-4">
-                            <Label className="text-base font-semibold">본문 폰트 크기</Label>
-                            <div className="flex items-center gap-4">
-                                <Slider
-                                    value={[bodyFontSize]}
-                                    onValueChange={(value) => setBodyFontSize(value[0])}
-                                    min={80}
-                                    max={130}
-                                    step={10}
-                                    aria-label="본문 폰트 크기"
-                                />
-                                <span className="w-16 text-right text-sm text-muted-foreground">{bodyFontSize}%</span>
-                            </div>
-                        </div>
-                    </div>
-                    <SheetFooter>
-                        <Button onClick={handleSaveSettings} className="w-full">
-                            <Save className="mr-2 h-4 w-4" />
-                            디자인 설정 저장
-                        </Button>
-                    </SheetFooter>
-                </SheetContent>
-            </Sheet>
             <Button variant="ghost" size="icon" asChild>
                 <Link href="/">
                     <LogOut className="h-5 w-5"/>

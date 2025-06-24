@@ -24,12 +24,6 @@
     --input: 210 30% 92%;
     --ring: 205 68% 78%;
     --radius: 0.8rem;
-
-    --font-body: 'Alegreya';
-    --font-headline: 'Belleza';
-
-    --font-size-headline-scale: 1;
-    --font-size-body-scale: 1;
   }
   .dark {
     --background: 215 30% 12%;
@@ -67,12 +61,21 @@
   }
 
   /* Overriding Tailwind's font sizes to make them dynamic */
-  .text-xs { font-size: calc(0.75rem * var(--font-size-body-scale)); line-height: calc(1rem * var(--font-size-body-scale)); }
-  .text-sm { font-size: calc(0.875rem * var(--font-size-body-scale)); line-height: calc(1.25rem * var(--font-size-body-scale)); }
-  .text-base { font-size: calc(1rem * var(--font-size-body-scale)); line-height: calc(1.5rem * var(--font-size-body-scale)); }
-  .text-lg { font-size: calc(1.125rem * var(--font-size-headline-scale)); line-height: calc(1.75rem * var(--font-size-headline-scale)); }
-  .text-xl { font-size: calc(1.25rem * var(--font-size-headline-scale)); line-height: calc(1.75rem * var(--font-size-headline-scale)); }
-  .text-2xl { font-size: calc(1.5rem * var(--font-size-headline-scale)); line-height: calc(2rem * var(--font-size-headline-scale)); }
-  .text-3xl { font-size: calc(1.875rem * var(--font-size-headline-scale)); line-height: calc(2.25rem * var(--font-size-headline-scale)); }
-  .text-4xl { font-size: calc(2.25rem * var(--font-size-headline-scale)); line-height: calc(2.5rem * var(--font-size-headline-scale)); }
+  .text-xs { font-size: 0.75rem; line-height: 1rem; }
+  .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+  .text-base { font-size: 1rem; line-height: 1.5rem; }
+  .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+  .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+  .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+  .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+  .text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+}
+
+@layer base {
+  body {
+    @apply font-body;
+  }
+  h1, h2, h3, h4, h5, h6, .font-headline {
+    @apply font-headline;
+  }
 }
