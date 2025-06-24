@@ -118,7 +118,7 @@ export default function ProfilePage() {
         toast({
           variant: "destructive",
           title: "오류",
-          description: "아바타 생성에 실패했습니다. 잠시 후 다시 시도해주세요."
+          description: "아바타 생성에 실패했습니다. API 키가 올바르게 설정되었는지 확인해주세요."
         });
       }
     });
