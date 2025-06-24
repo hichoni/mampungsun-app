@@ -1,3 +1,4 @@
+
 'use client'
 
 import Link from "next/link"
@@ -83,16 +84,16 @@ export default function LoginPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary/50">
       <Card className="mx-auto max-w-sm w-full">
-        <CardHeader className="text-center">
-            <div className="flex justify-center items-center mb-4">
-                <Link href="/" className="flex items-center justify-center" prefetch={false}>
-                    <BalloonIcon className="h-10 w-10 text-primary" />
-                </Link>
+        <CardHeader className="text-center space-y-4">
+            <Link href="/" className="flex items-center justify-center">
+                <BalloonIcon className="h-10 w-10 text-primary" />
+            </Link>
+            <div className="space-y-1">
+                <CardTitle className="text-2xl font-headline">학생 로그인</CardTitle>
+                <CardDescription>
+                    학년, 반, 번호를 선택하고 PIN 번호를 입력하세요.
+                </CardDescription>
             </div>
-          <CardTitle className="text-2xl font-headline">학생 로그인</CardTitle>
-          <CardDescription>
-            학년, 반, 번호를 선택하고 PIN 번호를 입력하세요.
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="grid gap-4">
@@ -141,7 +142,7 @@ export default function LoginPage() {
           </form>
           <div className="mt-4 text-center text-sm">
             교사이신가요?{" "}
-            <Link href="/teacher/login" className="underline" prefetch={false}>
+            <Link href="/teacher/login" className="underline">
               교사용 로그인
             </Link>
           </div>

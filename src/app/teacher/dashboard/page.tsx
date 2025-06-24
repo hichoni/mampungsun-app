@@ -249,7 +249,7 @@ export default function TeacherDashboard() {
   return (
     <div className="min-h-screen bg-background">
       <header className="px-4 lg:px-6 h-16 flex items-center border-b">
-        <Link href="/" className="flex items-center justify-center" prefetch={false}>
+        <Link href="/" className="flex items-center justify-center">
           <BalloonIcon className="h-8 w-8 text-primary" />
           <span className="ml-2 text-xl font-headline font-bold text-foreground">맘풍선 교사 페이지</span>
         </Link>
