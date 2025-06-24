@@ -1,6 +1,6 @@
 'use client'
 
-import type { DiaryEntry, User } from "@/lib/definitions"
+import type { DiaryEntry, User, Comment } from "@/lib/definitions"
 import {
   Card,
   CardContent,
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Heart, MessageCircle, Loader2 } from "lucide-react"
+import { Heart, MessageCircle, Loader2, Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
@@ -21,6 +21,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { useState, useTransition } from "react"
 import { mockUsers } from "@/lib/data"
@@ -31,7 +42,10 @@ import { moderateText } from "@/ai/flows/moderate-text-flow"
 interface DiaryCardProps {
   entry: DiaryEntry
   author: User | undefined
-  onComment: (entryId: string, comment: { userId: string; nickname: string; comment: string }) => void;
+  onComment: (entryId: string, comment: Comment) => void;
+  onLikeComment: (entryId: string, commentId: string) => void;
+  onDeleteComment: (entryId: string, commentId: string) => void;
+  isTeacherView?: boolean;
 }
 
 const getEmotionBadgeVariant = (emotion: string): 'default' | 'secondary' | 'destructive' | 'outline' => {
@@ -43,7 +57,7 @@ const getEmotionBadgeVariant = (emotion: string): 'default' | 'secondary' | 'des
   }
 }
 
-export function DiaryCard({ entry, author, onComment }: DiaryCardProps) {
+export function DiaryCard({ entry, author, onComment, onLikeComment, onDeleteComment, isTeacherView = false }: DiaryCardProps) {
   const { toast } = useToast();
   const [likes, setLikes] = useState(entry.likes);
   const [isLiked, setIsLiked] = useState(false);
@@ -69,10 +83,12 @@ export function DiaryCard({ entry, author, onComment }: DiaryCardProps) {
       const moderationResult = await moderateText({ text: commentText });
 
       if (moderationResult && moderationResult.isAppropriate) {
-        const newCommentPayload = {
+        const newCommentPayload: Comment = {
+          id: Date.now().toString(),
           userId: commenter.id,
           nickname: commenter.nickname,
           comment: commentText,
+          likes: 0,
         };
     
         onComment(entry.id, newCommentPayload);
@@ -157,17 +173,48 @@ export function DiaryCard({ entry, author, onComment }: DiaryCardProps) {
                         <ScrollArea className="h-full pr-6">
                             <div className="space-y-4">
                                 {entry.comments.length > 0 ? (
-                                    entry.comments.map((comment, index) => (
-                                        <div key={index} className="flex items-start gap-3">
-                                            <Avatar className="w-8 h-8 border">
-                                                <AvatarImage src={`https://placehold.co/40x40.png?text=${comment.nickname.charAt(0)}`} />
-                                                <AvatarFallback>{comment.nickname.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="bg-muted p-3 rounded-lg rounded-tl-none max-w-full">
-                                                <p className="font-semibold text-sm text-foreground">{comment.nickname}</p>
-                                                <p className="text-sm text-muted-foreground">{comment.comment}</p>
-                                            </div>
-                                        </div>
+                                    entry.comments.map((comment) => (
+                                      <div key={comment.id} className="flex items-start gap-2">
+                                          <Avatar className="w-8 h-8 border">
+                                              <AvatarImage src={`https://placehold.co/40x40.png?text=${comment.nickname.charAt(0)}`} />
+                                              <AvatarFallback>{comment.nickname.charAt(0)}</AvatarFallback>
+                                          </Avatar>
+                                          <div className="flex-1 space-y-1">
+                                              <div className="bg-muted p-3 rounded-lg rounded-tl-none">
+                                                  <p className="font-semibold text-sm text-foreground">{comment.nickname}</p>
+                                                  <p className="text-sm text-muted-foreground">{comment.comment}</p>
+                                              </div>
+                                              <div className="flex items-center gap-2 pl-2">
+                                                  <Button variant="ghost" size="sm" className="p-1 h-auto flex items-center gap-1" onClick={() => onLikeComment(entry.id, comment.id)}>
+                                                      <Heart className="h-3 w-3" />
+                                                      {comment.likes > 0 && <span className="text-xs text-muted-foreground font-normal">{comment.likes}</span>}
+                                                  </Button>
+                                                  {isTeacherView && (
+                                                       <AlertDialog>
+                                                          <AlertDialogTrigger asChild>
+                                                             <Button variant="ghost" size="sm" className="p-1 h-auto text-destructive hover:text-destructive">
+                                                                <Trash2 className="h-3 w-3"/>
+                                                             </Button>
+                                                          </AlertDialogTrigger>
+                                                          <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                              <AlertDialogTitle>정말 삭제하시겠습니까?</AlertDialogTitle>
+                                                              <AlertDialogDescription>
+                                                                이 댓글은 되돌릴 수 없습니다. 댓글이 영구적으로 삭제됩니다.
+                                                              </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                              <AlertDialogCancel>취소</AlertDialogCancel>
+                                                              <AlertDialogAction onClick={() => onDeleteComment(entry.id, comment.id)} className="bg-destructive hover:bg-destructive/90">
+                                                                삭제
+                                                              </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                          </AlertDialogContent>
+                                                       </AlertDialog>
+                                                  )}
+                                              </div>
+                                          </div>
+                                      </div>
                                     ))
                                 ) : (
                                     <p className="text-center text-sm text-muted-foreground py-4">

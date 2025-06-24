@@ -9,6 +9,14 @@ export type User = {
   isApproved: boolean;
 };
 
+export type Comment = {
+  id: string;
+  userId: string;
+  nickname: string;
+  comment: string;
+  likes: number;
+};
+
 export type DiaryEntry = {
   id: string;
   userId: string;
@@ -18,5 +26,5 @@ export type DiaryEntry = {
   dominantEmotion: string;
   suggestedResponses: string[];
   likes: number;
-  comments: { userId: string; nickname: string; comment: string }[];
+  comments: Comment[];
 };

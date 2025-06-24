@@ -38,7 +38,7 @@ export const mockDiaryEntries: DiaryEntry[] = [
     suggestedResponses: ['괜찮아, 그럴 수 있어.', '힘내, 내가 옆에 있을게.', '너의 잘못이 아니야.'],
     likes: 12,
     comments: [
-      { userId: '102', nickname: '꿈꾸는 돌고래', comment: '괜찮아, 그럴 수 있어.' }
+      { id: 'c1', userId: '102', nickname: '꿈꾸는 돌고래', comment: '괜찮아, 그럴 수 있어.', likes: 3 }
     ],
   },
   {
@@ -51,8 +51,8 @@ export const mockDiaryEntries: DiaryEntry[] = [
     suggestedResponses: ['정말 대단하다!', '네가 자랑스러워.', '노력의 결실이네! 축하해.'],
     likes: 25,
     comments: [
-      { userId: '101', nickname: '행복한 토끼', comment: '정말 대단하다!' },
-      { userId: '201', nickname: '밝은 해바라기', comment: '네가 자랑스러워.' }
+      { id: 'c2', userId: '101', nickname: '행복한 토끼', comment: '정말 대단하다!', likes: 5 },
+      { id: 'c3', userId: '201', nickname: '밝은 해바라기', comment: '네가 자랑스러워.', likes: 2 }
     ],
   },
   {

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { DiaryCard } from "@/components/diary-card"
 import { mockDiaryEntries, mockUsers } from "@/lib/data"
-import type { DiaryEntry, User } from "@/lib/definitions"
+import type { DiaryEntry, User, Comment } from "@/lib/definitions"
 import { generateAiComment } from "@/ai/flows/generate-ai-comment-flow"
 
 const AI_CHEERER_ID = 'ai-cheerer';
@@ -12,6 +12,12 @@ const AI_COMMENT_THRESHOLD_HOURS = 1;
 
 export default function DashboardPage() {
   const [entries, setEntries] = useState<DiaryEntry[]>(mockDiaryEntries);
+
+  const updateAndStoreEntries = (updatedEntries: DiaryEntry[]) => {
+    setEntries(updatedEntries);
+    localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
+  };
+
 
   useEffect(() => {
     const storedEntriesStr = localStorage.getItem('diaryEntries');
@@ -49,10 +55,12 @@ export default function DashboardPage() {
             const result = await generateAiComment({ diaryEntryContent: entry.content });
             
             if (result.comment) {
-              const aiComment = {
+              const aiComment: Comment = {
+                id: `ai-${entry.id}`,
                 userId: AI_CHEERER_ID,
                 nickname: aiUser.nickname,
                 comment: result.comment,
+                likes: 0,
               };
               updatedEntries[i].comments.push(aiComment);
               entriesWereUpdated = true;
@@ -64,8 +72,7 @@ export default function DashboardPage() {
       }
 
       if (entriesWereUpdated) {
-        setEntries(updatedEntries);
-        localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
+        updateAndStoreEntries(updatedEntries);
       }
     };
     
@@ -80,7 +87,7 @@ export default function DashboardPage() {
   }, []); // Run only on mount
 
 
-  const handleComment = (entryId: string, newComment: { userId: string; nickname: string; comment: string }) => {
+  const handleComment = (entryId: string, newComment: Comment) => {
     const updatedEntries = entries.map(entry => {
       if (entry.id === entryId) {
         return {
@@ -90,9 +97,32 @@ export default function DashboardPage() {
       }
       return entry;
     });
-    setEntries(updatedEntries);
-    localStorage.setItem('diaryEntries', JSON.stringify(updatedEntries));
+    updateAndStoreEntries(updatedEntries);
   };
+  
+  const handleLikeComment = (entryId: string, commentId: string) => {
+    const updatedEntries = entries.map(entry => {
+      if (entry.id === entryId) {
+        return {
+          ...entry,
+          comments: entry.comments.map(comment => {
+            if (comment.id === commentId) {
+              return { ...comment, likes: comment.likes + 1 };
+            }
+            return comment;
+          }),
+        };
+      }
+      return entry;
+    });
+    updateAndStoreEntries(updatedEntries);
+  };
+
+  const handleDeleteComment = (entryId: string, commentId: string) => {
+    // Students cannot delete comments from this view.
+    console.log("Delete action not permitted for students.");
+  };
+
 
   // In a real app, you would fetch this data
   const publicEntries = entries.filter(entry => entry.isPublic)
@@ -112,7 +142,14 @@ export default function DashboardPage() {
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {publicEntries.map(entry => (
-          <DiaryCard key={entry.id} entry={entry} author={findUserById(entry.userId)} onComment={handleComment} />
+          <DiaryCard 
+            key={entry.id} 
+            entry={entry} 
+            author={findUserById(entry.userId)} 
+            onComment={handleComment}
+            onLikeComment={handleLikeComment}
+            onDeleteComment={handleDeleteComment}
+          />
         ))}
       </div>
     </>

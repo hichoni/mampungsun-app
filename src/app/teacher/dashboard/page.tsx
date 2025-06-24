@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { LogOut, PlusCircle, Trash2, Upload, Download, Save, Settings } from "lucide-react"
+import { LogOut, PlusCircle, Trash2, Upload, Download, Save, Settings, MessageSquareText } from "lucide-react"
 import Link from "next/link"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
@@ -390,6 +390,20 @@ export default function TeacherDashboard() {
         </div>
       </header>
       <main className="p-4 sm:p-6 md:p-8 space-y-8">
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline">콘텐츠 관리</CardTitle>
+                <CardDescription>학생들이 작성한 맘풍선과 댓글을 확인하고 관리합니다.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Button asChild>
+                    <Link href="/teacher/dashboard/content">
+                        <MessageSquareText className="mr-2 h-4 w-4" />
+                        콘텐츠 관리 페이지로 이동
+                    </Link>
+                </Button>
+            </CardContent>
+        </Card>
         
         <Card>
             <CardHeader>
