@@ -69,6 +69,39 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
   const [newCommentText, setNewCommentText] = useState('');
   const [isPending, startTransition] = useTransition();
   const [commenter, setCommenter] = useState<User | null>(null);
+  const [timeAgo, setTimeAgo] = useState('');
+
+  useEffect(() => {
+    const calculateTimeAgo = () => {
+      const seconds = Math.floor((new Date().getTime() - new Date(entry.createdAt).getTime()) / 1000);
+      if (seconds < 0) return '방금 전';
+
+      let interval = seconds / 31536000;
+      if (interval > 1) return `${Math.floor(interval)}년 전`;
+
+      interval = seconds / 2592000;
+      if (interval > 1) return `${Math.floor(interval)}달 전`;
+
+      interval = seconds / 86400;
+      if (interval > 1) return `${Math.floor(interval)}일 전`;
+
+      interval = seconds / 3600;
+      if (interval > 1) return `${Math.floor(interval)}시간 전`;
+
+      interval = seconds / 60;
+      if (interval > 1) return `${Math.floor(interval)}분 전`;
+
+      return `${Math.floor(seconds)}초 전`;
+    };
+
+    setTimeAgo(calculateTimeAgo());
+
+    const timer = setInterval(() => {
+      setTimeAgo(calculateTimeAgo());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, [entry.createdAt]);
 
   useEffect(() => {
     const LOGGED_IN_USER_ID = isTeacherView ? 'teacher-master' : '4'; // Teacher or Student
@@ -125,7 +158,7 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
 
       if (moderationResult && moderationResult.isAppropriate) {
         const newCommentPayload: Comment = {
-          id: `comment-${Date.now()}`,
+          id: `comment-${entry.id}-${Date.now()}`,
           userId: commenter.id,
           nickname: commenter.nickname,
           avatarUrl: commenter.avatarUrl,
@@ -156,22 +189,6 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
     handlePostComment(newCommentText);
   };
 
-
-  const timeAgo = (date: string) => {
-    const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
-    let interval = seconds / 31536000;
-    if (interval > 1) return Math.floor(interval) + "년 전";
-    interval = seconds / 2592000;
-    if (interval > 1) return Math.floor(interval) + "달 전";
-    interval = seconds / 86400;
-    if (interval > 1) return Math.floor(interval) + "일 전";
-    interval = seconds / 3600;
-    if (interval > 1) return Math.floor(interval) + "시간 전";
-    interval = seconds / 60;
-    if (interval > 1) return Math.floor(interval) + "분 전";
-    return Math.floor(seconds) + "초 전";
-  }
-
   return (
     <Card className="flex flex-col h-full">
       <CardHeader>
@@ -182,7 +199,7 @@ export function DiaryCard({ entry, author, onComment, onLikeEntry, onLikeComment
           </Avatar>
           <div className="flex-1 min-w-0">
             <CardTitle className="text-base truncate">{author?.nickname}</CardTitle>
-            <CardDescription>{timeAgo(entry.createdAt)}</CardDescription>
+            <CardDescription>{timeAgo || '계산 중...'}</CardDescription>
           </div>
           <div className="flex items-center gap-1">
             <Badge variant={getEmotionBadgeVariant(entry.dominantEmotion)} className="flex-shrink-0 whitespace-nowrap">{entry.dominantEmotion}</Badge>
