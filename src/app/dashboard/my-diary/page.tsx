@@ -65,22 +65,15 @@ export default function MyDiaryPage() {
 
   const handleLikeComment = (entryId: string, commentId: string, action: 'like' | 'unlike') => {
     setEntries(currentEntries => {
-      const newEntries = [...currentEntries];
-      const entryIndex = newEntries.findIndex(e => e.id === entryId);
-      if (entryIndex === -1) return currentEntries;
-
-      const entryToUpdate = { ...newEntries[entryIndex] };
-      const commentIndex = entryToUpdate.comments.findIndex(c => c.id === commentId);
-      if (commentIndex === -1) return currentEntries;
-
-      const newComments = [...entryToUpdate.comments];
-      const commentToUpdate = { ...newComments[commentIndex] };
-      const newLikes = action === 'like' ? commentToUpdate.likes + 1 : Math.max(0, commentToUpdate.likes - 1);
-      newComments[commentIndex] = { ...commentToUpdate, likes: newLikes };
-      
-      const updatedEntry = { ...entryToUpdate, comments: newComments };
-      newEntries[entryIndex] = updatedEntry;
-      
+      const newEntries = JSON.parse(JSON.stringify(currentEntries));
+      const entry = newEntries.find((e: DiaryEntry) => e.id === entryId);
+      if (!entry) return currentEntries;
+  
+      const comment = entry.comments.find((c: Comment) => c.id === commentId);
+      if (!comment) return currentEntries;
+  
+      comment.likes = action === 'like' ? comment.likes + 1 : Math.max(0, comment.likes - 1);
+  
       localStorage.setItem('diaryEntries', JSON.stringify(newEntries));
       return newEntries;
     });
