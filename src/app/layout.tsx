@@ -6,7 +6,8 @@ import FontManager from '@/components/font-manager';
 export const metadata: Metadata = {
   title: '맘풍선 (Mampungseon)',
   description: '당신의 마음을 표현하고, 따뜻한 응원을 받아보세요.',
-  themeColor: '#4ac0ec',
+  manifest: '/manifest.json',
+  themeColor: '#2F9FE6',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
