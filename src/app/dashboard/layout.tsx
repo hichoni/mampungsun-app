@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import {
   Bell,
   Home,
@@ -7,7 +8,6 @@ import {
   LogOut,
   User,
   MessageSquare,
-  Smile,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -30,7 +30,7 @@ export default function DashboardLayout({
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-              <Smile className="h-6 w-6 text-primary" />
+              <Image src="/balloon2.png" alt="맘풍선 로고" width={28} height={28} />
               <span className="font-headline text-lg">맘풍선</span>
             </Link>
           </div>

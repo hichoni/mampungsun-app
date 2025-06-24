@@ -4,6 +4,7 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import React, { useState } from "react"
+import Image from "next/image"
 import {
   Card,
   CardContent,
@@ -15,7 +16,6 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
-import { Smile } from "lucide-react"
 
 const MASTER_ID = "master"
 const MASTER_PASSWORD = "password123"
@@ -47,7 +47,7 @@ export default function TeacherLoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-secondary/50">
       <Card className="mx-auto max-w-sm w-full">
         <CardHeader className="text-center space-y-4">
-          <Smile className="h-10 w-10 text-primary mx-auto" />
+          <Image src="/balloon2.png" alt="맘풍선 로고" width={40} height={40} className="mx-auto" />
           <div className="space-y-1">
             <CardTitle className="text-2xl font-headline">교사용 로그인</CardTitle>
             <CardDescription>
