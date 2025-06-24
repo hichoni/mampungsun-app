@@ -27,6 +27,21 @@ export default function LoginPage() {
   const [studentId, setStudentId] = useState<string>('');
   const [pin, setPin] = useState<string>('');
 
+  const handleGradeChange = (value: string) => {
+    setGrade(value);
+    setStudentClass('');
+    setStudentId('');
+  };
+
+  const handleClassChange = (value: string) => {
+    setStudentClass(value);
+    setStudentId('');
+  };
+
+  const availableGrades = [...new Set(mockUsers.filter(u => u.grade > 0).map(u => u.grade))].sort((a,b) => a-b);
+  const availableClasses = grade ? [...new Set(mockUsers.filter(u => u.grade === parseInt(grade, 10)).map(u => u.class))].sort((a,b) => a-b) : [];
+  const availableStudentIds = (grade && studentClass) ? [...new Set(mockUsers.filter(u => u.grade === parseInt(grade, 10) && u.class === parseInt(studentClass, 10)).map(u => u.studentId))].sort((a,b) => a-b) : [];
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -100,34 +115,34 @@ export default function LoginPage() {
             <div className="grid grid-cols-3 gap-4">
                 <div className="grid gap-2">
                     <Label htmlFor="grade">학년</Label>
-                    <Select name="grade" required onValueChange={setGrade}>
+                    <Select name="grade" required value={grade} onValueChange={handleGradeChange}>
                         <SelectTrigger id="grade">
                             <SelectValue placeholder="학년" />
                         </SelectTrigger>
                         <SelectContent>
-                            {[...new Set(mockUsers.map(u => u.grade))].sort((a,b) => a-b).map(g => <SelectItem key={g} value={String(g)}>{g}학년</SelectItem>)}
+                            {availableGrades.map(g => <SelectItem key={g} value={String(g)}>{g}학년</SelectItem>)}
                         </SelectContent>
                     </Select>
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="class">반</Label>
-                    <Select name="class" required onValueChange={setStudentClass}>
+                    <Select name="class" required value={studentClass} onValueChange={handleClassChange} disabled={!grade}>
                         <SelectTrigger id="class">
                             <SelectValue placeholder="반" />
                         </SelectTrigger>
                         <SelectContent>
-                             {[...new Set(mockUsers.map(u => u.class))].sort((a,b) => a-b).map(c => <SelectItem key={c} value={String(c)}>{c}반</SelectItem>)}
+                             {availableClasses.map(c => <SelectItem key={c} value={String(c)}>{c}반</SelectItem>)}
                         </SelectContent>
                     </Select>
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="studentId">번호</Label>
-                     <Select name="studentId" required onValueChange={setStudentId}>
+                     <Select name="studentId" required value={studentId} onValueChange={setStudentId} disabled={!studentClass}>
                         <SelectTrigger id="studentId">
                             <SelectValue placeholder="번호" />
                         </SelectTrigger>
                         <SelectContent>
-                             {[...new Set(mockUsers.map(u => u.studentId))].sort((a,b) => a-b).map(s => <SelectItem key={s} value={String(s)}>{s}번</SelectItem>)}
+                             {availableStudentIds.map(s => <SelectItem key={s} value={String(s)}>{s}번</SelectItem>)}
                         </SelectContent>
                     </Select>
                 </div>
