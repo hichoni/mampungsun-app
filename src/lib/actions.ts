@@ -5,6 +5,7 @@ import { db } from '@/lib/firebase'
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc, query, where, orderBy, deleteDoc, writeBatch, Timestamp, arrayUnion, arrayRemove } from 'firebase/firestore'
 import type { User, DiaryEntry, Comment } from '@/lib/definitions'
 import { mockUsers, mockDiaryEntries } from './data'
+import { generateNickname } from '@/ai/flows/generate-nickname-flow'
 
 // Helper function to convert Firestore Timestamps to ISO strings
 function toJSON(obj: any): any {
@@ -79,6 +80,12 @@ export async function approveUser(id: string, isApproved: boolean) {
     if (!db) throw new Error("Firestore not configured");
     const userRef = doc(db, "users", id);
     await updateDoc(userRef, { isApproved });
+    revalidatePath('/teacher/dashboard');
+}
+
+export async function resetStudentPin(id: string) {
+    if (!db) throw new Error("Firestore not configured");
+    await updateDoc(doc(db, "users", id), { pin: '0000' });
     revalidatePath('/teacher/dashboard');
 }
 

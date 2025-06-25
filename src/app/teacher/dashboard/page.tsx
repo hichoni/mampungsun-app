@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { LogOut, PlusCircle, Trash2, Upload, Download, MessageSquareText, Loader2, Database } from "lucide-react"
+import { LogOut, PlusCircle, Trash2, Upload, Download, MessageSquareText, Loader2, Database, KeyRound } from "lucide-react"
 import Link from "next/link"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
@@ -48,7 +48,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { generateNickname } from "@/ai/flows/generate-nickname-flow"
 import { isFirebaseConfigured } from "@/lib/firebase"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
-import { getAllStudents, approveUser, deleteUser, addUser, getAllEntries, seedDatabase } from "@/lib/actions"
+import { getAllStudents, approveUser, deleteUser, addUser, getAllEntries, seedDatabase, resetStudentPin } from "@/lib/actions"
 import type { DiaryEntry } from "@/lib/definitions"
 
 const getEmotionBadgeVariant = (emotion: string) => {
@@ -73,7 +73,7 @@ export default function TeacherDashboard() {
   const [studentToDelete, setStudentToDelete] = useState<User | null>(null);
   const [isAddStudentDialogOpen, setAddStudentDialogOpen] = useState(false);
   const [isBatchUploadDialogOpen, setBatchUploadDialogOpen] = useState(false);
-  const [newStudent, setNewStudent] = useState({ grade: '', studentClass: '', studentId: '', name: '', nickname: '' });
+  const [newStudent, setNewStudent] = useState({ grade: '', studentClass: '', studentId: '', name: '' });
   const fileInputRef = useRef<HTMLInputElement>(null);
     
   const [selectedGrade, setSelectedGrade] = useState<string>('all');
@@ -106,13 +106,15 @@ export default function TeacherDashboard() {
   }
 
   const handleAddStudent = () => {
-    const { grade, studentClass, studentId, name, nickname } = newStudent;
-    if (!grade || !studentClass || !studentId || !name || !nickname) {
+    const { grade, studentClass, studentId, name } = newStudent;
+    if (!grade || !studentClass || !studentId || !name) {
       toast({ variant: "destructive", title: "오류", description: "모든 필드를 입력해주세요." });
       return;
     }
 
     startLoading(async () => {
+        const nicknameResult = await generateNickname({ name });
+        const nickname = nicknameResult.nickname;
         const newUser = await addUser({
             grade: parseInt(grade, 10),
             class: parseInt(studentClass, 10),
@@ -121,7 +123,7 @@ export default function TeacherDashboard() {
             nickname,
         });
         setStudents(prev => [...prev, newUser]);
-        setNewStudent({ grade: '', studentClass: '', studentId: '', name: '', nickname: '' });
+        setNewStudent({ grade: '', studentClass: '', studentId: '', name: '' });
         setAddStudentDialogOpen(false);
         toast({ title: "성공!", description: `${newUser.name} 학생이 추가되었습니다. 초기 PIN은 '0000'입니다.` });
     });
@@ -133,6 +135,13 @@ export default function TeacherDashboard() {
         setStudents(currentStudents => currentStudents.filter(s => s.id !== studentId));
         toast({ title: "성공", description: "학생 정보가 삭제되었습니다." });
         setStudentToDelete(null);
+    });
+  }
+
+  const handlePinReset = (studentId: string) => {
+    startLoading(async () => {
+        await resetStudentPin(studentId);
+        toast({ title: "성공", description: "학생의 PIN이 '0000'으로 초기화되었습니다." });
     });
   }
 
@@ -486,10 +495,6 @@ export default function TeacherDashboard() {
                                     <Input id="name" value={newStudent.name} onChange={(e) => setNewStudent({...newStudent, name: e.target.value})} className="col-span-3" />
                                 </div>
                                 <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="nickname" className="text-right">별명</Label>
-                                    <Input id="nickname" value={newStudent.nickname} onChange={(e) => setNewStudent({...newStudent, nickname: e.target.value})} className="col-span-3" />
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
                                     <Label htmlFor="grade" className="text-right">학년</Label>
                                     <Input id="grade" type="number" value={newStudent.grade} onChange={(e) => setNewStudent({...newStudent, grade: e.target.value})} className="col-span-3" />
                                 </div>
@@ -578,11 +583,31 @@ export default function TeacherDashboard() {
                          </div>
                       </TableCell>
                       <TableCell className="text-right">
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" title="PIN 초기화">
+                                    <KeyRound className="h-4 w-4 text-muted-foreground"/>
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>{student.name} 학생의 PIN을 초기화하시겠습니까?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        이 작업은 학생의 PIN 번호를 '0000'으로 재설정합니다. 학생은 다음 로그인 시 새로운 PIN 번호를 설정해야 합니다.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>취소</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handlePinReset(student.id)}>
+                                        초기화
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                          <AlertDialog>
                             <AlertDialogTrigger asChild>
-                               <Button variant="ghost" size="icon">
+                               <Button variant="ghost" size="icon" title="학생 삭제">
                                   <Trash2 className="h-4 w-4 text-destructive"/>
-                                  <span className="sr-only">삭제</span>
                                </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
