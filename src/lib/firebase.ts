@@ -19,10 +19,10 @@ function isFirebaseConfigured() {
     const authDomain = config.authDomain?.trim();
     const projectId = config.projectId?.trim();
 
-    return (
-        apiKey && apiKey !== 'your-api-key' &&
-        authDomain && !authDomain.startsWith('your-project-id') &&
-        projectId && projectId !== 'your-project-id'
+    return !!(
+        apiKey && apiKey.length > 0 && apiKey !== 'your-api-key' &&
+        authDomain && authDomain.length > 0 && !authDomain.startsWith('your-project-id') &&
+        projectId && projectId.length > 0 && projectId !== 'your-project-id'
     );
 }
 
