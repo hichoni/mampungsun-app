@@ -1,5 +1,8 @@
+'use server'
+
 import { initializeApp, getApps, getApp, FirebaseOptions } from "firebase/app";
-import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -18,7 +21,7 @@ function isFirebaseConfigured() {
 let app;
 if (!getApps().length) {
     if (!isFirebaseConfigured()) {
-        console.warn("Firebase config is not set. Firestore will not be initialized.");
+        console.warn("Firebase config is not set. Firebase services will not be initialized.");
         app = null;
     } else {
         app = initializeApp(firebaseConfig);
@@ -28,5 +31,6 @@ if (!getApps().length) {
 }
 
 const db = app ? getFirestore(app) : null;
+const storage = app ? getStorage(app) : null;
 
-export { app, db, isFirebaseConfigured };
+export { app, db, storage, isFirebaseConfigured };

@@ -87,8 +87,8 @@ export default function ProfilePage() {
     startGenerating(async () => {
       try {
         toast({ title: "AI 아바타 생성 중...", description: "잠시만 기다려주세요. 멋진 아바타를 만들고 있어요!" });
-        const result = await generateAvatar({ nickname: user.nickname });
-        const newAvatarUrl = result.avatarDataUri;
+        const result = await generateAvatar({ nickname: user.nickname, userId: user.id });
+        const newAvatarUrl = result.avatarUrl;
 
         await updateUser(user.id, { avatarUrl: newAvatarUrl });
         setUser(prev => prev ? { ...prev, avatarUrl: newAvatarUrl } : null);
@@ -102,7 +102,7 @@ export default function ProfilePage() {
         toast({
           variant: "destructive",
           title: "오류",
-          description: "아바타 생성에 실패했습니다. API 키가 올바르게 설정되었는지 확인해주세요."
+          description: "아바타 생성에 실패했습니다. 잠시 후 다시 시도하거나, API 키 설정을 확인해주세요."
         });
       }
     });
