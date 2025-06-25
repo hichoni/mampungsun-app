@@ -10,12 +10,12 @@ import { z } from 'zod';
 const GenerateNicknameInputSchema = z.object({
   name: z.string().describe('별명을 생성할 학생의 이름입니다.'),
 });
-type GenerateNicknameInput = z.infer<typeof GenerateNicknameInputSchema>;
+export type GenerateNicknameInput = z.infer<typeof GenerateNicknameInputSchema>;
 
 const GenerateNicknameOutputSchema = z.object({
   nickname: z.string().describe('생성된 별명입니다. "형용사+동물" 형식이어야 합니다.'),
 });
-type GenerateNicknameOutput = z.infer<typeof GenerateNicknameOutputSchema>;
+export type GenerateNicknameOutput = z.infer<typeof GenerateNicknameOutputSchema>;
 
 export async function generateNickname(input: GenerateNicknameInput): Promise<GenerateNicknameOutput> {
   return generateNicknameFlow(input);

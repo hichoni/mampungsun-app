@@ -1,4 +1,4 @@
-// 'use server';
+'use server';
 
 /**
  * @fileOverview 맘풍선(감정 일기)에 담긴 학생의 감정을 분석하기 위한 AI 플로우입니다.
@@ -10,8 +10,6 @@
  * @returns {Promise<AnalyzeStudentEmotionsOutput>} - 분석 결과와 제안된 응답으로 확인되는 프로미스입니다.
  */
 
-'use server';
-
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
@@ -20,7 +18,7 @@ const AnalyzeStudentEmotionsInputSchema = z.object({
     .string()
     .describe('학생의 감정 일기(맘풍선)의 텍스트 내용입니다.'),
 });
-type AnalyzeStudentEmotionsInput = z.infer<typeof AnalyzeStudentEmotionsInputSchema>;
+export type AnalyzeStudentEmotionsInput = z.infer<typeof AnalyzeStudentEmotionsInputSchema>;
 
 const AnalyzeStudentEmotionsOutputSchema = z.object({
   dominantEmotion: z
@@ -30,7 +28,7 @@ const AnalyzeStudentEmotionsOutputSchema = z.object({
     .array(z.string())
     .describe('제안된 응원/칭찬 메시지의 배열입니다.'),
 });
-type AnalyzeStudentEmotionsOutput = z.infer<typeof AnalyzeStudentEmotionsOutputSchema>;
+export type AnalyzeStudentEmotionsOutput = z.infer<typeof AnalyzeStudentEmotionsOutputSchema>;
 
 export async function analyzeStudentEmotions(
   input: AnalyzeStudentEmotionsInput

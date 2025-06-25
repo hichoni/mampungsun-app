@@ -1,5 +1,3 @@
-'use server'
-
 import { initializeApp, getApps, getApp, FirebaseOptions } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";

@@ -13,13 +13,13 @@ import { z } from 'zod';
 const ModerateTextInputSchema = z.object({
   text: z.string().describe('검토할 텍스트 내용입니다.'),
 });
-type ModerateTextInput = z.infer<typeof ModerateTextInputSchema>;
+export type ModerateTextInput = z.infer<typeof ModerateTextInputSchema>;
 
 const ModerateTextOutputSchema = z.object({
   isAppropriate: z.boolean().describe('텍스트가 적절한지 여부입니다.'),
   reason: z.string().describe('부적절하다고 판단된 경우, 그 이유입니다. 적절한 경우 빈 문자열입니다.'),
 });
-type ModerateTextOutput = z.infer<typeof ModerateTextOutputSchema>;
+export type ModerateTextOutput = z.infer<typeof ModerateTextOutputSchema>;
 
 export async function moderateText(input: ModerateTextInput): Promise<ModerateTextOutput> {
   return moderateTextFlow(input);

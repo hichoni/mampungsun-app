@@ -11,12 +11,16 @@ const GenerateAvatarInputSchema = z.object({
   nickname: z.string().describe('아바타를 생성할 학생의 별명입니다.'),
   userId: z.string().describe('아바타를 생성할 학생의 고유 ID입니다. 이미지 저장 경로에 사용됩니다.'),
 });
-type GenerateAvatarInput = z.infer<typeof GenerateAvatarInputSchema>;
+export type GenerateAvatarInput = z.infer<typeof GenerateAvatarInputSchema>;
 
 const GenerateAvatarOutputSchema = z.object({
   avatarUrl: z.string().describe('Firebase Storage에 업로드된 아바타 이미지의 URL입니다.'),
 });
-type GenerateAvatarOutput = z.infer<typeof GenerateAvatarOutputSchema>;
+export type GenerateAvatarOutput = z.infer<typeof GenerateAvatarOutputSchema>;
+
+export async function generateAvatar(input: GenerateAvatarInput): Promise<GenerateAvatarOutput> {
+    return generateAvatarFlow(input);
+}
 
 const generateAvatarFlow = ai.defineFlow(
   {
@@ -55,7 +59,3 @@ const generateAvatarFlow = ai.defineFlow(
     return { avatarUrl: downloadUrl };
   }
 );
-
-export async function generateAvatar(input: GenerateAvatarInput): Promise<GenerateAvatarOutput> {
-    return generateAvatarFlow(input);
-}
