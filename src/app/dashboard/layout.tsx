@@ -6,7 +6,7 @@ import {
   PlusCircle,
   LogOut,
   User,
-  MessageSquare,
+  Wind,
   Menu,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -15,7 +15,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/s
 const navLinksData = [
   { href: "/dashboard", icon: Home, label: "모두의 맘풍선" },
   { href: "/dashboard/my-diary", icon: BookUser, label: "나의 맘풍선" },
-  { href: "/dashboard/chat", icon: MessageSquare, label: "마음 대화" },
+  { href: "/dashboard/chat", icon: Wind, label: "마음 바람" },
 ];
 
 

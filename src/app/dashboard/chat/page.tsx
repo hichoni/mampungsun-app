@@ -20,7 +20,7 @@ type Message = {
 const initialMessages: Message[] = [
     {
         role: 'model',
-        content: '안녕! 나는 너의 마음을 들어주고 함께 이야기 나눌 AI 친구, 마음이라고 해. 오늘 기분은 어때?'
+        content: "안녕! 나는 너의 마음속 복잡한 감정들을 시원한 바람에 날려 보낼 수 있도록 도와주는 AI 친구, '바람'이야. 너의 진짜 '바람'은 무엇인지 함께 이야기 나눠볼까?"
     }
 ]
 
@@ -179,7 +179,7 @@ export default function ChatPage() {
                         ref={inputRef}
                         value={input}
                         onChange={e => setInput(e.target.value)}
-                        placeholder="마음이에게 하고 싶은 말을 입력하세요..."
+                        placeholder="바람이에게 하고 싶은 말을 입력하세요..."
                         className="flex-1"
                         disabled={isPending}
                     />
