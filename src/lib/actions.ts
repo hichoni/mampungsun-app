@@ -94,7 +94,7 @@ export async function addUser(studentData: Omit<User, 'id' | 'pin' | 'isApproved
     const newUser: User = {
       id: newUserRef.id,
       ...studentData,
-      pin: Math.floor(1000 + Math.random() * 9000).toString(),
+      pin: '0000', // Set initial PIN to 0000
       isApproved: true,
     };
     await setDoc(newUserRef, newUser);

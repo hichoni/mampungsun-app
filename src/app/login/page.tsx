@@ -38,7 +38,7 @@ export default function LoginPage() {
     if (isFirebaseConfigured()) {
         startLoadingStudents(async () => {
             const students = await getAllStudents();
-            setAllStudents(students);
+            setAllStudents(students.filter(s => s.isApproved));
         });
     }
   }, []);
@@ -55,17 +55,17 @@ export default function LoginPage() {
   };
 
   const availableGrades = useMemo(() => {
-    return [...new Set(allStudents.filter(u => u.grade > 0 && u.isApproved).map(u => u.grade))].sort((a,b) => a-b);
+    return [...new Set(allStudents.filter(u => u.grade > 0).map(u => u.grade))].sort((a,b) => a-b);
   }, [allStudents]);
   
   const availableClasses = useMemo(() => {
     if (!grade) return [];
-    return [...new Set(allStudents.filter(u => u.grade === parseInt(grade, 10) && u.isApproved).map(u => u.class))].sort((a,b) => a-b);
+    return [...new Set(allStudents.filter(u => u.grade === parseInt(grade, 10)).map(u => u.class))].sort((a,b) => a-b);
   }, [allStudents, grade]);
   
   const availableStudentIds = useMemo(() => {
     if (!grade || !studentClass) return [];
-    return [...new Set(allStudents.filter(u => u.grade === parseInt(grade, 10) && u.class === parseInt(studentClass, 10) && u.isApproved).map(u => u.studentId))].sort((a,b) => a-b);
+    return [...new Set(allStudents.filter(u => u.grade === parseInt(grade, 10) && u.class === parseInt(studentClass, 10)).map(u => u.studentId))].sort((a,b) => a-b);
   }, [allStudents, grade, studentClass]);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -100,10 +100,14 @@ export default function LoginPage() {
             }
         
             localStorage.setItem('mampungsun_user_id', user.id);
+            toast({ title: "로그인 성공!", description: `환영합니다, ${user.nickname}님!` });
 
-            toast({ title: "로그인 성공!", description: `환영합니다, ${user.nickname}님!` })
-        
-            router.push('/dashboard');
+            if (user.pin === '0000') {
+              router.push('/dashboard/force-pin-change');
+            } else {
+              router.push('/dashboard');
+            }
+            
         } catch (error) {
             console.error("Login error:", error);
             toast({ variant: "destructive", title: "로그인 오류", description: "로그인 중 문제가 발생했습니다." });
