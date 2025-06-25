@@ -20,7 +20,7 @@ const AnalyzeStudentEmotionsInputSchema = z.object({
     .string()
     .describe('학생의 감정 일기(맘풍선)의 텍스트 내용입니다.'),
 });
-export type AnalyzeStudentEmotionsInput = z.infer<typeof AnalyzeStudentEmotionsInputSchema>;
+type AnalyzeStudentEmotionsInput = z.infer<typeof AnalyzeStudentEmotionsInputSchema>;
 
 const AnalyzeStudentEmotionsOutputSchema = z.object({
   dominantEmotion: z
@@ -30,7 +30,7 @@ const AnalyzeStudentEmotionsOutputSchema = z.object({
     .array(z.string())
     .describe('제안된 응원/칭찬 메시지의 배열입니다.'),
 });
-export type AnalyzeStudentEmotionsOutput = z.infer<typeof AnalyzeStudentEmotionsOutputSchema>;
+type AnalyzeStudentEmotionsOutput = z.infer<typeof AnalyzeStudentEmotionsOutputSchema>;
 
 export async function analyzeStudentEmotions(
   input: AnalyzeStudentEmotionsInput

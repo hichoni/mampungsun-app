@@ -19,12 +19,12 @@ const EmotionCoachInputSchema = z.object({
   history: z.array(messageSchema).describe("The history of the conversation so far."),
   message: z.string().describe("The user's latest message."),
 });
-export type EmotionCoachInput = z.infer<typeof EmotionCoachInputSchema>;
+type EmotionCoachInput = z.infer<typeof EmotionCoachInputSchema>;
 
 const EmotionCoachOutputSchema = z.object({
     response: z.string().describe("The AI coach's response."),
 });
-export type EmotionCoachOutput = z.infer<typeof EmotionCoachOutputSchema>;
+type EmotionCoachOutput = z.infer<typeof EmotionCoachOutputSchema>;
 
 
 const systemPrompt = `당신은 '마음이'라는 이름을 가진, 초등학생을 위한 따뜻하고 공감 능력이 뛰어난 AI 친구야. 너의 목표는 학생들의 이야기를 들어주고, 그들의 감정을 이해하도록 돕고, 부드럽고 지지적인 코칭을 제공하는 거야.

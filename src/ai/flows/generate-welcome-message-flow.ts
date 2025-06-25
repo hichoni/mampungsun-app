@@ -8,12 +8,12 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
 const GenerateWelcomeMessageInputSchema = z.object({});
-export type GenerateWelcomeMessageInput = z.infer<typeof GenerateWelcomeMessageInputSchema>;
+type GenerateWelcomeMessageInput = z.infer<typeof GenerateWelcomeMessageInputSchema>;
 
 const GenerateWelcomeMessageOutputSchema = z.object({
   welcomeMessage: z.string().describe('생성된 환영 메시지입니다.'),
 });
-export type GenerateWelcomeMessageOutput = z.infer<typeof GenerateWelcomeMessageOutputSchema>;
+type GenerateWelcomeMessageOutput = z.infer<typeof GenerateWelcomeMessageOutputSchema>;
 
 export async function generateWelcomeMessage(input?: GenerateWelcomeMessageInput): Promise<GenerateWelcomeMessageOutput> {
   return generateWelcomeMessageFlow(input ?? {});

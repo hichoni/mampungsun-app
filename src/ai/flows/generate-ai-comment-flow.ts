@@ -10,12 +10,12 @@ import { z } from 'zod';
 const GenerateAiCommentInputSchema = z.object({
   diaryEntryContent: z.string().describe('학생의 맘풍선(일기) 내용입니다.'),
 });
-export type GenerateAiCommentInput = z.infer<typeof GenerateAiCommentInputSchema>;
+type GenerateAiCommentInput = z.infer<typeof GenerateAiCommentInputSchema>;
 
 const GenerateAiCommentOutputSchema = z.object({
   comment: z.string().describe('AI 응원 요정이 생성한 따뜻한 응원 댓글입니다.'),
 });
-export type GenerateAiCommentOutput = z.infer<typeof GenerateAiCommentOutputSchema>;
+type GenerateAiCommentOutput = z.infer<typeof GenerateAiCommentOutputSchema>;
 
 export async function generateAiComment(input: GenerateAiCommentInput): Promise<GenerateAiCommentOutput> {
   return generateAiCommentFlow(input);
