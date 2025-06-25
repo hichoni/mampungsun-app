@@ -14,21 +14,34 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { mockUsers } from "@/lib/data"
-import React, { useState, useTransition } from "react"
+import React, { useState, useTransition, useEffect, useMemo } from "react"
 import { ArrowLeft, Loader2 } from "lucide-react"
-import { loginUser } from "@/lib/actions"
+import { loginUser, getAllStudents } from "@/lib/actions"
 import { isFirebaseConfigured } from "@/lib/firebase"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import type { User } from "@/lib/definitions"
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  
+  const [allStudents, setAllStudents] = useState<User[]>([]);
+  const [isLoadingStudents, startLoadingStudents] = useTransition();
+
   const [grade, setGrade] = useState<string>('');
   const [studentClass, setStudentClass] = useState<string>('');
   const [studentId, setStudentId] = useState<string>('');
   const [pin, setPin] = useState<string>('');
-  const [isPending, startTransition] = useTransition();
+  const [isLoggingIn, startLoggingIn] = useTransition();
+
+  useEffect(() => {
+    if (isFirebaseConfigured()) {
+        startLoadingStudents(async () => {
+            const students = await getAllStudents();
+            setAllStudents(students);
+        });
+    }
+  }, []);
 
   const handleGradeChange = (value: string) => {
     setGrade(value);
@@ -41,9 +54,19 @@ export default function LoginPage() {
     setStudentId('');
   };
 
-  const availableGrades = [...new Set(mockUsers.filter(u => u.grade > 0).map(u => u.grade))].sort((a,b) => a-b);
-  const availableClasses = grade ? [...new Set(mockUsers.filter(u => u.grade === parseInt(grade, 10)).map(u => u.class))].sort((a,b) => a-b) : [];
-  const availableStudentIds = (grade && studentClass) ? [...new Set(mockUsers.filter(u => u.grade === parseInt(grade, 10) && u.class === parseInt(studentClass, 10)).map(u => u.studentId))].sort((a,b) => a-b) : [];
+  const availableGrades = useMemo(() => {
+    return [...new Set(allStudents.filter(u => u.grade > 0 && u.isApproved).map(u => u.grade))].sort((a,b) => a-b);
+  }, [allStudents]);
+  
+  const availableClasses = useMemo(() => {
+    if (!grade) return [];
+    return [...new Set(allStudents.filter(u => u.grade === parseInt(grade, 10) && u.isApproved).map(u => u.class))].sort((a,b) => a-b);
+  }, [allStudents, grade]);
+  
+  const availableStudentIds = useMemo(() => {
+    if (!grade || !studentClass) return [];
+    return [...new Set(allStudents.filter(u => u.grade === parseInt(grade, 10) && u.class === parseInt(studentClass, 10) && u.isApproved).map(u => u.studentId))].sort((a,b) => a-b);
+  }, [allStudents, grade, studentClass]);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -57,7 +80,7 @@ export default function LoginPage() {
         return;
     }
 
-    startTransition(async () => {
+    startLoggingIn(async () => {
         try {
             const user = await loginUser(parseInt(grade), parseInt(studentClass), parseInt(studentId));
 
@@ -87,6 +110,8 @@ export default function LoginPage() {
         }
     });
   }
+  
+  const isPending = isLoadingStudents || isLoggingIn;
 
   if (!isFirebaseConfigured()) {
     return (
@@ -131,7 +156,8 @@ export default function LoginPage() {
                             <SelectValue placeholder="학년" />
                         </SelectTrigger>
                         <SelectContent>
-                            {availableGrades.map(g => <SelectItem key={g} value={String(g)}>{g}학년</SelectItem>)}
+                            {isLoadingStudents ? <SelectItem value="loading" disabled>불러오는 중...</SelectItem> :
+                             availableGrades.map(g => <SelectItem key={g} value={String(g)}>{g}학년</SelectItem>)}
                         </SelectContent>
                     </Select>
                 </div>
