@@ -14,11 +14,15 @@ const firebaseConfig: FirebaseOptions = {
 
 function isFirebaseConfigured() {
     const config = firebaseConfig;
-    // Check for presence and also that they are not the placeholder values from the README
+    // Trim values and check for presence and also that they are not the placeholder values from the README
+    const apiKey = config.apiKey?.trim();
+    const authDomain = config.authDomain?.trim();
+    const projectId = config.projectId?.trim();
+
     return (
-        config.apiKey && config.apiKey !== 'your-api-key' &&
-        config.authDomain && !config.authDomain.startsWith('your-project-id') &&
-        config.projectId && config.projectId !== 'your-project-id'
+        apiKey && apiKey !== 'your-api-key' &&
+        authDomain && !authDomain.startsWith('your-project-id') &&
+        projectId && projectId !== 'your-project-id'
     );
 }
 
