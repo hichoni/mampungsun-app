@@ -1,3 +1,4 @@
+
 'use client'
 
 import React, { useState, useRef, useEffect, useMemo, useTransition } from "react"
@@ -73,6 +74,7 @@ export default function TeacherDashboard() {
   const [isAddStudentDialogOpen, setAddStudentDialogOpen] = useState(false);
   const [isBatchUploadDialogOpen, setBatchUploadDialogOpen] = useState(false);
   const [newStudent, setNewStudent] = useState({ grade: '', studentClass: '', studentId: '', name: '', nickname: '' });
+  const [addedStudentInfo, setAddedStudentInfo] = useState<{ name: string; pin: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
     
   const [selectedGrade, setSelectedGrade] = useState<string>('all');
@@ -120,9 +122,9 @@ export default function TeacherDashboard() {
             nickname,
         });
         setStudents(prev => [...prev, newUser]);
-        toast({ title: "성공", description: "새로운 학생이 추가되었습니다." });
         setNewStudent({ grade: '', studentClass: '', studentId: '', name: '', nickname: '' });
         setAddStudentDialogOpen(false);
+        setAddedStudentInfo({ name: newUser.name, pin: newUser.pin });
     });
   };
   
@@ -614,6 +616,32 @@ export default function TeacherDashboard() {
           </CardContent>
         </Card>
       </main>
+
+      <AlertDialog open={!!addedStudentInfo} onOpenChange={(open) => !open && setAddedStudentInfo(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>학생 추가 완료!</AlertDialogTitle>
+                <AlertDialogDescription>
+                    새로운 학생의 정보입니다. PIN 번호를 학생에게 꼭 알려주세요.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="rounded-md border bg-muted p-4 space-y-2 my-4">
+                <p className="flex justify-between">
+                    <span className="text-muted-foreground">이름:</span> 
+                    <span className="font-semibold">{addedStudentInfo?.name}</span>
+                </p>
+                <p className="flex justify-between items-center">
+                    <span className="text-muted-foreground">초기 PIN 번호:</span> 
+                    <span className="font-bold text-2xl text-primary tracking-widest">{addedStudentInfo?.pin}</span>
+                </p>
+            </div>
+            <AlertDialogFooter>
+                <AlertDialogAction onClick={() => setAddedStudentInfo(null)}>
+                    확인했습니다
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
