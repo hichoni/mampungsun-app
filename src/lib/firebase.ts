@@ -13,14 +13,20 @@ const firebaseConfig: FirebaseOptions = {
 };
 
 function isFirebaseConfigured() {
-    return !!firebaseConfig.apiKey && !!firebaseConfig.authDomain && !!firebaseConfig.projectId;
+    const config = firebaseConfig;
+    // Check for presence and also that they are not the placeholder values from the README
+    return (
+        config.apiKey && config.apiKey !== 'your-api-key' &&
+        config.authDomain && !config.authDomain.startsWith('your-project-id') &&
+        config.projectId && config.projectId !== 'your-project-id'
+    );
 }
 
 // Initialize Firebase
 let app;
 if (!getApps().length) {
     if (!isFirebaseConfigured()) {
-        console.warn("Firebase config is not set. Firebase services will not be initialized.");
+        console.warn("Firebase config is not set or contains placeholder values. Please check your .env.local file. Firebase services will not be initialized.");
         app = null;
     } else {
         app = initializeApp(firebaseConfig);
