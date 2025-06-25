@@ -30,7 +30,7 @@ const generateAvatarFlow = ai.defineFlow(
   async (input) => {
     const { media } = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: `귀여운 만화 동물 캐릭터, '${input.nickname}'라는 별명을 바탕으로. 단순하고, 다채로우며, 플랫 벡터 일러스트 스타일. 단색의 밝은 배경에 캐릭터가 중앙에 위치. 이미지에 글자나 텍스트 없음. 아이의 프로필 사진으로 완벽함.`,
+      prompt: `A cute, simple, and colorful cartoon animal character for a child's profile picture, inspired by the nickname: '${input.nickname}'. Flat vector illustration style. The character should be centered on a solid, bright background. No text in the image.`,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
         safetySettings: [
