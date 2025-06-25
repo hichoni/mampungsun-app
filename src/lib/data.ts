@@ -2,32 +2,68 @@ import type { User, DiaryEntry } from './definitions';
 
 export const mockUsers: User[] = [
   // Grade 1 (up to 7 classes)
-  { id: '101', name: '김민준', nickname: '행복한 토끼', grade: 1, class: 2, studentId: 3, pin: '1234', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('토')}` },
-  { id: '102', name: '이서연', nickname: '꿈꾸는 돌고래', grade: 1, class: 3, studentId: 12, pin: '5678', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('돌')}` },
-  { id: '103', name: '박지훈', nickname: '슬기로운 거북이', grade: 1, class: 7, studentId: 15, pin: '1111', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('거')}` },
-  { id: '4', name: '김테스트', nickname: '테스트다람쥐', grade: 1, class: 1, studentId: 1, pin: '0000', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('테')}` },
+  {
+    id: '101', name: '김민준', nickname: '행복한 토끼', grade: 1, class: 2, studentId: 3, pin: '1234', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('토')}`,
+    loginCount: 15, lastLoginAt: new Date(Date.now() - 1000 * 3600 * 2).toISOString(), loginHistory: [new Date(Date.now() - 1000 * 3600 * 2).toISOString(), new Date(Date.now() - 1000 * 3600 * 26).toISOString()]
+  },
+  {
+    id: '102', name: '이서연', nickname: '꿈꾸는 돌고래', grade: 1, class: 3, studentId: 12, pin: '5678', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('돌')}`,
+    loginCount: 22, lastLoginAt: new Date(Date.now() - 1000 * 3600 * 8).toISOString(), loginHistory: [new Date(Date.now() - 1000 * 3600 * 8).toISOString()]
+  },
+  {
+    id: '103', name: '박지훈', nickname: '슬기로운 거북이', grade: 1, class: 7, studentId: 15, pin: '1111', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('거')}`,
+    loginCount: 5, lastLoginAt: new Date(Date.now() - 1000 * 3600 * 72).toISOString(), loginHistory: []
+  },
+  {
+    id: '4', name: '김테스트', nickname: '테스트다람쥐', grade: 1, class: 1, studentId: 1, pin: '0000', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('테')}`,
+    loginCount: 1, lastLoginAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(), loginHistory: [new Date(Date.now() - 1000 * 60 * 5).toISOString()]
+  },
 
   // Grade 2 (up to 6 classes)
-  { id: '201', name: '최수빈', nickname: '밝은 해바라기', grade: 2, class: 1, studentId: 5, pin: '2222', isApproved: false, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('해')}` },
-  { id: '202', name: '정다은', nickname: '친절한 코알라', grade: 2, class: 6, studentId: 3, pin: '3333', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('코')}` },
+  {
+    id: '201', name: '최수빈', nickname: '밝은 해바라기', grade: 2, class: 1, studentId: 5, pin: '2222', isApproved: false, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('해')}`,
+    loginCount: 0, loginHistory: []
+  },
+  {
+    id: '202', name: '정다은', nickname: '친절한 코알라', grade: 2, class: 6, studentId: 3, pin: '3333', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('코')}`,
+    loginCount: 30, lastLoginAt: new Date(Date.now() - 1000 * 3600 * 24 * 5).toISOString(), loginHistory: []
+  },
 
   // Grade 3 (up to 5 classes)
-  { id: '301', name: '강현우', nickname: '씩씩한 호랑이', grade: 3, class: 5, studentId: 21, pin: '4444', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('호')}` },
+  {
+    id: '301', name: '강현우', nickname: '씩씩한 호랑이', grade: 3, class: 5, studentId: 21, pin: '4444', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('호')}`,
+    loginCount: 8, lastLoginAt: new Date(Date.now() - 1000 * 3600 * 1).toISOString(), loginHistory: []
+  },
 
   // Grade 4 (up to 6 classes)
-  { id: '401', name: '조아라', nickname: '노래하는 카나리아', grade: 4, class: 6, studentId: 10, pin: '5555', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('카')}` },
+  {
+    id: '401', name: '조아라', nickname: '노래하는 카나리아', grade: 4, class: 6, studentId: 10, pin: '5555', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('카')}`,
+    loginCount: 12, loginHistory: []
+  },
 
   // Grade 5 (up to 5 classes)
-  { id: '501', name: '윤재호', nickname: '지혜로운 부엉이', grade: 5, class: 5, studentId: 8, pin: '6666', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('부')}` },
+  {
+    id: '501', name: '윤재호', nickname: '지혜로운 부엉이', grade: 5, class: 5, studentId: 8, pin: '6666', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('부')}`,
+    loginCount: 3, loginHistory: []
+  },
 
   // Grade 6 (up to 6 classes)
-  { id: '601', name: '송예진', nickname: '우아한 백조', grade: 6, class: 6, studentId: 19, pin: '7777', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('백')}` },
+  {
+    id: '601', name: '송예진', nickname: '우아한 백조', grade: 6, class: 6, studentId: 19, pin: '7777', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('백')}`,
+    loginCount: 18, loginHistory: []
+  },
 
   // AI User
-  { id: 'ai-cheerer', name: '응원 요정', nickname: '응원 요정', grade: 0, class: 0, studentId: 0, pin: '', isApproved: true, avatarUrl: `https://placehold.co/100x100/FFDAB9/8B4513.png?text=${encodeURIComponent('요')}` },
+  {
+    id: 'ai-cheerer', name: '응원 요정', nickname: '응원 요정', grade: 0, class: 0, studentId: 0, pin: '', isApproved: true, avatarUrl: `https://placehold.co/100x100/FFDAB9/8B4513.png?text=${encodeURIComponent('요')}`,
+    loginCount: 0, loginHistory: []
+  },
 
   // Teacher User
-  { id: 'teacher-master', name: '선생님', nickname: '선생님', grade: -1, class: -1, studentId: -1, pin: 'password123', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('샘')}` },
+  {
+    id: 'teacher-master', name: '선생님', nickname: '선생님', grade: -1, class: -1, studentId: -1, pin: 'password123', isApproved: true, avatarUrl: `https://placehold.co/100x100/A0D2EB/263238.png?text=${encodeURIComponent('샘')}`,
+    loginCount: 0, loginHistory: []
+  },
 ];
 
 export const mockDiaryEntries: DiaryEntry[] = [

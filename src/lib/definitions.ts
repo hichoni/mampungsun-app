@@ -10,6 +10,9 @@ export type User = {
   pin: string;
   isApproved: boolean;
   avatarUrl?: string;
+  loginCount?: number;
+  lastLoginAt?: string | Timestamp | null;
+  loginHistory?: (string | Timestamp)[];
 };
 
 export type Comment = {
@@ -17,7 +20,7 @@ export type Comment = {
   userId: string;
   nickname: string;
   comment: string;
-  createdAt: string | Timestamp;
+  createdAt?: string | Timestamp;
   avatarUrl?: string;
 };
 

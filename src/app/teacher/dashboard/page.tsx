@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { LogOut, PlusCircle, Trash2, Upload, Download, MessageSquareText, Loader2, Database, KeyRound, Palette } from "lucide-react"
+import { LogOut, PlusCircle, Trash2, Upload, Download, MessageSquareText, Loader2, Database, KeyRound, Palette, User as UserIcon } from "lucide-react"
 import Link from "next/link"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
@@ -50,6 +50,10 @@ import { isFirebaseConfigured } from "@/lib/firebase"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { getAllStudents, approveUser, deleteUser, addUser, getAllEntries, seedDatabase, resetStudentPin, getFontSettings, updateFontSettings } from "@/lib/actions"
 import type { DiaryEntry } from "@/lib/definitions"
+import { format } from "date-fns"
+import { ko } from "date-fns/locale"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 
 const getEmotionBadgeVariant = (emotion: string) => {
   switch (emotion) {
@@ -641,7 +645,74 @@ export default function TeacherDashboard() {
                       <TableCell>{student.grade}</TableCell>
                       <TableCell>{student.class}</TableCell>
                       <TableCell>{student.studentId}</TableCell>
-                      <TableCell className="font-medium">{student.name}</TableCell>
+                      <TableCell className="font-medium">
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="link" className="p-0 h-auto font-medium text-left">
+                                    {student.name}
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-md">
+                                <DialogHeader>
+                                    <div className="flex items-center gap-4">
+                                        <Avatar className="h-16 w-16 text-3xl border">
+                                            <AvatarImage src={student.avatarUrl} alt={student.nickname} />
+                                            <AvatarFallback>
+                                                <UserIcon />
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <DialogTitle className="text-2xl font-headline">{student.nickname}</DialogTitle>
+                                            <DialogDescription>{student.grade}학년 {student.class}반 {student.studentId}번 {student.name}</DialogDescription>
+                                        </div>
+                                    </div>
+                                </DialogHeader>
+                                <div className="mt-4 grid gap-4">
+                                    <Card>
+                                        <CardHeader className="p-4">
+                                            <CardTitle className="text-base">활동 요약</CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="p-4 pt-0 text-sm space-y-2">
+                                            <div className="flex justify-between">
+                                                <span className="text-muted-foreground">작성한 맘풍선</span>
+                                                <strong>{diaryEntries.filter(e => e.userId === student.id).length}개</strong>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-muted-foreground">총 로그인</span>
+                                                <strong>{student.loginCount || 0}회</strong>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-muted-foreground">최근 로그인</span>
+                                                <strong>
+                                                {student.lastLoginAt 
+                                                    ? format(new Date(student.lastLoginAt as string), 'yyyy년 M월 d일 HH:mm', { locale: ko })
+                                                    : '기록 없음'}
+                                                </strong>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                    <div>
+                                        <h4 className="text-sm font-medium mb-2">로그인 기록</h4>
+                                        <ScrollArea className="h-40 rounded-md border">
+                                            <div className="p-4 text-sm">
+                                                {(student.loginHistory && student.loginHistory.length > 0) ? (
+                                                    <ul className="space-y-2">
+                                                        {[...student.loginHistory].reverse().map((loginTime, index) => (
+                                                            <li key={index}>
+                                                                {format(new Date(loginTime as string), 'yyyy.MM.dd HH:mm:ss', { locale: ko })}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                ) : (
+                                                    <p className="text-muted-foreground text-center py-4">로그인 기록이 없습니다.</p>
+                                                )}
+                                            </div>
+                                        </ScrollArea>
+                                    </div>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                      </TableCell>
                       <TableCell>{student.nickname}</TableCell>
                       <TableCell>
                         <Badge variant={getEmotionBadgeVariant(student.latestEmotion)}>

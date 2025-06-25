@@ -52,7 +52,7 @@ export async function getUser(id: string): Promise<User | null> {
 export async function getAllStudents(): Promise<User[]> {
     if (!db) return [];
     try {
-        const q = query(collection(db, "users"), where("grade", ">=", 0));
+        const q = query(collection(db, "users"));
         const querySnapshot = await getDocs(q);
         return querySnapshot.docs.map(doc => toJSON({id: doc.id, ...doc.data()}) as User);
     } catch (error) {
@@ -74,6 +74,16 @@ export async function loginUser(grade: number, studentClass: number, studentId: 
         return toJSON({ id: userDoc.id, ...userDoc.data() }) as User;
     }
     return null;
+}
+
+export async function recordLogin(userId: string) {
+    if (!db) throw new Error("Firestore not configured");
+    const userRef = doc(db, "users", userId);
+    await updateDoc(userRef, {
+        loginCount: increment(1),
+        lastLoginAt: Timestamp.now(),
+        loginHistory: arrayUnion(Timestamp.now())
+    });
 }
 
 export async function updateUser(id: string, data: Partial<User>) {
@@ -103,14 +113,16 @@ export async function deleteUser(id: string) {
     revalidatePath('/teacher/dashboard');
 }
 
-export async function addUser(studentData: Omit<User, 'id' | 'pin' | 'isApproved' | 'avatarUrl'>): Promise<User> {
+export async function addUser(studentData: Omit<User, 'id' | 'pin' | 'isApproved' | 'avatarUrl' | 'loginCount' | 'lastLoginAt' | 'loginHistory'>): Promise<User> {
     if (!db) throw new Error("Firestore not configured");
     const newUserRef = doc(collection(db, 'users'));
     const newUser: User = {
       id: newUserRef.id,
       ...studentData,
-      pin: '0000', // Set initial PIN to 0000
+      pin: '0000',
       isApproved: true,
+      loginCount: 0,
+      loginHistory: [],
     };
     await setDoc(newUserRef, newUser);
     revalidatePath('/teacher/dashboard');
@@ -281,7 +293,13 @@ export async function seedDatabase() {
 
     mockUsers.forEach(user => {
         const docRef = doc(usersCollection, user.id);
-        batch.set(docRef, user);
+        const { lastLoginAt, loginHistory, ...restOfUser } = user;
+        const firestoreUser = {
+            ...restOfUser,
+            lastLoginAt: user.lastLoginAt ? Timestamp.fromDate(new Date(user.lastLoginAt as string)) : null,
+            loginHistory: (user.loginHistory || []).map(lh => Timestamp.fromDate(new Date(lh as string)))
+        };
+        batch.set(docRef, firestoreUser);
     });
 
     mockDiaryEntries.forEach(entry => {
@@ -293,7 +311,7 @@ export async function seedDatabase() {
             createdAt: Timestamp.fromDate(new Date(entry.createdAt as string)),
             comments: (entry.comments || []).map(c => ({
                 ...c,
-                createdAt: Timestamp.fromDate(new Date(c.createdAt as string))
+                createdAt: c.createdAt ? Timestamp.fromDate(new Date(c.createdAt as string)) : Timestamp.now()
             }))
         };
 

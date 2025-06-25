@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast"
 import React, { useState, useTransition, useEffect, useMemo } from "react"
 import { ArrowLeft, Loader2 } from "lucide-react"
-import { loginUser, getAllStudents } from "@/lib/actions"
+import { loginUser, getAllStudents, recordLogin } from "@/lib/actions"
 import { isFirebaseConfigured } from "@/lib/firebase"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import type { User } from "@/lib/definitions"
@@ -98,6 +98,8 @@ export default function LoginPage() {
                 toast({ variant: "destructive", title: "로그인 실패", description: "PIN 번호가 올바르지 않습니다." });
                 return;
             }
+
+            await recordLogin(user.id);
         
             localStorage.setItem('mampungsun_user_id', user.id);
             toast({ title: "로그인 성공!", description: `환영합니다, ${user.nickname}님!` });
@@ -149,7 +151,7 @@ export default function LoginPage() {
         <CardHeader>
             <CardTitle className="text-2xl font-headline">학생 로그인</CardTitle>
             <CardDescription>학년, 반, 번호를 선택하고 PIN 번호를 입력하세요.</CardDescription>
-        </CardHeader>
+        </Header>
         <CardContent>
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid grid-cols-3 gap-4">
