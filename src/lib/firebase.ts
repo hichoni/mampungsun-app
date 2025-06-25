@@ -13,7 +13,7 @@ const firebaseConfig: FirebaseOptions = {
 };
 
 function isFirebaseConfigured() {
-    return !!firebaseConfig.projectId;
+    return !!firebaseConfig.apiKey && !!firebaseConfig.authDomain && !!firebaseConfig.projectId;
 }
 
 // Initialize Firebase
