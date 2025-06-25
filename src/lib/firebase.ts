@@ -15,14 +15,21 @@ const firebaseConfig: FirebaseOptions = {
 function isFirebaseConfigured() {
     const config = firebaseConfig;
     
-    // This is a more robust check to prevent initialization with incomplete data.
-    // It verifies that each value is present and is not the default placeholder.
-    if (!config.apiKey || config.apiKey.startsWith('your-api-key')) return false;
-    if (!config.authDomain || config.authDomain.startsWith('your-project-id')) return false;
-    if (!config.projectId || config.projectId.startsWith('your-project-id')) return false;
-    if (!config.storageBucket || config.storageBucket.startsWith('your-project-id')) return false;
-    if (!config.messagingSenderId || config.messagingSenderId.startsWith('your-sender-id')) return false;
-    if (!config.appId || config.appId.startsWith('your-app-id')) return false;
+    // 이 함수는 값이 유효한지(존재하고, 비어있지 않고, 플레이스홀더가 아닌지) 확인합니다.
+    const check = (value: string | undefined, placeholder: string) => {
+        if (!value || value.trim() === '' || value.trim() === placeholder) {
+            return false;
+        }
+        return true;
+    }
+
+    // README.md에 있는 플레이스홀더 값을 기준으로 모든 설정 값을 엄격하게 확인합니다.
+    if (!check(config.apiKey, 'your-api-key')) return false;
+    if (!check(config.authDomain, 'your-project-id.firebaseapp.com')) return false;
+    if (!check(config.projectId, 'your-project-id')) return false;
+    if (!check(config.storageBucket, 'your-project-id.appspot.com')) return false;
+    if (!check(config.messagingSenderId, 'your-sender-id')) return false;
+    if (!check(config.appId, 'your-app-id')) return false;
 
     return true;
 }
