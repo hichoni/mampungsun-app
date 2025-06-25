@@ -130,8 +130,9 @@ export default function DashboardPage() {
         </div>
       </div>
       {isLoading ? (
-        <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center justify-center h-64 gap-4">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">흩어진 맘풍선을 모으는 중이에요...</p>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

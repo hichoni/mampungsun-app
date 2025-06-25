@@ -97,8 +97,9 @@ export default function MyDiaryPage() {
         </CardHeader>
         <CardContent className="flex justify-center">
             {isLoading ? (
-                <div className="flex items-center justify-center h-48">
-                    <Loader2 className="h-8 w-8 animate-spin" />
+                <div className="flex flex-col items-center justify-center h-48 gap-4">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">마음 날씨를 분석하고 있어요...</p>
                 </div>
             ) : chartData.length > 0 ? (
                 <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[300px]">
@@ -125,8 +126,9 @@ export default function MyDiaryPage() {
       </Card>
 
       {isLoading ? (
-         <div className="flex items-center justify-center h-64">
+         <div className="flex flex-col items-center justify-center h-64 gap-4">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">내가 날린 맘풍선들을 돌아보고 있어요...</p>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
