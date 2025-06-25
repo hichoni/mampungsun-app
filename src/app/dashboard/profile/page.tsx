@@ -115,8 +115,8 @@ export default function ProfilePage() {
         console.error("Avatar generation failed:", error);
         toast({
           variant: "destructive",
-          title: "오류",
-          description: "아바타 생성에 실패했습니다. 잠시 후 다시 시도하거나, API 키 또는 Firebase 설정을 확인해주세요."
+          title: "아바타 생성 오류",
+          description: error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
         });
       }
     });

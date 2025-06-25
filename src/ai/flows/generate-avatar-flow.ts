@@ -28,24 +28,30 @@ const generateAvatarFlow = ai.defineFlow(
     outputSchema: GenerateAvatarOutputSchema,
   },
   async (input) => {
-    const { media } = await ai.generate({
-      model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: `A cute, simple, and colorful cartoon animal character for a child's profile picture, inspired by the nickname: '${input.nickname}'. Flat vector illustration style. The character should be centered on a solid, bright background. No text in the image.`,
-      config: {
-        responseModalities: ['TEXT', 'IMAGE'],
-        safetySettings: [
-            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-        ],
-      },
-    });
+    try {
+      const { media } = await ai.generate({
+        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        prompt: `A very simple, cute, cartoon animal mascot for a child's profile picture. The character is inspired by the Korean nickname: "${input.nickname}". Flat vector art style with bright colors. Centered on a solid color background. No text or letters in the image.`,
+        config: {
+          responseModalities: ['TEXT', 'IMAGE'],
+          safetySettings: [
+              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+          ],
+        },
+      });
 
-    if (!media?.url) {
-      throw new Error('Image generation failed. No media was returned.');
+      if (!media?.url) {
+        throw new Error('Image generation failed. No media was returned from the AI model.');
+      }
+      
+      return { imageDataUri: media.url };
+    } catch (error) {
+        console.error('Error in generateAvatarFlow:', error);
+        // Re-throw the error to be caught by the client
+        throw new Error('AI 아바타 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     }
-    
-    return { imageDataUri: media.url };
   }
 );
