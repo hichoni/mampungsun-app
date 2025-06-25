@@ -1,4 +1,7 @@
+'use server'
+
 import { initializeApp, getApps, getApp, FirebaseOptions } from "firebase/app";
+import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
@@ -28,7 +31,8 @@ if (!getApps().length) {
     app = getApp();
 }
 
+const auth = app ? getAuth(app) : null;
 const db = app ? getFirestore(app) : null;
 const storage = app ? getStorage(app) : null;
 
-export { app, db, storage, isFirebaseConfigured };
+export { app, auth, db, storage, isFirebaseConfigured };

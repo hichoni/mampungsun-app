@@ -46,7 +46,7 @@ import { PieChart, Pie, Cell } from "recharts"
 import { type ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { generateNickname } from "@/ai/flows/generate-nickname-flow"
-import { isFirebaseConfigured } from "@/lib/firebase"
+import { isFirebaseConfigured, auth } from "@/lib/firebase"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { getAllStudents, approveUser, deleteUser, addUser, getAllEntries, seedDatabase, resetStudentPin, getFontSettings, updateFontSettings } from "@/lib/actions"
 import type { DiaryEntry } from "@/lib/definitions"
@@ -54,6 +54,8 @@ import { format } from "date-fns"
 import { ko } from "date-fns/locale"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { useRouter } from "next/navigation"
+import { signOut } from "firebase/auth"
 
 const getEmotionBadgeVariant = (emotion: string) => {
   switch (emotion) {
@@ -87,6 +89,7 @@ const availableFonts = [
 
 
 export default function TeacherDashboard() {
+  const router = useRouter();
   const [students, setStudents] = useState<User[]>([]);
   const [diaryEntries, setDiaryEntries] = useState<DiaryEntry[]>([]);
   const [isLoading, startLoading] = useTransition();
@@ -120,6 +123,14 @@ export default function TeacherDashboard() {
         });
     }
   }, []);
+
+  const handleLogout = () => {
+    if (auth) {
+        signOut(auth);
+    }
+    localStorage.removeItem('mampungsun_user_id');
+    router.push('/');
+  }
 
   const handleApprovalChange = (studentId: string, isApproved: boolean) => {
     startLoading(async () => {
@@ -392,11 +403,9 @@ export default function TeacherDashboard() {
                     학생 화면으로
                 </Link>
             </Button>
-            <Button asChild variant="ghost">
-                <Link href="/">
-                    <LogOut className="mr-2 h-4 w-4"/>
-                    로그아웃
-                </Link>
+            <Button variant="ghost" onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4"/>
+                로그아웃
             </Button>
         </div>
       </header>

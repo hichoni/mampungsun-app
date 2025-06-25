@@ -2,14 +2,18 @@
 
 import { useState, useEffect, useTransition } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { ArrowLeft, LogOut, Loader2 } from "lucide-react"
 import { DiaryCard } from "@/components/diary-card"
 import type { DiaryEntry, User } from "@/lib/definitions"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { getAllEntries, getAllStudents, deleteEntry, pinEntry } from "@/lib/actions"
+import { auth } from "@/lib/firebase"
+import { signOut } from "firebase/auth"
 
 export default function ContentManagementPage() {
+  const router = useRouter();
   const [entries, setEntries] = useState<DiaryEntry[]>([])
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [isLoading, startLoading] = useTransition();
@@ -25,6 +29,14 @@ export default function ContentManagementPage() {
         setAllUsers([...fetchedUsers, { id: 'teacher-master', name: '선생님', nickname: '선생님', grade: -1, class: -1, studentId: -1, pin: '', isApproved: true }]);
     });
   }, []);
+
+  const handleLogout = () => {
+    if (auth) {
+        signOut(auth);
+    }
+    localStorage.removeItem('mampungsun_user_id');
+    router.push('/');
+  }
 
   const handlePinEntry = (entryId: string, currentPinStatus: boolean) => {
     startLoading(async () => {
@@ -71,11 +83,9 @@ export default function ContentManagementPage() {
                 <h1 className="text-xl font-semibold font-headline">콘텐츠 관리</h1>
                 <p className="text-sm text-muted-foreground">학생들의 모든 맘풍선과 댓글을 확인하고 관리합니다.</p>
             </div>
-            <Button variant="ghost" size="icon" asChild>
-                <Link href="/">
-                    <LogOut className="h-5 w-5"/>
-                    <span className="sr-only">로그아웃</span>
-                </Link>
+            <Button variant="ghost" size="icon" onClick={handleLogout}>
+                <LogOut className="h-5 w-5"/>
+                <span className="sr-only">로그아웃</span>
             </Button>
         </header>
         <main className="p-4 sm:p-6 md:p-8">

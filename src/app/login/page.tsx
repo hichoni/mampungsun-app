@@ -17,7 +17,8 @@ import { useToast } from "@/hooks/use-toast"
 import React, { useState, useTransition, useEffect, useMemo } from "react"
 import { ArrowLeft, Loader2 } from "lucide-react"
 import { loginUser, getAllStudents, recordLogin } from "@/lib/actions"
-import { isFirebaseConfigured } from "@/lib/firebase"
+import { isFirebaseConfigured, auth } from "@/lib/firebase"
+import { signInAnonymously } from "firebase/auth"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import type { User } from "@/lib/definitions"
 
@@ -97,6 +98,10 @@ export default function LoginPage() {
             if (user.pin !== pin) {
                 toast({ variant: "destructive", title: "로그인 실패", description: "PIN 번호가 올바르지 않습니다." });
                 return;
+            }
+
+            if (auth) {
+                await signInAnonymously(auth);
             }
 
             await recordLogin(user.id);

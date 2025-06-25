@@ -1,4 +1,3 @@
-
 'use client'
 
 import Link from "next/link"
@@ -16,6 +15,8 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { ArrowLeft } from "lucide-react"
+import { auth } from "@/lib/firebase"
+import { signInAnonymously } from "firebase/auth"
 
 const MASTER_ID = "master"
 const MASTER_PASSWORD = "password123"
@@ -26,9 +27,22 @@ export default function TeacherLoginPage() {
   const [masterId, setMasterId] = useState("")
   const [password, setPassword] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (masterId === MASTER_ID && password === MASTER_PASSWORD) {
+      if (auth) {
+        try {
+          await signInAnonymously(auth);
+        } catch (error) {
+          console.error("Anonymous sign-in failed", error);
+          toast({
+            variant: "destructive",
+            title: "인증 실패",
+            description: "Firebase 인증에 실패했습니다."
+          });
+          return;
+        }
+      }
       localStorage.setItem('mampungsun_user_id', 'teacher-master');
       toast({
         title: "로그인 성공",
