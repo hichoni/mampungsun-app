@@ -38,12 +38,13 @@ import { ScrollArea } from "./ui/scroll-area"
 import { Input } from "./ui/input"
 import { moderateText } from "@/ai/flows/moderate-text-flow"
 import { cn } from "@/lib/utils"
-import { addComment, deleteComment, getUser, likeEntry } from "@/lib/actions"
+import { addComment, deleteComment, likeEntry } from "@/lib/actions"
 import { useRouter } from "next/navigation"
 
 interface DiaryCardProps {
   entry: DiaryEntry
   author: User | undefined
+  currentUser: User | null
   onDeleteEntry?: (entryId: string) => void;
   onPinEntry?: (entryId: string, isPinned: boolean) => void;
   isTeacherView?: boolean;
@@ -58,11 +59,9 @@ const getEmotionBadgeVariant = (emotion: string): 'default' | 'secondary' | 'des
   }
 }
 
-export function DiaryCard({ entry, author, onDeleteEntry, onPinEntry, isTeacherView = false }: DiaryCardProps) {
+export function DiaryCard({ entry, author, currentUser, onDeleteEntry, onPinEntry, isTeacherView = false }: DiaryCardProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [commenter, setCommenter] = useState<User | null>(null);
   
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(entry.likes || 0);
@@ -106,22 +105,13 @@ export function DiaryCard({ entry, author, onDeleteEntry, onPinEntry, isTeacherV
   }, [entry.createdAt]);
   
   useEffect(() => {
-    const userId = localStorage.getItem(isTeacherView ? 'mampungsun_teacher_id' : 'mampungsun_user_id');
-    setCurrentUserId(userId);
-    
-    const fetchCommenter = async (id: string) => {
-        const user = await getUser(id);
-        setCommenter(user);
-    };
-    if (userId) fetchCommenter(userId);
-
-    setIsLiked(!!userId && !!entry.likedBy && entry.likedBy.includes(userId));
+    setIsLiked(!!currentUser?.id && !!entry.likedBy && entry.likedBy.includes(currentUser.id));
     setLikeCount(entry.likes || 0);
     setComments(entry.comments || []);
-  }, [entry, isTeacherView]);
+  }, [entry, currentUser]);
 
   const handleLikeToggle = () => {
-    if (!currentUserId) {
+    if (!currentUser) {
         toast({variant: "destructive", title: "로그인이 필요합니다."});
         router.push('/login');
         return;
@@ -132,7 +122,7 @@ export function DiaryCard({ entry, author, onDeleteEntry, onPinEntry, isTeacherV
 
     startTransition(async () => {
         try {
-            await likeEntry(entry.id, currentUserId);
+            await likeEntry(entry.id, currentUser.id);
         } catch(e) {
             // Revert optimistic update on failure
             setIsLiked(!newIsLiked);
@@ -147,7 +137,7 @@ export function DiaryCard({ entry, author, onDeleteEntry, onPinEntry, isTeacherV
         toast({variant: "destructive", title: "댓글을 입력해주세요."});
         return;
     }
-    if (!commenter || !currentUserId) {
+    if (!currentUser) {
         toast({variant: "destructive", title: "로그인이 필요합니다."});
         return;
     }
@@ -161,9 +151,9 @@ export function DiaryCard({ entry, author, onDeleteEntry, onPinEntry, isTeacherV
 
         try {
             const newComment = await addComment(entry.id, {
-                userId: commenter.id,
-                nickname: commenter.nickname,
-                avatarUrl: commenter.avatarUrl,
+                userId: currentUser.id,
+                nickname: currentUser.nickname,
+                avatarUrl: currentUser.avatarUrl,
                 comment: commentText,
             });
 
@@ -348,9 +338,9 @@ export function DiaryCard({ entry, author, onDeleteEntry, onPinEntry, isTeacherV
                                 onChange={(e) => setNewCommentText(e.target.value)}
                                 placeholder="직접 응원 메시지를 입력할 수도 있어요."
                                 className="flex-1"
-                                disabled={isPending || !commenter}
+                                disabled={isPending || !currentUser}
                             />
-                            <Button type="submit" disabled={!newCommentText.trim() || isPending || !commenter}>
+                            <Button type="submit" disabled={!newCommentText.trim() || isPending || !currentUser}>
                                 {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "전송"}
                             </Button>
                         </form>

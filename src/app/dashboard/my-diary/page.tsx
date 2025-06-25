@@ -136,6 +136,7 @@ export default function MyDiaryPage() {
                 key={entry.id} 
                 entry={entry} 
                 author={currentUser} 
+                currentUser={currentUser}
                 />
             ))
             ) : (

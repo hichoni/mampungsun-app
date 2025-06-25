@@ -55,6 +55,8 @@ export default function ContentManagementPage() {
   const findUserById = (userId: string): User | undefined => {
     return allUsers.find(user => user.id === userId);
   }
+  
+  const teacherUser = allUsers.find(u => u.id === 'teacher-master');
 
   return (
     <div className="min-h-screen bg-background">
@@ -89,7 +91,8 @@ export default function ContentManagementPage() {
                       <DiaryCard 
                           key={entry.id} 
                           entry={entry} 
-                          author={findUserById(entry.userId)} 
+                          author={findUserById(entry.userId)}
+                          currentUser={teacherUser || null}
                           onDeleteEntry={handleDeleteEntry}
                           onPinEntry={handlePinEntry}
                           isTeacherView={true} 

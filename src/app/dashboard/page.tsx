@@ -6,84 +6,95 @@ import type { DiaryEntry, User, Comment } from "@/lib/definitions"
 import { generateAiComment } from "@/ai/flows/generate-ai-comment-flow"
 import { generateWelcomeMessage } from "@/ai/flows/generate-welcome-message-flow"
 import { Lightbulb, Loader2 } from "lucide-react"
-import { getPublicEntries, getAllStudents, addComment } from "@/lib/actions"
+import { getPublicEntries, getAllStudents, addComment, getUser } from "@/lib/actions"
 import { isFirebaseConfigured } from "@/lib/firebase"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useRouter } from "next/navigation"
 
 const AI_CHEERER_ID = 'ai-cheerer';
 const AI_COMMENT_THRESHOLD_HOURS = 1;
 
+async function processAndAddAiComments(entries: DiaryEntry[], aiUser: User) {
+    const now = new Date().getTime();
+    const threshold = now - AI_COMMENT_THRESHOLD_HOURS * 60 * 60 * 1000;
+
+    const commentPromises = entries
+        .filter(entry => {
+            const hasEngagement = (entry.likes || 0) > 0 || (entry.comments?.length || 0) > 0;
+            const hasAiComment = entry.comments?.some(c => c.userId === AI_CHEERER_ID);
+            const entryTime = new Date(entry.createdAt as string).getTime();
+            return !hasEngagement && !hasAiComment && entryTime < threshold;
+        })
+        .map(async (entry) => {
+            try {
+                const result = await generateAiComment({ diaryEntryContent: entry.content });
+                if (result.comment) {
+                    const aiComment: Omit<Comment, 'id' | 'createdAt'> = {
+                        userId: aiUser.id,
+                        nickname: aiUser.nickname,
+                        avatarUrl: aiUser.avatarUrl,
+                        comment: result.comment,
+                    };
+                    await addComment(entry.id, aiComment);
+                }
+            } catch (error) {
+                console.error(`Failed to generate AI comment for entry ${entry.id}:`, error);
+            }
+        });
+    
+    await Promise.allSettled(commentPromises);
+    if (commentPromises.length > 0) {
+        console.log("AI comment processing finished in the background.");
+    }
+}
+
+
 export default function DashboardPage() {
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, startLoading] = useTransition();
   const [welcomeMessage, setWelcomeMessage] = useState<string>('');
   const [isLoadingWelcome, setIsLoadingWelcome] = useState<boolean>(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    const userId = localStorage.getItem('mampungsun_user_id');
+    if (userId) {
+        getUser(userId).then(setCurrentUser);
+    } else {
+        router.push('/login');
+    }
+  }, [router]);
 
   useEffect(() => {
     if (!isFirebaseConfigured()) return;
 
-    startLoading(async () => {
-      // Fetch welcome message
-      setIsLoadingWelcome(true);
-      try {
-        const result = await generateWelcomeMessage();
+    // Fetch welcome message in parallel
+    setIsLoadingWelcome(true);
+    generateWelcomeMessage()
+      .then(result => {
         setWelcomeMessage(result.welcomeMessage || "친구들의 마음에 귀를 기울이고, 따뜻한 응원을 보내보세요!");
-      } catch (error) {
+      })
+      .catch(error => {
         console.error("Failed to generate welcome message:", error);
         setWelcomeMessage("친구들의 마음에 귀를 기울이고, 따뜻한 응원을 보내보세요!"); // Fallback message
-      } finally {
+      })
+      .finally(() => {
         setIsLoadingWelcome(false);
-      }
+      });
       
-      // Fetch users and entries
+    // Fetch users and entries
+    startLoading(async () => {
       const [users, initialEntries] = await Promise.all([getAllStudents(), getPublicEntries()]);
       setAllUsers(users);
+      setEntries(initialEntries);
 
-      // AI Comment logic
+      // Non-blocking AI comment generation
       const aiUser = users.find(u => u.id === AI_CHEERER_ID);
       if (aiUser) {
-        let entriesWereUpdated = false;
-        const updatedEntriesPromises = initialEntries.map(async (entry) => {
-          const hasEngagement = (entry.likes || 0) > 0 || (entry.comments?.length || 0) > 0;
-          const hasAiComment = entry.comments?.some((c: any) => c.userId === AI_CHEERER_ID);
-          
-          if (hasEngagement || hasAiComment) return entry;
-  
-          const entryDate = new Date(entry.createdAt);
-          const hoursDiff = (new Date().getTime() - entryDate.getTime()) / (1000 * 60 * 60);
-  
-          if (hoursDiff > AI_COMMENT_THRESHOLD_HOURS) {
-            try {
-              const result = await generateAiComment({ diaryEntryContent: entry.content });
-              if (result.comment) {
-                const aiComment: Omit<Comment, 'id' | 'createdAt' | 'likes'> = {
-                  userId: AI_CHEERER_ID,
-                  nickname: aiUser.nickname,
-                  avatarUrl: aiUser.avatarUrl,
-                  comment: result.comment,
-                };
-                await addComment(entry.id, aiComment, AI_CHEERER_ID);
-                entriesWereUpdated = true;
-              }
-            } catch (error) {
-              console.error("Failed to generate AI comment for entry:", entry.id, error);
-            }
-          }
-          return entry; // This is a bit of a race condition, but for a demo it's ok.
-        });
-  
-        await Promise.all(updatedEntriesPromises);
-
-        if (entriesWereUpdated) {
-          // Re-fetch entries to get the latest data with AI comments
-          const refreshedEntries = await getPublicEntries();
-          setEntries(refreshedEntries);
-        } else {
-          setEntries(initialEntries);
-        }
-      } else {
-        setEntries(initialEntries);
+        // Fire-and-forget: run in the background, don't await, don't block UI
+        processAndAddAiComments(initialEntries, aiUser);
       }
     });
   }, []);
@@ -129,6 +140,7 @@ export default function DashboardPage() {
               key={entry.id} 
               entry={entry} 
               author={findUserById(entry.userId)} 
+              currentUser={currentUser}
             />
           ))}
         </div>
