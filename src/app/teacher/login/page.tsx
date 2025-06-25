@@ -15,8 +15,9 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { ArrowLeft } from "lucide-react"
-import { auth } from "@/lib/firebase"
+import { auth, isFirebaseConfigured } from "@/lib/firebase"
 import { signInAnonymously } from "firebase/auth"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 
 const MASTER_ID = "master"
 const MASTER_PASSWORD = "password123"
@@ -56,6 +57,28 @@ export default function TeacherLoginPage() {
         description: "아이디 또는 비밀번호가 올바르지 않습니다."
       })
     }
+  }
+
+  if (!isFirebaseConfigured()) {
+    return (
+        <div className="flex items-center justify-center min-h-screen bg-secondary/50 p-4">
+             <Card className="mx-auto max-w-md w-full">
+                <CardHeader>
+                    <CardTitle className="text-2xl font-headline text-destructive">설정 필요</CardTitle>
+                    <CardDescription>앱을 사용하기 전에 Firebase 설정이 필요합니다.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Alert variant="destructive">
+                        <AlertTitle>Firebase 미설정</AlertTitle>
+                        <AlertDescription>
+                            <p>Firestore 데이터베이스 연동을 위한 환경 변수 설정이 필요합니다.</p>
+                            <p className="mt-2">프로젝트의 `README.md` 파일을 참고하여 설정을 완료해주세요.</p>
+                        </AlertDescription>
+                    </Alert>
+                </CardContent>
+            </Card>
+        </div>
+    )
   }
 
   return (
