@@ -1,20 +1,19 @@
 'use server';
 /**
- * @fileOverview 학생의 별명을 기반으로 귀여운 아바타 이미지를 생성하고 Firebase Storage에 업로드하는 AI 플로우입니다.
+ * @fileOverview 학생의 별명을 기반으로 귀여운 아바타 이미지를 생성하는 AI 플로우입니다.
+ * 이 플로우는 이미지 데이터 URI를 반환하며, 클라이언트에서 Firebase Storage에 업로드해야 합니다.
  */
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { storage } from '@/lib/firebase';
-import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 
 const GenerateAvatarInputSchema = z.object({
   nickname: z.string().describe('아바타를 생성할 학생의 별명입니다.'),
-  userId: z.string().describe('아바타를 생성할 학생의 고유 ID입니다. 이미지 저장 경로에 사용됩니다.'),
+  userId: z.string().describe('아바타를 생성할 학생의 고유 ID입니다. (참고용)'),
 });
 type GenerateAvatarInput = z.infer<typeof GenerateAvatarInputSchema>;
 
 const GenerateAvatarOutputSchema = z.object({
-  avatarUrl: z.string().describe('Firebase Storage에 업로드된 아바타 이미지의 URL입니다.'),
+  imageDataUri: z.string().describe('Base64로 인코딩된 생성된 아바타 이미지의 데이터 URI입니다.'),
 });
 type GenerateAvatarOutput = z.infer<typeof GenerateAvatarOutputSchema>;
 
@@ -29,13 +28,9 @@ const generateAvatarFlow = ai.defineFlow(
     outputSchema: GenerateAvatarOutputSchema,
   },
   async (input) => {
-    if (!storage) {
-        throw new Error("Firebase Storage is not configured. Please check environment variables.");
-    }
-      
     const { media } = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: `'${input.nickname}'이라는 별명을 바탕으로 한 귀엽고 친근한 만화 동물 캐릭터. 단순하고, 다채로우며, 플랫 벡터 일러스트 스타일. 단색의 밝은 배경에 캐릭터가 중앙에 위치. 이미지에 글자나 텍스트 없음. 아이의 프로필 사진으로 완벽함.`,
+      prompt: `귀여운 만화 동물 캐릭터, '${input.nickname}'라는 별명을 바탕으로. 단순하고, 다채로우며, 플랫 벡터 일러스트 스타일. 단색의 밝은 배경에 캐릭터가 중앙에 위치. 이미지에 글자나 텍스트 없음. 아이의 프로필 사진으로 완벽함.`,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
         safetySettings: [
@@ -51,11 +46,6 @@ const generateAvatarFlow = ai.defineFlow(
       throw new Error('Image generation failed. No media was returned.');
     }
     
-    // The generated data URI is too large for Firestore. Upload to Firebase Storage instead.
-    const storageRef = ref(storage, `avatars/${input.userId}/${new Date().getTime()}.png`);
-    const uploadResult = await uploadString(storageRef, media.url, 'data_url');
-    const downloadUrl = await getDownloadURL(uploadResult.ref);
-
-    return { avatarUrl: downloadUrl };
+    return { imageDataUri: media.url };
   }
 );

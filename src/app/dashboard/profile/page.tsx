@@ -12,6 +12,8 @@ import { User as UserIcon, Loader2 } from "lucide-react"
 import { generateAvatar } from "@/ai/flows/generate-avatar-flow"
 import { useRouter } from "next/navigation"
 import { getUser, updateUser } from "@/lib/actions"
+import { storage } from "@/lib/firebase"
+import { ref, uploadString, getDownloadURL } from "firebase/storage"
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -88,7 +90,19 @@ export default function ProfilePage() {
       try {
         toast({ title: "AI 아바타 생성 중...", description: "잠시만 기다려주세요. 멋진 아바타를 만들고 있어요!" });
         const result = await generateAvatar({ nickname: user.nickname, userId: user.id });
-        const newAvatarUrl = result.avatarUrl;
+        const imageDataUri = result.imageDataUri;
+        
+        if (!imageDataUri) {
+          throw new Error("AI did not return an image.");
+        }
+
+        if (!storage) {
+          throw new Error("Firebase Storage is not configured. Please check environment variables.");
+        }
+        
+        const storageRef = ref(storage, `avatars/${user.id}/${new Date().getTime()}.png`);
+        const uploadResult = await uploadString(storageRef, imageDataUri, 'data_url');
+        const newAvatarUrl = await getDownloadURL(uploadResult.ref);
 
         await updateUser(user.id, { avatarUrl: newAvatarUrl });
         setUser(prev => prev ? { ...prev, avatarUrl: newAvatarUrl } : null);
@@ -102,7 +116,7 @@ export default function ProfilePage() {
         toast({
           variant: "destructive",
           title: "오류",
-          description: "아바타 생성에 실패했습니다. 잠시 후 다시 시도하거나, API 키 설정을 확인해주세요."
+          description: "아바타 생성에 실패했습니다. 잠시 후 다시 시도하거나, API 키 또는 Firebase 설정을 확인해주세요."
         });
       }
     });
