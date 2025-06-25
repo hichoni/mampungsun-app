@@ -49,13 +49,21 @@ export default function TeacherLoginPage() {
             description: "학생들과 같은 화면으로 이동합니다."
         })
         router.push('/dashboard')
-      } catch (error) {
-        console.error("Anonymous sign-in failed", error);
-        toast({
-          variant: "destructive",
-          title: "인증 실패",
-          description: "Firebase 인증에 실패했습니다. 설정을 다시 확인해주세요."
-        });
+      } catch (error: any) {
+        if (error.code === 'auth/configuration-not-found') {
+            toast({
+                variant: "destructive",
+                title: "Firebase 설정 오류",
+                description: "인증 설정이 올바르지 않습니다. README 파일을 참고하여 .env.local 파일을 다시 확인해주세요."
+            });
+        } else {
+            console.error("Anonymous sign-in failed", error);
+            toast({
+              variant: "destructive",
+              title: "인증 실패",
+              description: "Firebase 인증에 실패했습니다. 설정을 다시 확인해주세요."
+            });
+        }
         return;
       }
     } else {

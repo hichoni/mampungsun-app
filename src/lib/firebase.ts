@@ -17,7 +17,8 @@ function isFirebaseConfigured() {
     
     // 이 함수는 값이 유효한지(존재하고, 비어있지 않고, 플레이스홀더가 아닌지) 확인합니다.
     const check = (value: string | undefined, placeholder: string) => {
-        if (!value || value.trim() === '' || value.trim() === placeholder) {
+        // 값이 반드시 문자열이어야 하고, 공백이 아니어야 하며, 플레이스홀더와 달라야 합니다.
+        if (typeof value !== 'string' || value.trim() === '' || value.trim() === placeholder) {
             return false;
         }
         return true;

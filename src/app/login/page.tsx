@@ -119,9 +119,17 @@ export default function LoginPage() {
               router.push('/dashboard');
             }
             
-        } catch (error) {
-            console.error("Login error:", error);
-            toast({ variant: "destructive", title: "로그인 오류", description: "로그인 중 문제가 발생했습니다." });
+        } catch (error: any) {
+            if (error.code === 'auth/configuration-not-found') {
+              toast({
+                  variant: "destructive",
+                  title: "Firebase 설정 오류",
+                  description: "인증 설정이 올바르지 않습니다. README 파일을 참고하여 .env.local 파일을 다시 확인해주세요."
+              });
+            } else {
+              console.error("Login error:", error);
+              toast({ variant: "destructive", title: "로그인 오류", description: "로그인 중 문제가 발생했습니다." });
+            }
         }
     });
   }
