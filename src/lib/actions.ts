@@ -45,7 +45,9 @@ export async function getUser(id: string): Promise<User | null> {
 export async function getAllStudents(): Promise<User[]> {
     if (!db) return [];
     try {
-        const q = query(collection(db, "users"), where("grade", ">=", 0), where("isApproved", "==", true));
+        // Teacher dashboard needs to see ALL students (approved or not), so we remove the isApproved filter.
+        // The login page already filters for approved students on the client side.
+        const q = query(collection(db, "users"), where("grade", ">=", 0));
         const querySnapshot = await getDocs(q);
         return querySnapshot.docs.map(doc => toJSON({id: doc.id, ...doc.data()}) as User);
     } catch (error) {
