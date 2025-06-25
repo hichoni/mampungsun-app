@@ -151,7 +151,7 @@ export default function LoginPage() {
         <CardHeader>
             <CardTitle className="text-2xl font-headline">학생 로그인</CardTitle>
             <CardDescription>학년, 반, 번호를 선택하고 PIN 번호를 입력하세요.</CardDescription>
-        </Header>
+        </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid grid-cols-3 gap-4">
