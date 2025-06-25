@@ -2,20 +2,45 @@
 
 import { useState, useEffect, useMemo, useTransition } from "react"
 import { DiaryCard } from "@/components/diary-card"
-import type { DiaryEntry, User } from "@/lib/definitions"
+import type { DiaryEntry, User, DiaryEntryAnalysisResult } from "@/lib/definitions"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PieChart, Pie, Cell } from "recharts"
 import { type ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { generateMyDiaryWelcomeMessage } from "@/ai/flows/generate-my-diary-welcome-flow"
+import { analyzeStudentEmotions } from "@/ai/flows/analyze-student-emotions"
 import { Lightbulb, Loader2 } from "lucide-react"
-import { getUser, getUserEntries } from "@/lib/actions"
+import { getUser, getUserEntries, updateDiaryEntryAnalysis } from "@/lib/actions"
 import { useRouter } from "next/navigation"
+
+async function processAndAnalyzeEmotions(entries: DiaryEntry[]) {
+    const entriesToAnalyze = entries.filter(entry => entry.dominantEmotion === '분석 중...');
+
+    if (entriesToAnalyze.length === 0) return;
+
+    const analysisPromises = entriesToAnalyze.map(async (entry) => {
+        try {
+            const analysisResult = await analyzeStudentEmotions({ diaryEntry: entry.content });
+            await updateDiaryEntryAnalysis(entry.id, analysisResult);
+        } catch (error) {
+            console.error(`Failed to analyze entry ${entry.id}:`, error);
+            await updateDiaryEntryAnalysis(entry.id, { dominantEmotion: '분석 실패', suggestedResponses: [] });
+        }
+    });
+
+    await Promise.allSettled(analysisPromises);
+    if (analysisPromises.length > 0) {
+        console.log("Emotion analysis processing for my diary finished in the background.");
+    }
+}
+
 
 const chartConfig = {
   기쁨: { label: "기쁨", color: "hsl(var(--primary))" },
   슬픔: { label: "슬픔", color: "hsl(var(--destructive))" },
   불안: { label: "불안", color: "hsl(var(--secondary))" },
   평온: { label: "평온", color: "hsl(var(--accent))" },
+  '분석 중...': { label: "분석 중", color: "hsl(var(--muted))" },
+  '분석 실패': { label: "분석 실패", color: "hsl(var(--muted))" },
   '정보 없음': { label: "정보 없음", color: "hsl(var(--muted))" },
 } satisfies ChartConfig;
 
@@ -40,6 +65,9 @@ export default function MyDiaryPage() {
       ]);
       setCurrentUser(user);
       setEntries(userEntries);
+
+      // Non-blocking analysis for this user's entries
+      processAndAnalyzeEmotions(userEntries);
 
       try {
         const result = await generateMyDiaryWelcomeMessage();

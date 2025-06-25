@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { db } from '@/lib/firebase'
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc, query, where, orderBy, deleteDoc, writeBatch, Timestamp, arrayUnion, arrayRemove, increment } from 'firebase/firestore'
-import type { User, DiaryEntry, Comment } from '@/lib/definitions'
+import type { User, DiaryEntry, Comment, DiaryEntryAnalysisResult } from '@/lib/definitions'
 import { mockUsers, mockDiaryEntries } from './data'
 import { generateNickname } from '@/ai/flows/generate-nickname-flow'
 
@@ -140,7 +140,7 @@ export async function getAllEntries(): Promise<DiaryEntry[]> {
     return querySnapshot.docs.map(doc => toJSON({ id: doc.id, ...doc.data() }) as DiaryEntry);
 }
 
-export async function addDiaryEntry(entryData: Omit<DiaryEntry, 'id' | 'createdAt' | 'likes' | 'comments' | 'likedBy' | 'isPinned' | 'visitCount'>) {
+export async function addDiaryEntry(entryData: {userId: string, content: string, isPublic: boolean}) {
     if (!db) throw new Error("Firestore not configured");
     const newEntry = {
         ...entryData,
@@ -150,10 +150,23 @@ export async function addDiaryEntry(entryData: Omit<DiaryEntry, 'id' | 'createdA
         comments: [],
         isPinned: false,
         visitCount: 0,
+        dominantEmotion: '분석 중...',
+        suggestedResponses: [],
     };
     await addDoc(collection(db, "diaryEntries"), newEntry);
     revalidatePath('/', 'layout');
 }
+
+export async function updateDiaryEntryAnalysis(entryId: string, analysisResult: DiaryEntryAnalysisResult) {
+    if (!db) throw new Error("Firestore not configured");
+    const entryRef = doc(db, "diaryEntries", entryId);
+    await updateDoc(entryRef, {
+        dominantEmotion: analysisResult.dominantEmotion,
+        suggestedResponses: analysisResult.suggestedResponses,
+    });
+    revalidatePath('/', 'layout');
+}
+
 
 export async function likeEntry(entryId: string, userId: string) {
     if (!db) throw new Error("Firestore not configured");

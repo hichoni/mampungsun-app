@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useTransition } from "react"
 import { DiaryCard } from "@/components/diary-card"
-import type { DiaryEntry, User, Comment } from "@/lib/definitions"
+import type { DiaryEntry, User, Comment, DiaryEntryAnalysisResult } from "@/lib/definitions"
 import { generateAiComment } from "@/ai/flows/generate-ai-comment-flow"
+import { analyzeStudentEmotions } from "@/ai/flows/analyze-student-emotions"
 import { generateWelcomeMessage } from "@/ai/flows/generate-welcome-message-flow"
 import { Lightbulb, Loader2 } from "lucide-react"
-import { getPublicEntries, getAllStudents, addComment, getUser } from "@/lib/actions"
+import { getPublicEntries, getAllStudents, addComment, getUser, updateDiaryEntryAnalysis } from "@/lib/actions"
 import { isFirebaseConfigured } from "@/lib/firebase"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useRouter } from "next/navigation"
@@ -45,6 +46,28 @@ async function processAndAddAiComments(entries: DiaryEntry[], aiUser: User) {
     await Promise.allSettled(commentPromises);
     if (commentPromises.length > 0) {
         console.log("AI comment processing finished in the background.");
+    }
+}
+
+async function processAndAnalyzeEmotions(entries: DiaryEntry[]) {
+    const entriesToAnalyze = entries.filter(entry => entry.dominantEmotion === '분석 중...');
+
+    if (entriesToAnalyze.length === 0) return;
+
+    const analysisPromises = entriesToAnalyze.map(async (entry) => {
+        try {
+            const analysisResult = await analyzeStudentEmotions({ diaryEntry: entry.content });
+            await updateDiaryEntryAnalysis(entry.id, analysisResult);
+        } catch (error) {
+            console.error(`Failed to analyze entry ${entry.id}:`, error);
+            // Mark as failed to prevent retrying every time
+            await updateDiaryEntryAnalysis(entry.id, { dominantEmotion: '분석 실패', suggestedResponses: [] });
+        }
+    });
+
+    await Promise.allSettled(analysisPromises);
+    if (analysisPromises.length > 0) {
+        console.log("Emotion analysis processing finished in the background.");
     }
 }
 
@@ -93,9 +116,11 @@ export default function DashboardPage() {
       // Non-blocking AI comment generation
       const aiUser = users.find(u => u.id === AI_CHEERER_ID);
       if (aiUser) {
-        // Fire-and-forget: run in the background, don't await, don't block UI
         processAndAddAiComments(initialEntries, aiUser);
       }
+      
+      // Non-blocking emotion analysis
+      processAndAnalyzeEmotions(initialEntries);
     });
   }, []);
 

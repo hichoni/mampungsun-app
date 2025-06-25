@@ -35,3 +35,8 @@ export type DiaryEntry = {
   likedBy: string[]; // Array of user IDs who liked the entry
   visitCount: number;
 };
+
+export type DiaryEntryAnalysisResult = {
+  dominantEmotion: string;
+  suggestedResponses: string[];
+};

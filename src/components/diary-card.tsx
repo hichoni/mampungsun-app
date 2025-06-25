@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Heart, MessageCircle, Loader2, Trash2, Pin, Eye } from "lucide-react"
+import { Heart, MessageCircle, Loader2, Trash2, Pin, Eye, Bot } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
@@ -55,6 +55,8 @@ const getEmotionBadgeVariant = (emotion: string): 'default' | 'secondary' | 'des
     case '기쁨': return 'default'
     case '슬픔': return 'destructive'
     case '불안': return 'secondary'
+    case '분석 중...':
+    case '분석 실패':
     default: return 'outline'
   }
 }
@@ -75,6 +77,8 @@ export function DiaryCard({ entry, author, currentUser, onDeleteEntry, onPinEntr
   const [timeAgo, setTimeAgo] = useState('');
   const [sessionVisited, setSessionVisited] = useState(false);
   
+  const isAnalyzing = entry.dominantEmotion === '분석 중...';
+
   const calculateTimeAgo = () => {
     if (!entry.createdAt) return '';
     const entryDate = new Date(entry.createdAt as string);
@@ -99,7 +103,6 @@ export function DiaryCard({ entry, author, currentUser, onDeleteEntry, onPinEntr
   };
 
   useEffect(() => {
-    // This effect runs only on the client-side
     setTimeAgo(calculateTimeAgo());
     const timer = setInterval(() => setTimeAgo(calculateTimeAgo()), 60000);
     return () => clearInterval(timer);
@@ -126,7 +129,6 @@ export function DiaryCard({ entry, author, currentUser, onDeleteEntry, onPinEntr
         try {
             await likeEntry(entry.id, currentUser.id);
         } catch(e) {
-            // Revert optimistic update on failure
             setIsLiked(!newIsLiked);
             setLikeCount(prev => !newIsLiked ? prev + 1 : prev - 1);
             toast({variant: "destructive", title: "오류", description: "좋아요 처리에 실패했습니다."});
@@ -159,7 +161,6 @@ export function DiaryCard({ entry, author, currentUser, onDeleteEntry, onPinEntr
                 comment: commentText,
             });
 
-            // After successful submission, update UI with the returned comment
             setComments(prev => [...prev, newComment]);
             toast({ title: "댓글이 등록되었어요." });
         } catch(e) {
@@ -204,7 +205,6 @@ export function DiaryCard({ entry, author, currentUser, onDeleteEntry, onPinEntr
               setVisitCount(prev => prev + 1);
             } catch (e) {
               console.error("Failed to increment visit count", e);
-              // Don't revert optimistic update, just log the error
             }
         });
     }
@@ -224,7 +224,12 @@ export function DiaryCard({ entry, author, currentUser, onDeleteEntry, onPinEntr
             <CardDescription>{timeAgo || '방금 전'}</CardDescription>
           </div>
           <div className="flex items-center gap-1">
-            {entry.dominantEmotion && <Badge variant={getEmotionBadgeVariant(entry.dominantEmotion)} className="flex-shrink-0 whitespace-nowrap">{entry.dominantEmotion}</Badge>}
+            {entry.dominantEmotion && (
+              <Badge variant={getEmotionBadgeVariant(entry.dominantEmotion)} className="flex-shrink-0 whitespace-nowrap">
+                {isAnalyzing && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+                {entry.dominantEmotion}
+              </Badge>
+            )}
             {isTeacherView && (
               <>
                 {onPinEntry && (
@@ -277,8 +282,8 @@ export function DiaryCard({ entry, author, currentUser, onDeleteEntry, onPinEntr
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
                 <DialogTrigger asChild>
-                    <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                        <MessageCircle className="h-4 w-4" />
+                    <Button variant="ghost" size="sm" className="flex items-center gap-2" disabled={isAnalyzing}>
+                        {isAnalyzing ? <Bot className="h-4 w-4 animate-pulse" /> : <MessageCircle className="h-4 w-4" />}
                         {comments.length}
                     </Button>
                 </DialogTrigger>
