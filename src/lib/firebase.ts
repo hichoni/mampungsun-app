@@ -16,18 +16,17 @@ function isFirebaseConfigured() {
     const config = firebaseConfig;
     
     // Check for placeholder values from the README, trimming whitespace.
-    // An empty or undefined value will also fail these checks.
     const apiKey = config.apiKey?.trim();
     if (!apiKey || apiKey === 'your-api-key') return false;
 
     const authDomain = config.authDomain?.trim();
-    if (!authDomain || authDomain.startsWith('your-project-id')) return false;
+    if (!authDomain || authDomain === 'your-project-id.firebaseapp.com') return false;
 
     const projectId = config.projectId?.trim();
     if (!projectId || projectId === 'your-project-id') return false;
 
     const storageBucket = config.storageBucket?.trim();
-    if (!storageBucket || storageBucket.startsWith('your-project-id')) return false;
+    if (!storageBucket || storageBucket === 'your-project-id.appspot.com') return false;
     
     const messagingSenderId = config.messagingSenderId?.trim();
     if (!messagingSenderId || messagingSenderId === 'your-sender-id') return false;
