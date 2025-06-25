@@ -14,9 +14,9 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { LogOut, PlusCircle, Trash2, Upload, Download, MessageSquareText, Loader2, Database, KeyRound } from "lucide-react"
+import { LogOut, PlusCircle, Trash2, Upload, Download, MessageSquareText, Loader2, Database, KeyRound, Palette } from "lucide-react"
 import Link from "next/link"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
@@ -48,7 +48,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { generateNickname } from "@/ai/flows/generate-nickname-flow"
 import { isFirebaseConfigured } from "@/lib/firebase"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
-import { getAllStudents, approveUser, deleteUser, addUser, getAllEntries, seedDatabase, resetStudentPin } from "@/lib/actions"
+import { getAllStudents, approveUser, deleteUser, addUser, getAllEntries, seedDatabase, resetStudentPin, getFontSettings, updateFontSettings } from "@/lib/actions"
 import type { DiaryEntry } from "@/lib/definitions"
 
 const getEmotionBadgeVariant = (emotion: string) => {
@@ -64,6 +64,24 @@ const getEmotionBadgeVariant = (emotion: string) => {
   }
 };
 
+const availableFonts = [
+    { value: 'Belleza', name: 'Belleza (기본 제목체)' },
+    { value: 'Alegreya', name: 'Alegreya (기본 본문체)' },
+    { value: 'Gaegu', name: '개구쟁이 (Gaegu)' },
+    { value: 'Gowun Dodum', name: '고운 돋움 (Gowun Dodum)' },
+    { value: 'Nanum Pen Script', name: '나눔손글씨 펜' },
+    { value: 'Do Hyeon', name: '도현 (Do Hyeon)' },
+    { value: 'Noto Sans KR', name: '노토 산스 (Noto Sans KR)' },
+    { value: 'Nanum Gothic', name: '나눔 고딕 (Nanum Gothic)' },
+    { value: 'Black Han Sans', name: '검은고딕 (Black Han Sans)' },
+    { value: 'East Sea Dokdo', name: '동해 독도 (East Sea Dokdo)' },
+    { value: 'Gugi', name: '구기 (Gugi)' },
+    { value: 'IBM Plex Sans KR', name: 'IBM 플렉스 산스' },
+    { value: 'Sunflower', name: '해바라기 (Sunflower)' },
+    { value: 'Hi Melody', name: '하이 멜로디 (Hi Melody)' },
+];
+
+
 export default function TeacherDashboard() {
   const [students, setStudents] = useState<User[]>([]);
   const [diaryEntries, setDiaryEntries] = useState<DiaryEntry[]>([]);
@@ -78,18 +96,23 @@ export default function TeacherDashboard() {
     
   const [selectedGrade, setSelectedGrade] = useState<string>('all');
   const [selectedClass, setSelectedClass] = useState<string>('all');
+
+  const [fontSettings, setFontSettings] = useState({ headline: 'Belleza', body: 'Alegreya' });
+  const [isFontSaving, startFontSaving] = useTransition();
   
   const { toast } = useToast();
 
   useEffect(() => {
     if (isFirebaseConfigured()) {
         startLoading(async () => {
-            const [fetchedStudents, fetchedEntries] = await Promise.all([
+            const [fetchedStudents, fetchedEntries, currentFonts] = await Promise.all([
                 getAllStudents(),
-                getAllEntries()
+                getAllEntries(),
+                getFontSettings()
             ]);
             setStudents(fetchedStudents);
             setDiaryEntries(fetchedEntries);
+            setFontSettings(currentFonts);
         });
     }
   }, []);
@@ -308,15 +331,24 @@ export default function TeacherDashboard() {
         if (result.success) {
             toast({ title: "성공!", description: result.message });
             // Refetch data
-            const [fetchedStudents, fetchedEntries] = await Promise.all([
+            const [fetchedStudents, fetchedEntries, currentFonts] = await Promise.all([
                 getAllStudents(),
-                getAllEntries()
+                getAllEntries(),
+                getFontSettings(),
             ]);
             setStudents(fetchedStudents);
             setDiaryEntries(fetchedEntries);
+            setFontSettings(currentFonts);
         } else {
             toast({ variant: "destructive", title: "실패", description: result.message });
         }
+    });
+  }
+
+  const handleFontSettingsSave = () => {
+    startFontSaving(async () => {
+        await updateFontSettings(fontSettings);
+        toast({ title: "성공!", description: "앱 폰트가 변경되었습니다. 페이지를 새로고침하면 적용됩니다." });
     });
   }
 
@@ -404,6 +436,52 @@ export default function TeacherDashboard() {
                     </Link>
                 </Button>
             </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline">앱 폰트 설정</CardTitle>
+                <CardDescription>앱 전체에서 사용될 제목과 본문 폰트를 변경할 수 있습니다.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="headline-font">제목 폰트</Label>
+                    <Select 
+                        value={fontSettings.headline} 
+                        onValueChange={(value) => setFontSettings(prev => ({...prev, headline: value}))}
+                        disabled={isLoading || isFontSaving}
+                    >
+                        <SelectTrigger id="headline-font">
+                            <SelectValue placeholder="제목 폰트 선택" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availableFonts.map(font => <SelectItem key={font.value} value={font.value}>{font.name}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="body-font">본문 폰트</Label>
+                     <Select 
+                        value={fontSettings.body} 
+                        onValueChange={(value) => setFontSettings(prev => ({...prev, body: value}))}
+                        disabled={isLoading || isFontSaving}
+                    >
+                        <SelectTrigger id="body-font">
+                            <SelectValue placeholder="본문 폰트 선택" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availableFonts.map(font => <SelectItem key={font.value} value={font.value}>{font.name}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+            </CardContent>
+            <CardFooter>
+                 <Button onClick={handleFontSettingsSave} disabled={isLoading || isFontSaving}>
+                    {isFontSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <Palette className="mr-2 h-4 w-4" />
+                    폰트 설정 저장
+                </Button>
+            </CardFooter>
         </Card>
         
         <Card>

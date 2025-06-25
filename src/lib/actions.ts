@@ -45,7 +45,7 @@ export async function getUser(id: string): Promise<User | null> {
 export async function getAllStudents(): Promise<User[]> {
     if (!db) return [];
     try {
-        const q = query(collection(db, "users"), where("grade", ">=", 0));
+        const q = query(collection(db, "users"), where("grade", ">=", 0), where("isApproved", "==", true));
         const querySnapshot = await getDocs(q);
         return querySnapshot.docs.map(doc => toJSON({id: doc.id, ...doc.data()}) as User);
     } catch (error) {
@@ -95,7 +95,7 @@ export async function deleteUser(id: string) {
     revalidatePath('/teacher/dashboard');
 }
 
-export async function addUser(studentData: Omit<User, 'id' | 'pin' | 'isApproved'>): Promise<User> {
+export async function addUser(studentData: Omit<User, 'id' | 'pin' | 'isApproved' | 'avatarUrl'>): Promise<User> {
     if (!db) throw new Error("Firestore not configured");
     const newUserRef = doc(collection(db, 'users'));
     const newUser: User = {
@@ -276,4 +276,33 @@ export async function seedDatabase() {
         console.error("Seeding failed: ", error);
         return { success: false, message: `데이터베이스 초기화 중 오류가 발생했습니다: ${error.message}` };
     }
+}
+
+// --- Font Settings Actions ---
+
+const DEFAULT_FONTS = {
+    headline: 'Belleza',
+    body: 'Alegreya',
+};
+
+export async function getFontSettings(): Promise<{headline: string; body: string}> {
+    if (!db) return DEFAULT_FONTS;
+    try {
+        const settingsRef = doc(db, "settings", "global");
+        const settingsSnap = await getDoc(settingsRef);
+        if (settingsSnap.exists() && settingsSnap.data().fonts) {
+            return toJSON(settingsSnap.data().fonts);
+        }
+        return DEFAULT_FONTS;
+    } catch (error) {
+        console.error("Error getting font settings:", error);
+        return DEFAULT_FONTS;
+    }
+}
+
+export async function updateFontSettings(settings: {headline: string; body: string}) {
+    if (!db) throw new Error("Firestore not configured");
+    const settingsRef = doc(db, "settings", "global");
+    await setDoc(settingsRef, { fonts: settings }, { merge: true });
+    revalidatePath('/', 'layout');
 }
