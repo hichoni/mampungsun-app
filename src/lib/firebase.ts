@@ -14,16 +14,28 @@ const firebaseConfig: FirebaseOptions = {
 
 function isFirebaseConfigured() {
     const config = firebaseConfig;
-    // Trim values and check for presence and also that they are not the placeholder values from the README
+    
+    // Check for placeholder values from the README, trimming whitespace.
+    // An empty or undefined value will also fail these checks.
     const apiKey = config.apiKey?.trim();
-    const authDomain = config.authDomain?.trim();
-    const projectId = config.projectId?.trim();
+    if (!apiKey || apiKey === 'your-api-key') return false;
 
-    return !!(
-        apiKey && apiKey.length > 0 && apiKey !== 'your-api-key' &&
-        authDomain && authDomain.length > 0 && !authDomain.startsWith('your-project-id') &&
-        projectId && projectId.length > 0 && projectId !== 'your-project-id'
-    );
+    const authDomain = config.authDomain?.trim();
+    if (!authDomain || authDomain.startsWith('your-project-id')) return false;
+
+    const projectId = config.projectId?.trim();
+    if (!projectId || projectId === 'your-project-id') return false;
+
+    const storageBucket = config.storageBucket?.trim();
+    if (!storageBucket || storageBucket.startsWith('your-project-id')) return false;
+    
+    const messagingSenderId = config.messagingSenderId?.trim();
+    if (!messagingSenderId || messagingSenderId === 'your-sender-id') return false;
+
+    const appId = config.appId?.trim();
+    if (!appId || appId === 'your-app-id') return false;
+
+    return true;
 }
 
 // Initialize Firebase
