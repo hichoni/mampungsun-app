@@ -84,7 +84,12 @@ export default function DashboardPage() {
   useEffect(() => {
     const userId = localStorage.getItem('mampungsun_user_id');
     if (userId) {
-        getUser(userId).then(setCurrentUser);
+        getUser(userId)
+          .then(setCurrentUser)
+          .catch(err => {
+            console.error("Failed to get current user, logging out.", err);
+            router.push('/login');
+          });
     } else {
         router.push('/login');
     }
@@ -109,18 +114,24 @@ export default function DashboardPage() {
       
     // Fetch users and entries
     startLoading(async () => {
-      const [users, initialEntries] = await Promise.all([getAllStudents(), getPublicEntries()]);
-      setAllUsers(users);
-      setEntries(initialEntries);
+      try {
+        const [users, initialEntries] = await Promise.all([getAllStudents(), getPublicEntries()]);
+        setAllUsers(users);
+        setEntries(initialEntries);
 
-      // Non-blocking AI comment generation
-      const aiUser = users.find(u => u.id === AI_CHEERER_ID);
-      if (aiUser) {
-        processAndAddAiComments(initialEntries, aiUser);
+        // Non-blocking AI comment generation
+        const aiUser = users.find(u => u.id === AI_CHEERER_ID);
+        if (aiUser) {
+          processAndAddAiComments(initialEntries, aiUser);
+        }
+        
+        // Non-blocking emotion analysis
+        processAndAnalyzeEmotions(initialEntries);
+      } catch (error) {
+        console.error("Failed to load dashboard data:", error);
+        setEntries([]);
+        setAllUsers([]);
       }
-      
-      // Non-blocking emotion analysis
-      processAndAnalyzeEmotions(initialEntries);
     });
   }, []);
 

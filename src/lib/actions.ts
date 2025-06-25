@@ -25,6 +25,13 @@ function toJSON(obj: any): any {
     return obj;
 }
 
+// Helper to revalidate paths where diary entries are displayed
+async function revalidateDiaryPaths() {
+    revalidatePath('/dashboard');
+    revalidatePath('/dashboard/my-diary');
+    revalidatePath('/teacher/dashboard/content');
+}
+
 
 // --- User Actions ---
 export async function getUser(id: string): Promise<User | null> {
@@ -38,7 +45,7 @@ export async function getUser(id: string): Promise<User | null> {
         return null;
     } catch (error) {
         console.error(`Error getting user ${id}:`, error);
-        return null;
+        throw error; // Re-throw to be caught by the caller
     }
 }
 
@@ -73,7 +80,8 @@ export async function updateUser(id: string, data: Partial<User>) {
     if (!db) throw new Error("Firestore not configured");
     const userRef = doc(db, "users", id);
     await updateDoc(userRef, data);
-    revalidatePath('/', 'layout');
+    revalidatePath('/dashboard/profile');
+    await revalidateDiaryPaths();
 }
 
 export async function approveUser(id: string, isApproved: boolean) {
@@ -154,7 +162,7 @@ export async function addDiaryEntry(entryData: {userId: string, content: string,
         suggestedResponses: [],
     };
     await addDoc(collection(db, "diaryEntries"), newEntry);
-    revalidatePath('/', 'layout');
+    await revalidateDiaryPaths();
 }
 
 export async function updateDiaryEntryAnalysis(entryId: string, analysisResult: DiaryEntryAnalysisResult) {
@@ -164,7 +172,7 @@ export async function updateDiaryEntryAnalysis(entryId: string, analysisResult: 
         dominantEmotion: analysisResult.dominantEmotion,
         suggestedResponses: analysisResult.suggestedResponses,
     });
-    revalidatePath('/', 'layout');
+    await revalidateDiaryPaths();
 }
 
 
@@ -192,7 +200,7 @@ export async function likeEntry(entryId: string, userId: string) {
         });
     }
     
-    revalidatePath('/', 'layout');
+    await revalidateDiaryPaths();
 }
 
 export async function addComment(entryId: string, commentData: Omit<Comment, 'id' | 'createdAt'>): Promise<Comment> {
@@ -209,7 +217,7 @@ export async function addComment(entryId: string, commentData: Omit<Comment, 'id
         comments: arrayUnion(newComment)
     });
     
-    revalidatePath('/', 'layout');
+    await revalidateDiaryPaths();
     return toJSON(newComment) as Comment;
 }
 
@@ -229,13 +237,13 @@ export async function deleteComment(entryId: string, commentId: string) {
         });
     }
 
-    revalidatePath('/', 'layout');
+    await revalidateDiaryPaths();
 }
 
 export async function deleteEntry(entryId: string) {
     if (!db) throw new Error("Firestore not configured");
     await deleteDoc(doc(db, "diaryEntries", entryId));
-    revalidatePath('/', 'layout');
+    await revalidateDiaryPaths();
 }
 
 export async function pinEntry(entryId: string, isPinned: boolean) {
@@ -250,7 +258,7 @@ export async function incrementVisitCount(entryId: string) {
     await updateDoc(entryRef, {
         visitCount: increment(1)
     });
-    revalidatePath('/', 'layout');
+    await revalidateDiaryPaths();
 }
 
 

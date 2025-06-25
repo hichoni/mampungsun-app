@@ -89,7 +89,8 @@ export default function ChatPage() {
         e.preventDefault();
         if (!input.trim() || !currentUser) return;
 
-        const newUserMessage: Message = { role: 'user', content: input };
+        const userInput = input;
+        const newUserMessage: Message = { role: 'user', content: userInput };
         setMessages(prev => [...prev, newUserMessage]);
         setInput('');
 
@@ -99,11 +100,22 @@ export default function ChatPage() {
                 parts: [{ text: msg.content }]
             }));
             
-            const result = await emotionCoach({ history: genkitHistory, message: input });
+            try {
+                const result = await emotionCoach({ history: genkitHistory, message: userInput });
 
-            if (result.response) {
-                const newAiMessage: Message = { role: 'model', content: result.response };
-                setMessages(prev => [...prev, newAiMessage]);
+                if (result.response) {
+                    const newAiMessage: Message = { role: 'model', content: result.response };
+                    setMessages(prev => [...prev, newAiMessage]);
+                } else {
+                    throw new Error("AI did not return a response.");
+                }
+            } catch (error) {
+                console.error("Emotion coach failed:", error);
+                const errorMessage: Message = {
+                    role: 'model',
+                    content: '미안해, 지금은 응답할 수 없어. 잠시 후 다시 시도해 줄래?'
+                };
+                setMessages(prev => [...prev, errorMessage]);
             }
         });
     }
