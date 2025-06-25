@@ -29,12 +29,12 @@ export default function TeacherLoginPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (masterId === MASTER_ID && password === MASTER_PASSWORD) {
-      localStorage.setItem('mampungsun_teacher_id', 'teacher-master');
+      localStorage.setItem('mampungsun_user_id', 'teacher-master');
       toast({
         title: "로그인 성공",
-        description: "교사 페이지로 이동합니다."
+        description: "학생들과 같은 화면으로 이동합니다."
       })
-      router.push('/teacher/dashboard')
+      router.push('/dashboard')
     } else {
       toast({
         variant: "destructive",

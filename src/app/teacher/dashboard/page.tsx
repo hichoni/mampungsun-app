@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { LogOut, PlusCircle, Trash2, Upload, Download, MessageSquareText, Loader2, Database, KeyRound, Palette, User as UserIcon } from "lucide-react"
+import { LogOut, PlusCircle, Trash2, Upload, Download, MessageSquareText, Loader2, Database, KeyRound, Palette, User as UserIcon, Home } from "lucide-react"
 import Link from "next/link"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
@@ -385,11 +385,17 @@ export default function TeacherDashboard() {
           <Image src="/icon-balloon2.png" alt="맘풍선 로고" width={32} height={32} />
           <span className="font-headline text-xl text-foreground">맘풍선 교사 페이지</span>
         </Link>
-        <div className="ml-auto flex items-center gap-2">
-            <Button variant="ghost" size="icon" asChild>
+        <div className="ml-auto flex items-center gap-4">
+            <Button asChild variant="outline">
+                <Link href="/dashboard">
+                    <Home className="mr-2 h-4 w-4" />
+                    학생 화면으로
+                </Link>
+            </Button>
+            <Button asChild variant="ghost">
                 <Link href="/">
-                    <LogOut className="h-5 w-5"/>
-                    <span className="sr-only">로그아웃</span>
+                    <LogOut className="mr-2 h-4 w-4"/>
+                    로그아웃
                 </Link>
             </Button>
         </div>

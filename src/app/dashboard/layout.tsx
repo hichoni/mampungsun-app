@@ -4,13 +4,12 @@ import {
   Home,
   BookUser,
   PlusCircle,
-  LogOut,
-  User,
   Wind,
   Menu,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet"
+import { HeaderActions } from "@/components/header-actions"
 
 const navLinksData = [
   { href: "/dashboard", icon: Home, label: "모두의 맘풍선" },
@@ -111,18 +110,7 @@ export default function DashboardLayout({
           <div className="w-full flex-1">
             {/* Can add a search bar here later */}
           </div>
-          <Button variant="outline" size="icon" asChild>
-            <Link href="/dashboard/profile">
-              <User className="h-5 w-5" />
-              <span className="sr-only">프로필</span>
-            </Link>
-          </Button>
-          <Button variant="outline" size="icon" asChild>
-            <Link href="/">
-              <LogOut className="h-5 w-5" />
-              <span className="sr-only">로그아웃</span>
-            </Link>
-          </Button>
+          <HeaderActions />
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-secondary/20">
           {children}
