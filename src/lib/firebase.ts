@@ -15,24 +15,14 @@ const firebaseConfig: FirebaseOptions = {
 function isFirebaseConfigured() {
     const config = firebaseConfig;
     
-    // Check for placeholder values from the README, trimming whitespace.
-    const apiKey = config.apiKey?.trim();
-    if (!apiKey || apiKey === 'your-api-key') return false;
-
-    const authDomain = config.authDomain?.trim();
-    if (!authDomain || authDomain === 'your-project-id.firebaseapp.com') return false;
-
-    const projectId = config.projectId?.trim();
-    if (!projectId || projectId === 'your-project-id') return false;
-
-    const storageBucket = config.storageBucket?.trim();
-    if (!storageBucket || storageBucket === 'your-project-id.appspot.com') return false;
-    
-    const messagingSenderId = config.messagingSenderId?.trim();
-    if (!messagingSenderId || messagingSenderId === 'your-sender-id') return false;
-
-    const appId = config.appId?.trim();
-    if (!appId || appId === 'your-app-id') return false;
+    // This is a more robust check to prevent initialization with incomplete data.
+    // It verifies that each value is present and is not the default placeholder.
+    if (!config.apiKey || config.apiKey.startsWith('your-api-key')) return false;
+    if (!config.authDomain || config.authDomain.startsWith('your-project-id')) return false;
+    if (!config.projectId || config.projectId.startsWith('your-project-id')) return false;
+    if (!config.storageBucket || config.storageBucket.startsWith('your-project-id')) return false;
+    if (!config.messagingSenderId || config.messagingSenderId.startsWith('your-sender-id')) return false;
+    if (!config.appId || config.appId.startsWith('your-app-id')) return false;
 
     return true;
 }

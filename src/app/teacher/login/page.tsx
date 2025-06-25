@@ -30,26 +30,34 @@ export default function TeacherLoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isFirebaseConfigured() || !auth) {
+        toast({
+          variant: "destructive",
+          title: "Firebase 설정 오류",
+          description: "Firebase 설정이 올바르지 않습니다. README 파일을 확인해주세요."
+        });
+        return;
+    }
+
     if (masterId === MASTER_ID && password === MASTER_PASSWORD) {
-      if (auth) {
-        try {
-          await signInAnonymously(auth);
-        } catch (error) {
-          console.error("Anonymous sign-in failed", error);
-          toast({
-            variant: "destructive",
-            title: "인증 실패",
-            description: "Firebase 인증에 실패했습니다."
-          });
-          return;
-        }
+      try {
+        await signInAnonymously(auth);
+        localStorage.setItem('mampungsun_user_id', 'teacher-master');
+        toast({
+            title: "로그인 성공",
+            description: "학생들과 같은 화면으로 이동합니다."
+        })
+        router.push('/dashboard')
+      } catch (error) {
+        console.error("Anonymous sign-in failed", error);
+        toast({
+          variant: "destructive",
+          title: "인증 실패",
+          description: "Firebase 인증에 실패했습니다. 설정을 다시 확인해주세요."
+        });
+        return;
       }
-      localStorage.setItem('mampungsun_user_id', 'teacher-master');
-      toast({
-        title: "로그인 성공",
-        description: "학생들과 같은 화면으로 이동합니다."
-      })
-      router.push('/dashboard')
     } else {
       toast({
         variant: "destructive",

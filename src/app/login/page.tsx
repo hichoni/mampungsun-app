@@ -72,6 +72,11 @@ export default function LoginPage() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    if (!isFirebaseConfigured() || !auth) {
+        toast({ variant: "destructive", title: "Firebase 미설정", description: "Firebase 설정이 올바르지 않습니다. README 파일을 확인해주세요." });
+        return;
+    }
+
     if (!grade || !studentClass || !studentId || !pin) {
         toast({
             variant: "destructive",
@@ -100,10 +105,9 @@ export default function LoginPage() {
                 return;
             }
 
-            if (auth) {
-                await signInAnonymously(auth);
-            }
-
+            
+            await signInAnonymously(auth);
+            
             await recordLogin(user.id);
         
             localStorage.setItem('mampungsun_user_id', user.id);
