@@ -24,14 +24,20 @@ const generateAvatarFlow = ai.defineFlow(
   async (input) => {
     const { media } = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: `A cute, friendly cartoon animal avatar based on the nickname '${input.nickname}'. The style should be a simple, colorful, flat vector illustration, perfect for a children's app profile picture. The character should be centered with a simple, solid light-colored background. No text or letters in the image.`,
+      prompt: `Cute, friendly, cartoon animal character based on the nickname ${input.nickname}. Simple, colorful, flat vector illustration style. Centered character on a plain, light-colored background. No text or letters in the image. Perfect for a child's profile picture.`,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
+        safetySettings: [
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+        ],
       },
     });
 
     if (!media?.url) {
-      throw new Error('Image generation failed.');
+      throw new Error('Image generation failed. No media was returned.');
     }
 
     return { avatarDataUri: media.url };

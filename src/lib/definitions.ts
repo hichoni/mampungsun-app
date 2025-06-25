@@ -33,4 +33,5 @@ export type DiaryEntry = {
   comments: Comment[];
   isPinned?: boolean;
   likedBy: string[]; // Array of user IDs who liked the entry
+  visitCount: number;
 };

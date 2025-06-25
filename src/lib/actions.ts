@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { db } from '@/lib/firebase'
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc, query, where, orderBy, deleteDoc, writeBatch, Timestamp, arrayUnion, arrayRemove } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc, query, where, orderBy, deleteDoc, writeBatch, Timestamp, arrayUnion, arrayRemove, increment } from 'firebase/firestore'
 import type { User, DiaryEntry, Comment } from '@/lib/definitions'
 import { mockUsers, mockDiaryEntries } from './data'
 import { generateNickname } from '@/ai/flows/generate-nickname-flow'
@@ -45,8 +45,6 @@ export async function getUser(id: string): Promise<User | null> {
 export async function getAllStudents(): Promise<User[]> {
     if (!db) return [];
     try {
-        // Teacher dashboard needs to see ALL students (approved or not), so we remove the isApproved filter.
-        // The login page already filters for approved students on the client side.
         const q = query(collection(db, "users"), where("grade", ">=", 0));
         const querySnapshot = await getDocs(q);
         return querySnapshot.docs.map(doc => toJSON({id: doc.id, ...doc.data()}) as User);
@@ -142,7 +140,7 @@ export async function getAllEntries(): Promise<DiaryEntry[]> {
     return querySnapshot.docs.map(doc => toJSON({ id: doc.id, ...doc.data() }) as DiaryEntry);
 }
 
-export async function addDiaryEntry(entryData: Omit<DiaryEntry, 'id' | 'createdAt' | 'likes' | 'comments' | 'likedBy' | 'isPinned'>) {
+export async function addDiaryEntry(entryData: Omit<DiaryEntry, 'id' | 'createdAt' | 'likes' | 'comments' | 'likedBy' | 'isPinned' | 'visitCount'>) {
     if (!db) throw new Error("Firestore not configured");
     const newEntry = {
         ...entryData,
@@ -151,6 +149,7 @@ export async function addDiaryEntry(entryData: Omit<DiaryEntry, 'id' | 'createdA
         likedBy: [],
         comments: [],
         isPinned: false,
+        visitCount: 0,
     };
     await addDoc(collection(db, "diaryEntries"), newEntry);
     revalidatePath('/', 'layout');
@@ -231,6 +230,16 @@ export async function pinEntry(entryId: string, isPinned: boolean) {
     await updateDoc(doc(db, "diaryEntries", entryId), { isPinned });
     revalidatePath('/teacher/dashboard/content');
 }
+
+export async function incrementVisitCount(entryId: string) {
+    if (!db) throw new Error("Firestore not configured");
+    const entryRef = doc(db, "diaryEntries", entryId);
+    await updateDoc(entryRef, {
+        visitCount: increment(1)
+    });
+    revalidatePath('/', 'layout');
+}
+
 
 // --- Seeding Action ---
 export async function seedDatabase() {

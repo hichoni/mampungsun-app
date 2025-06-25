@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Heart, MessageCircle, Loader2, Trash2, Pin } from "lucide-react"
+import { Heart, MessageCircle, Loader2, Trash2, Pin, Eye } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
@@ -38,7 +38,7 @@ import { ScrollArea } from "./ui/scroll-area"
 import { Input } from "./ui/input"
 import { moderateText } from "@/ai/flows/moderate-text-flow"
 import { cn } from "@/lib/utils"
-import { addComment, deleteComment, likeEntry } from "@/lib/actions"
+import { addComment, deleteComment, likeEntry, incrementVisitCount } from "@/lib/actions"
 import { useRouter } from "next/navigation"
 
 interface DiaryCardProps {
@@ -65,6 +65,7 @@ export function DiaryCard({ entry, author, currentUser, onDeleteEntry, onPinEntr
   
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(entry.likes || 0);
+  const [visitCount, setVisitCount] = useState(entry.visitCount || 0);
 
   const [comments, setComments] = useState<Comment[]>(entry.comments || []);
   
@@ -72,6 +73,7 @@ export function DiaryCard({ entry, author, currentUser, onDeleteEntry, onPinEntr
   const [newCommentText, setNewCommentText] = useState('');
   const [isPending, startTransition] = useTransition();
   const [timeAgo, setTimeAgo] = useState('');
+  const [sessionVisited, setSessionVisited] = useState(false);
   
   const calculateTimeAgo = () => {
     if (!entry.createdAt) return '';
@@ -99,7 +101,6 @@ export function DiaryCard({ entry, author, currentUser, onDeleteEntry, onPinEntr
   useEffect(() => {
     // This effect runs only on the client-side
     setTimeAgo(calculateTimeAgo());
-
     const timer = setInterval(() => setTimeAgo(calculateTimeAgo()), 60000);
     return () => clearInterval(timer);
   }, [entry.createdAt]);
@@ -108,6 +109,7 @@ export function DiaryCard({ entry, author, currentUser, onDeleteEntry, onPinEntr
     setIsLiked(!!currentUser?.id && !!entry.likedBy && entry.likedBy.includes(currentUser.id));
     setLikeCount(entry.likes || 0);
     setComments(entry.comments || []);
+    setVisitCount(entry.visitCount || 0);
   }, [entry, currentUser]);
 
   const handleLikeToggle = () => {
@@ -192,6 +194,22 @@ export function DiaryCard({ entry, author, currentUser, onDeleteEntry, onPinEntr
     e.preventDefault();
     handlePostComment(newCommentText);
   };
+  
+  const handleDialogOpenChange = (open: boolean) => {
+    if (open && currentUser && currentUser.id !== entry.userId && !sessionVisited) {
+        setSessionVisited(true);
+        startTransition(async () => {
+            try {
+              await incrementVisitCount(entry.id);
+              setVisitCount(prev => prev + 1);
+            } catch (e) {
+              console.error("Failed to increment visit count", e);
+              // Don't revert optimistic update, just log the error
+            }
+        });
+    }
+    setDialogOpen(open);
+  };
 
   return (
     <Card className="flex flex-col h-full">
@@ -247,13 +265,17 @@ export function DiaryCard({ entry, author, currentUser, onDeleteEntry, onPinEntr
       <CardContent className="flex-grow">
         <p className="text-base">{entry.content}</p>
       </CardContent>
-      <CardFooter className="flex justify-between mt-auto">
+      <CardFooter className="flex justify-between items-center mt-auto">
+        <div className="flex items-center gap-1 text-muted-foreground text-sm">
+            <Eye className="h-4 w-4" />
+            <span>{visitCount}</span>
+        </div>
         <div className="flex gap-4">
             <Button variant="ghost" size="sm" onClick={handleLikeToggle} className="flex items-center gap-2" disabled={isPending}>
                 <Heart className={`h-4 w-4 ${isLiked ? 'text-red-500 fill-current' : ''}`} />
                 {likeCount}
             </Button>
-            <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
                 <DialogTrigger asChild>
                     <Button variant="ghost" size="sm" className="flex items-center gap-2">
                         <MessageCircle className="h-4 w-4" />
