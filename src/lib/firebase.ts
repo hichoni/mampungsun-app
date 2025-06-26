@@ -15,39 +15,39 @@ const firebaseConfig: FirebaseOptions = {
 function isFirebaseConfigured() {
     const config = firebaseConfig;
     
-    const check = (value: string | undefined, placeholder: string) => {
-        // 1. 값이 문자열이 아니면 유효하지 않음
-        if (typeof value !== 'string') {
+    // List of placeholder substrings that indicate a value is not properly configured.
+    const placeholderSubstrings = [
+        'your-api-key',
+        'your-project-id',
+        'your-sender-id',
+        'your-app-id'
+    ];
+
+    // Helper function to check if a single config value is valid.
+    const isValueConfigured = (value: string | undefined): boolean => {
+        // 1. Must be a non-empty string.
+        if (!value || typeof value !== 'string' || value.trim() === '') {
             return false;
         }
 
-        // 2. 앞뒤 공백 제거
-        const trimmedValue = value.trim();
-
-        // 3. 공백 제거 후 빈 문자열이면 유효하지 않음
-        if (trimmedValue === '') {
-            return false;
+        // 2. Must not contain any of the placeholder substrings.
+        for (const placeholder of placeholderSubstrings) {
+            if (value.includes(placeholder)) {
+                return false;
+            }
         }
 
-        // 4. 앞뒤 따옴표(큰따옴표 또는 작은따옴표)를 제거
-        const unquotedValue = trimmedValue.replace(/^"|"$/g, '').replace(/^'|'$/g, '');
-
-        // 5. 따옴표 제거 후 견본(placeholder) 값과 일치하면 유효하지 않음
-        if (unquotedValue === placeholder) {
-            return false;
-        }
-
-        // 모든 검사를 통과하면 유효함
+        // 3. All checks passed.
         return true;
-    }
+    };
 
-    // README.md에 있는 플레이스홀더 값을 기준으로 모든 설정 값을 엄격하게 확인합니다.
-    if (!check(config.apiKey, 'your-api-key')) return false;
-    if (!check(config.authDomain, 'your-project-id.firebaseapp.com')) return false;
-    if (!check(config.projectId, 'your-project-id')) return false;
-    if (!check(config.storageBucket, 'your-project-id.appspot.com')) return false;
-    if (!check(config.messagingSenderId, 'your-sender-id')) return false;
-    if (!check(config.appId, 'your-app-id')) return false;
+    // Check all required firebase config values.
+    if (!isValueConfigured(config.apiKey)) return false;
+    if (!isValueConfigured(config.authDomain)) return false;
+    if (!isValueConfigured(config.projectId)) return false;
+    if (!isValueConfigured(config.storageBucket)) return false;
+    if (!isValueConfigured(config.messagingSenderId)) return false;
+    if (!isValueConfigured(config.appId)) return false;
 
     return true;
 }
