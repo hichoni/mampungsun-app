@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 import {
   Card,
   CardContent,
@@ -15,59 +15,26 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
-import { ArrowLeft, Loader2 } from "lucide-react"
-import { auth } from "@/lib/firebase"
+import { ArrowLeft } from "lucide-react"
+import { auth, isFirebaseConfigured } from "@/lib/firebase"
 import { signInAnonymously } from "firebase/auth"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 
 const MASTER_ID = "master"
 const MASTER_PASSWORD = "password123"
 
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
-function isConfigValid(config: object): boolean {
-    return Object.values(config).every(value => value && typeof value === 'string' && !value.includes('your-'));
-}
-
-
 export default function TeacherLoginPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [masterId, setMasterId] = useState("")
   const [password, setPassword] = useState("")
-  const [configStatus, setConfigStatus] = useState<'checking' | 'valid' | 'invalid'>('checking');
-
-  useEffect(() => {
-    // Client-side check for Firebase config
-    if (isConfigValid(firebaseConfig) && auth) {
-      setConfigStatus('valid');
-    } else {
-      setConfigStatus('invalid');
-    }
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (configStatus !== 'valid' || !auth) {
-        toast({
-            variant: "destructive",
-            title: "Firebase 설정 오류",
-            description: "앱을 사용하기 전에 README.md를 참고하여 설정을 완료해주세요."
-        });
-        return;
-    }
-
     if (masterId === MASTER_ID && password === MASTER_PASSWORD) {
       try {
-        await signInAnonymously(auth);
+        await signInAnonymously(auth!);
         localStorage.setItem('mampungsun_user_id', 'teacher-master');
         toast({
             title: "로그인 성공",
@@ -75,16 +42,12 @@ export default function TeacherLoginPage() {
         })
         router.push('/teacher/dashboard')
       } catch (error: any) {
-        if (error.code === 'auth/configuration-not-found') {
-            setConfigStatus('invalid');
-        } else {
-            console.error("Anonymous sign-in failed", error);
-            toast({
-              variant: "destructive",
-              title: "인증 실패",
-              description: "Firebase 인증에 실패했습니다. 잠시 후 다시 시도해주세요."
-            });
-        }
+        console.error("Anonymous sign-in failed", error);
+        toast({
+          variant: "destructive",
+          title: "인증 실패",
+          description: "Firebase 인증에 실패했습니다. 잠시 후 다시 시도해주세요."
+        });
       }
     } else {
       toast({
@@ -95,15 +58,7 @@ export default function TeacherLoginPage() {
     }
   }
 
-  if (configStatus === 'checking') {
-    return (
-        <div className="flex items-center justify-center min-h-screen">
-            <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-    );
-  }
-
-  if (configStatus === 'invalid') {
+  if (!isFirebaseConfigured) {
     return (
         <div className="flex items-center justify-center min-h-screen bg-secondary/50 p-4">
              <Card className="mx-auto max-w-md w-full">
