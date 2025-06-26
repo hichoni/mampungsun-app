@@ -116,7 +116,6 @@ export default function TeacherLoginPage() {
               <Label htmlFor="masterId">마스터 아이디</Label>
               <Input
                 id="masterId"
-                placeholder="master"
                 required
                 value={masterId}
                 onChange={(e) => setMasterId(e.target.value)}
@@ -129,7 +128,6 @@ export default function TeacherLoginPage() {
                 id="password" 
                 type="password" 
                 required 
-                placeholder="password123"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoggingIn}
