@@ -83,7 +83,7 @@ export default function LoginPage() {
 
     startLoggingIn(async () => {
         try {
-            if (!auth) {
+            if (!isFirebaseConfigured || !auth) {
               toast({
                   variant: "destructive",
                   title: "Firebase 설정 오류",

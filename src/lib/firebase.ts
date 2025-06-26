@@ -1,4 +1,3 @@
-
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
@@ -13,26 +12,33 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Check if all essential keys are present and not just empty strings
-const hasEssentialConfig = 
-    firebaseConfig.apiKey && 
-    firebaseConfig.authDomain && 
-    firebaseConfig.projectId;
-
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
 
-if (hasEssentialConfig) {
+// Check if all essential keys are present and are not the placeholder values.
+const hasValidConfig =
+  firebaseConfig.apiKey &&
+  !firebaseConfig.apiKey.includes("your-api-key") &&
+  firebaseConfig.authDomain &&
+  !firebaseConfig.authDomain.includes("your-project-id") &&
+  firebaseConfig.projectId &&
+  !firebaseConfig.projectId.includes("your-project-id");
+
+// This flag is for UI components to show a warning if the config is invalid.
+const isFirebaseConfigured = hasValidConfig;
+
+if (hasValidConfig) {
   try {
+    // Initialize Firebase only if the config is valid.
     app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
     storage = getStorage(app);
   } catch (error) {
     console.error("Firebase initialization failed:", error);
-    // Ensure all exports are null if initialization fails
+    // If initialization fails, ensure all exports are null to prevent usage.
     app = null;
     auth = null;
     db = null;
@@ -40,6 +46,4 @@ if (hasEssentialConfig) {
   }
 }
 
-export { app, auth, db, storage };
-// The most reliable check is simply whether the app object was successfully created.
-export const isFirebaseConfigured = !!app;
+export { app, auth, db, storage, isFirebaseConfigured };

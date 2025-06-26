@@ -33,7 +33,7 @@ export default function TeacherLoginPage() {
 
     if (masterId === MASTER_ID && password === MASTER_PASSWORD) {
       try {
-        if (!auth) {
+        if (!isFirebaseConfigured || !auth) {
             toast({
                 variant: "destructive",
                 title: "Firebase 설정 오류",
