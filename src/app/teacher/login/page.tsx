@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import React, { useState } from "react"
+import React, { useState, useTransition } from "react"
 import {
   Card,
   CardContent,
@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Loader2 } from "lucide-react"
 import { auth, isFirebaseConfigured } from "@/lib/firebase"
 import { signInAnonymously } from "firebase/auth"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
@@ -28,8 +28,9 @@ export default function TeacherLoginPage() {
   const { toast } = useToast()
   const [masterId, setMasterId] = useState("")
   const [password, setPassword] = useState("")
+  const [isLoggingIn, startLoggingIn] = useTransition();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!isFirebaseConfigured || !auth) {
@@ -42,31 +43,33 @@ export default function TeacherLoginPage() {
     }
 
     if (masterId === MASTER_ID && password === MASTER_PASSWORD) {
-      try {
-        await signInAnonymously(auth!);
-        localStorage.setItem('mampungsun_user_id', 'teacher-master');
-        toast({
-            title: "로그인 성공",
-            description: "교사 대시보드로 이동합니다."
-        })
-        router.push('/teacher/dashboard')
-      } catch (error: any) {
-        console.error("Anonymous sign-in failed", error);
-        if (error.code === 'auth/configuration-not-found' || error.code === 'auth/operation-not-allowed') {
-            toast({
-              variant: "destructive",
-              title: "Firebase 설정 오류",
-              description: "익명 로그인이 활성화되지 않았을 수 있습니다. Firebase 콘솔의 Authentication > Sign-in method 탭에서 익명 로그인을 활성화해주세요.",
-              duration: 10000, // Show for longer
-            });
-        } else {
-            toast({
-              variant: "destructive",
-              title: "인증 실패",
-              description: "Firebase 인증에 실패했습니다. 잠시 후 다시 시도해주세요."
-            });
-        }
-      }
+        startLoggingIn(async () => {
+            try {
+                await signInAnonymously(auth!);
+                localStorage.setItem('mampungsun_user_id', 'teacher-master');
+                toast({
+                    title: "로그인 성공",
+                    description: "교사 대시보드로 이동합니다."
+                })
+                router.push('/teacher/dashboard')
+            } catch (error: any) {
+                console.error("Anonymous sign-in failed", error);
+                if (error.code === 'auth/configuration-not-found' || error.code === 'auth/operation-not-allowed') {
+                    toast({
+                    variant: "destructive",
+                    title: "Firebase 설정 오류",
+                    description: "익명 로그인이 활성화되지 않았을 수 있습니다. Firebase 콘솔의 Authentication > Sign-in method 탭에서 익명 로그인을 활성화해주세요.",
+                    duration: 10000, // Show for longer
+                    });
+                } else {
+                    toast({
+                    variant: "destructive",
+                    title: "인증 실패",
+                    description: "Firebase 인증에 실패했습니다. 잠시 후 다시 시도해주세요."
+                    });
+                }
+            }
+        });
     } else {
       toast({
         variant: "destructive",
@@ -123,6 +126,7 @@ export default function TeacherLoginPage() {
                 required
                 value={masterId}
                 onChange={(e) => setMasterId(e.target.value)}
+                disabled={isLoggingIn}
               />
             </div>
             <div className="grid gap-2">
@@ -134,9 +138,11 @@ export default function TeacherLoginPage() {
                 placeholder="password123"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoggingIn}
               />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={isLoggingIn}>
+              {isLoggingIn && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               로그인
             </Button>
           </form>
