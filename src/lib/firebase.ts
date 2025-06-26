@@ -1,3 +1,4 @@
+
 import { initializeApp, getApps, getApp, FirebaseOptions } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
@@ -15,39 +16,35 @@ const firebaseConfig: FirebaseOptions = {
 function isFirebaseConfigured() {
     const config = firebaseConfig;
     
-    // List of placeholder substrings that indicate a value is not properly configured.
-    const placeholderSubstrings = [
-        'your-api-key',
-        'your-project-id',
-        'your-sender-id',
-        'your-app-id'
-    ];
-
-    // Helper function to check if a single config value is valid.
-    const isValueConfigured = (value: string | undefined): boolean => {
-        // 1. Must be a non-empty string.
-        if (!value || typeof value !== 'string' || value.trim() === '') {
-            return false;
-        }
-
-        // 2. Must not contain any of the placeholder substrings.
-        for (const placeholder of placeholderSubstrings) {
-            if (value.includes(placeholder)) {
-                return false;
-            }
-        }
-
-        // 3. All checks passed.
-        return true;
+    // Helper to check if a value is unconfigured (undefined, null, empty, or just whitespace)
+    const isValueUnconfigured = (value: string | undefined): boolean => {
+        return !value || value.trim() === '';
     };
+    
+    // Check if any required config value is missing.
+    if (
+        isValueUnconfigured(config.apiKey) ||
+        isValueUnconfigured(config.authDomain) ||
+        isValueUnconfigured(config.projectId) ||
+        isValueUnconfigured(config.storageBucket) ||
+        isValueUnconfigured(config.messagingSenderId) ||
+        isValueUnconfigured(config.appId)
+    ) {
+        return false;
+    }
 
-    // Check all required firebase config values.
-    if (!isValueConfigured(config.apiKey)) return false;
-    if (!isValueConfigured(config.authDomain)) return false;
-    if (!isValueConfigured(config.projectId)) return false;
-    if (!isValueConfigured(config.storageBucket)) return false;
-    if (!isValueConfigured(config.messagingSenderId)) return false;
-    if (!isValueConfigured(config.appId)) return false;
+    // Check if any config value still contains a placeholder keyword.
+    // This is more robust than checking for exact matches.
+    if (
+        config.apiKey!.includes('your-api-key') ||
+        config.authDomain!.includes('your-project-id') ||
+        config.projectId!.includes('your-project-id') ||
+        config.storageBucket!.includes('your-project-id') ||
+        config.messagingSenderId!.includes('your-sender-id') ||
+        config.appId!.includes('your-app-id')
+    ) {
+        return false;
+    }
 
     return true;
 }
