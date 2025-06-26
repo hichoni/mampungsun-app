@@ -19,23 +19,37 @@ const cleanedFirebaseConfig = {
   appId: cleanEnvVar(process.env.NEXT_PUBLIC_FIREBASE_APP_ID),
 };
 
-// A robust check to see if the cleaned config values are present AND are not the placeholder values.
-const isFirebaseConfigured =
-  !!cleanedFirebaseConfig.apiKey && cleanedFirebaseConfig.apiKey !== 'your-api-key' &&
-  !!cleanedFirebaseConfig.authDomain && cleanedFirebaseConfig.authDomain !== 'your-project-id.firebaseapp.com' &&
-  !!cleanedFirebaseConfig.projectId && cleanedFirebaseConfig.projectId !== 'your-project-id';
+// A more robust check to see if the cleaned config values are present AND do not contain placeholder keywords.
+const hasValidConfigValues =
+  !!cleanedFirebaseConfig.apiKey && !cleanedFirebaseConfig.apiKey.includes('your-api-key') &&
+  !!cleanedFirebaseConfig.authDomain && !cleanedFirebaseConfig.authDomain.includes('your-project-id') &&
+  !!cleanedFirebaseConfig.projectId && !cleanedFirebaseConfig.projectId.includes('your-project-id');
+
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
+let isConfiguredAndInitialized = false;
 
-if (isFirebaseConfigured) {
-  // Use the cleaned config for initialization
-  app = getApps().length ? getApp() : initializeApp(cleanedFirebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-  storage = getStorage(app);
+if (hasValidConfigValues) {
+  try {
+    app = getApps().length ? getApp() : initializeApp(cleanedFirebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+    isConfiguredAndInitialized = true;
+  } catch (error) {
+      console.error("Firebase initialization failed despite config values being present. Check for typos in .env.local:", error);
+      // In case of an error during init, ensure everything remains in a non-configured state.
+      app = null;
+      auth = null;
+      db = null;
+      storage = null;
+      isConfiguredAndInitialized = false;
+  }
 }
 
-export { app, auth, db, storage, isFirebaseConfigured };
+// Export the final state.
+export { app, auth, db, storage };
+export const isFirebaseConfigured = isConfiguredAndInitialized;
