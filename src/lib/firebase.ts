@@ -19,25 +19,27 @@ let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
 let isFirebaseConfigured: boolean = false;
 
-// This function checks if a config value is valid. A value is considered
-// invalid if it's missing, empty, or contains a placeholder keyword.
-const isValueValid = (value: string | undefined, placeholderKeyword: string): boolean => {
+// This function checks if a config value is a valid, non-placeholder string.
+const isValueValid = (value: string | undefined): boolean => {
+    // It's invalid if not a string or is empty after trimming.
     if (typeof value !== 'string' || value.trim() === '') {
-        return false; // It's invalid if not a string or is empty
+        return false;
     }
-    // It's invalid if it contains the placeholder keyword.
-    // It's valid only if it does NOT contain the placeholder.
-    return !value.includes(placeholderKeyword);
+    // It's invalid if it contains a placeholder keyword.
+    if (value.includes('your-api-key') || value.includes('your-project-id')) {
+        return false;
+    }
+    return true;
 };
 
 // Check if all essential configuration values are provided and valid.
-const isConfigProvided =
-  isValueValid(firebaseConfig.apiKey, 'your-api-key') &&
-  isValueValid(firebaseConfig.authDomain, 'your-project-id') &&
-  isValueValid(firebaseConfig.projectId, 'your-project-id');
+const isConfigProvidedAndValid =
+  isValueValid(firebaseConfig.apiKey) &&
+  isValueValid(firebaseConfig.authDomain) &&
+  isValueValid(firebaseConfig.projectId);
 
 // Attempt to initialize Firebase only if the configuration is provided and valid.
-if (isConfigProvided) {
+if (isConfigProvidedAndValid) {
   try {
     app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     auth = getAuth(app);
