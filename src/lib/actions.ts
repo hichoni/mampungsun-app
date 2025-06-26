@@ -9,16 +9,18 @@ import { generateNickname } from '@/ai/flows/generate-nickname-flow'
 
 // Helper function to convert Firestore Timestamps to ISO strings
 function toJSON(obj: any): any {
-    if (obj instanceof Timestamp) {
+    if (obj && typeof obj.toDate === 'function') {
         return obj.toDate().toISOString();
     }
     if (Array.isArray(obj)) {
         return obj.map(toJSON);
     }
-    if (obj !== null && typeof obj === 'object' && !obj.hasOwnProperty('_nanoseconds')) {
+    if (obj !== null && typeof obj === 'object') {
         const res: { [key: string]: any } = {};
         for (const key in obj) {
-            res[key] = toJSON(obj[key]);
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                res[key] = toJSON(obj[key]);
+            }
         }
         return res;
     }
