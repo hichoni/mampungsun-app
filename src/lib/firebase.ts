@@ -13,13 +13,13 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// This flag will be true ONLY if the configuration is valid AND initialization succeeds.
-let isFirebaseInitialized = false;
-
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
+
+// This flag will be true ONLY if the configuration is valid AND initialization succeeds.
+let isFirebaseInitialized = false;
 
 // Check for presence of essential keys and ensure they are not placeholder values.
 const configIsInvalid = 
@@ -45,6 +45,9 @@ if (!configIsInvalid) {
         db = null;
         storage = null;
     }
+} else {
+    // If config is invalid from the start, ensure flag is false.
+    isFirebaseInitialized = false;
 }
 
 export const isFirebaseConfigured = isFirebaseInitialized; 
