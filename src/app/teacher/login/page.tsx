@@ -33,11 +33,11 @@ export default function TeacherLoginPage() {
 
     if (masterId === MASTER_ID && password === MASTER_PASSWORD) {
       try {
-        if (!isFirebaseConfigured || !auth) {
+        if (!auth) {
             toast({
                 variant: "destructive",
                 title: "Firebase 설정 오류",
-                description: "인증 설정이 올바르지 않습니다. README 파일을 참고하여 .env.local 파일을 다시 확인해주세요."
+                description: "인증 기능 초기화에 실패했습니다. README 파일을 참고하여 .env.local 파일을 다시 확인해주세요."
             });
             return;
         }
@@ -55,7 +55,7 @@ export default function TeacherLoginPage() {
              toast({
                 variant: "destructive",
                 title: "Firebase 설정 오류",
-                description: "환경 변수(.env.local)에 올바른 Firebase 설정 값이 입력되었는지 확인해주세요."
+                description: "환경 변수(.env.local)에 올바른 Firebase 설정 값이 입력되었는지 확인해주세요. 견본(placeholder) 값이 남아있는 것 같습니다."
             });
         } else {
             toast({

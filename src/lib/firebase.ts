@@ -17,21 +17,17 @@ let auth: Auth | null = null;
 let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
 
-// Check if all essential keys are present and are not the placeholder values.
-const hasValidConfig =
-  firebaseConfig.apiKey &&
-  !firebaseConfig.apiKey.includes("your-api-key") &&
-  firebaseConfig.authDomain &&
-  !firebaseConfig.authDomain.includes("your-project-id") &&
-  firebaseConfig.projectId &&
-  !firebaseConfig.projectId.includes("your-project-id");
+// A simple check if the essential variables are present.
+// This flag is for UI components to show a generic "not configured" message.
+const isFirebaseConfigured =
+  !!firebaseConfig.apiKey &&
+  !!firebaseConfig.authDomain &&
+  !!firebaseConfig.projectId;
 
-// This flag is for UI components to show a warning if the config is invalid.
-const isFirebaseConfigured = hasValidConfig;
-
-if (hasValidConfig) {
+if (isFirebaseConfigured) {
   try {
-    // Initialize Firebase only if the config is valid.
+    // Initialize Firebase.
+    // The SDK will throw an error if the config values are syntactically incorrect on first use.
     app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
