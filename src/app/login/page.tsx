@@ -72,6 +72,15 @@ export default function LoginPage() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    if (!isFirebaseConfigured || !auth) {
+        toast({
+            variant: "destructive",
+            title: "Firebase 설정 오류",
+            description: "인증 설정이 올바르지 않습니다. README 파일을 참고하여 .env.local 파일을 다시 확인해주세요."
+        });
+        return;
+    }
+
     if (!grade || !studentClass || !studentId || !pin) {
         toast({
             variant: "destructive",
@@ -83,15 +92,6 @@ export default function LoginPage() {
 
     startLoggingIn(async () => {
         try {
-            if (!auth) {
-              toast({
-                  variant: "destructive",
-                  title: "Firebase 설정 오류",
-                  description: "인증 기능 초기화에 실패했습니다. README 파일을 참고하여 .env.local 파일을 다시 확인해주세요."
-              });
-              return;
-            }
-
             const user = await loginUser(parseInt(grade), parseInt(studentClass), parseInt(studentId));
 
             if (!user) {

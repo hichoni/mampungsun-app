@@ -32,17 +32,17 @@ export default function TeacherLoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!isFirebaseConfigured || !auth) {
+        toast({
+            variant: "destructive",
+            title: "Firebase 설정 오류",
+            description: "인증 설정이 올바르지 않습니다. README 파일을 참고하여 .env.local 파일을 다시 확인해주세요."
+        });
+        return;
+    }
+
     if (masterId === MASTER_ID && password === MASTER_PASSWORD) {
       try {
-        if (!auth) {
-            toast({
-                variant: "destructive",
-                title: "Firebase 설정 오류",
-                description: "인증 기능 초기화에 실패했습니다. README 파일을 참고하여 .env.local 파일을 다시 확인해주세요."
-            });
-            return;
-        }
-        
         await signInAnonymously(auth);
         localStorage.setItem('mampungsun_user_id', 'teacher-master');
         toast({
