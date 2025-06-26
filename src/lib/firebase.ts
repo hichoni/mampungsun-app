@@ -13,19 +13,19 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Check if the essential environment variables are provided.
+// A more robust check for the essential environment variables.
+// It trims the values to ensure they are not just whitespace.
 const hasEssentialConfig =
-  firebaseConfig.apiKey &&
-  firebaseConfig.authDomain &&
-  firebaseConfig.projectId;
+  firebaseConfig.apiKey?.trim() &&
+  firebaseConfig.authDomain?.trim() &&
+  firebaseConfig.projectId?.trim();
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
 
-// Initialize Firebase only if the configuration is present.
-// This prevents errors on the server during build, and when env vars are missing.
+// Initialize Firebase only if the configuration is present and not just whitespace.
 if (hasEssentialConfig) {
   try {
     app = getApps().length ? getApp() : initializeApp(firebaseConfig);
