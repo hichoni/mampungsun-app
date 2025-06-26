@@ -46,5 +46,4 @@ if (isConfigValid) {
     console.log("Firebase config is incomplete or invalid. Please check your environment variables.");
 }
 
-// We no longer export isFirebaseConfigured, as checking for `auth` being null is the source of truth.
 export { app, auth, db, storage };
