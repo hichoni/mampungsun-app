@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { ArrowLeft, Loader2 } from "lucide-react"
 import { auth } from "@/lib/firebase"
-import { signInAnonymously } from "firebase/auth"
+import { getAnonymousSession } from "@/lib/actions"
 
 const MASTER_ID = "master"
 const MASTER_PASSWORD = "password123"
@@ -70,7 +70,7 @@ export default function TeacherLoginPage() {
 
     startLoggingIn(async () => {
         try {
-            await signInAnonymously(auth);
+            await getAnonymousSession();
             
             localStorage.setItem('mampungsun_user_id', 'teacher-master');
             toast({
@@ -81,25 +81,11 @@ export default function TeacherLoginPage() {
 
         } catch (error: any) {
             console.error("Teacher login error:", error);
-            if (error.code === 'auth/configuration-not-found') {
-                 toast({
-                    variant: "destructive",
-                    title: "Firebase 인증 오류",
-                    description: "Firebase 설정 값(API 키 등)이 올바르지 않습니다. .env.local 파일을 다시 확인해주세요.",
-                });
-            } else if (error.code === 'auth/operation-not-allowed') {
-                 toast({
-                    variant: "destructive",
-                    title: "Firebase 설정 오류",
-                    description: "Firebase 콘솔에서 '익명 로그인'을 활성화해주세요.",
-                });
-            } else {
-                 toast({
-                    variant: "destructive",
-                    title: "로그인 중 알 수 없는 오류",
-                    description: "잠시 후 다시 시도해주세요.",
-                });
-            }
+            toast({
+                variant: "destructive",
+                title: "로그인 중 오류 발생",
+                description: error.message || "잠시 후 다시 시도해주세요.",
+            });
         }
     });
   }

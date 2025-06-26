@@ -18,9 +18,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast"
 import React, { useState, useTransition, useEffect, useMemo } from "react"
 import { ArrowLeft, Loader2 } from "lucide-react"
-import { loginUser, getAllStudents, recordLogin } from "@/lib/actions"
+import { loginUser, getAllStudents, recordLogin, getAnonymousSession } from "@/lib/actions"
 import { auth } from "@/lib/firebase"
-import { signInAnonymously } from "firebase/auth"
 import type { User } from "@/lib/definitions"
 
 export default function LoginPage() {
@@ -136,7 +135,7 @@ export default function LoginPage() {
                 return;
             }
             
-            await signInAnonymously(auth);
+            await getAnonymousSession();
             await recordLogin(user.id);
         
             localStorage.setItem('mampungsun_user_id', user.id);
@@ -150,25 +149,11 @@ export default function LoginPage() {
             
         } catch (error: any) {
             console.error("Login error:", error);
-            if (error.code === 'auth/configuration-not-found') {
-                toast({
-                   variant: "destructive",
-                   title: "Firebase 인증 오류",
-                   description: "Firebase 설정 값(API 키 등)이 올바르지 않습니다. .env.local 파일을 다시 확인해주세요.",
-               });
-           } else if (error.code === 'auth/operation-not-allowed') {
-                toast({
-                   variant: "destructive",
-                   title: "Firebase 설정 오류",
-                   description: "Firebase 콘솔에서 '익명 로그인'을 활성화해주세요.",
-               });
-           } else {
-               toast({
-                   variant: "destructive",
-                   title: "로그인 오류",
-                   description: "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요."
-               });
-           }
+            toast({
+                variant: "destructive",
+                title: "로그인 오류",
+                description: error.message || "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요."
+            });
         }
     });
   }

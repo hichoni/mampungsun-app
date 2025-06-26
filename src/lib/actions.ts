@@ -1,11 +1,12 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { db } from '@/lib/firebase'
+import { db, auth } from '@/lib/firebase'
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc, query, where, orderBy, deleteDoc, writeBatch, Timestamp, arrayUnion, arrayRemove, increment } from 'firebase/firestore'
 import type { User, DiaryEntry, Comment, DiaryEntryAnalysisResult } from '@/lib/definitions'
 import { mockUsers, mockDiaryEntries } from './data'
 import { generateNickname } from '@/ai/flows/generate-nickname-flow'
+import { signInAnonymously } from 'firebase/auth'
 
 // Helper function to convert Firestore Timestamps to ISO strings
 function toJSON(obj: any): any {
@@ -32,6 +33,20 @@ async function revalidateDiaryPaths() {
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/my-diary');
     revalidatePath('/teacher/dashboard/content');
+}
+
+// --- Auth Action ---
+export async function getAnonymousSession() {
+    if (!auth) {
+        throw new Error("Firebase is not configured correctly.");
+    }
+    try {
+        await signInAnonymously(auth);
+    } catch (error) {
+        console.error("Anonymous sign-in failed on server:", error);
+        // Re-throw a more user-friendly error to the client
+        throw new Error("Authentication service failed to respond. Please check Firebase configuration.");
+    }
 }
 
 
