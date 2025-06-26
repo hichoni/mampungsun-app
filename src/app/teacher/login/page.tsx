@@ -46,9 +46,9 @@ export default function TeacherLoginPage() {
         localStorage.setItem('mampungsun_user_id', 'teacher-master');
         toast({
             title: "로그인 성공",
-            description: "학생들과 같은 화면으로 이동합니다."
+            description: "교사 대시보드로 이동합니다."
         })
-        router.push('/dashboard')
+        router.push('/teacher/dashboard')
       } catch (error: any) {
         console.error("Anonymous sign-in failed", error);
         if (error.code === 'auth/configuration-not-found') {
