@@ -111,7 +111,7 @@ export default function LoginPage() {
                 return;
             }
             
-            await signInAnonymously(auth!);
+            await signInAnonymously(auth);
             
             await recordLogin(user.id);
         
@@ -131,7 +131,7 @@ export default function LoginPage() {
                   variant: "destructive",
                   title: "Firebase 설정 오류",
                   description: "익명 로그인이 활성화되지 않았을 수 있습니다. Firebase 콘솔의 Authentication > Sign-in method 탭에서 익명 로그인을 활성화해주세요.",
-                  duration: 10000, // Show for longer
+                  duration: 10000,
                 });
             } else {
                 toast({ variant: "destructive", title: "로그인 오류", description: "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요." });

@@ -45,7 +45,7 @@ export default function TeacherLoginPage() {
     if (masterId === MASTER_ID && password === MASTER_PASSWORD) {
         startLoggingIn(async () => {
             try {
-                await signInAnonymously(auth!);
+                await signInAnonymously(auth);
                 localStorage.setItem('mampungsun_user_id', 'teacher-master');
                 toast({
                     title: "로그인 성공",
@@ -59,7 +59,7 @@ export default function TeacherLoginPage() {
                     variant: "destructive",
                     title: "Firebase 설정 오류",
                     description: "익명 로그인이 활성화되지 않았을 수 있습니다. Firebase 콘솔의 Authentication > Sign-in method 탭에서 익명 로그인을 활성화해주세요.",
-                    duration: 10000, // Show for longer
+                    duration: 10000,
                     });
                 } else {
                     toast({
