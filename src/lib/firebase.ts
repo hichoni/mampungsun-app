@@ -17,46 +17,33 @@ let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
-let isFirebaseConfigured: boolean = false;
 
-// This function checks if a config value is a valid, non-placeholder string.
-const isValueValid = (value: string | undefined): boolean => {
-    // It's invalid if not a string or is empty after trimming.
-    if (typeof value !== 'string' || value.trim() === '') {
-        return false;
+// This is the single source of truth for whether the config is valid.
+// A config value is invalid if it's missing, empty, or contains a placeholder.
+const isConfigValid = 
+    !!firebaseConfig.apiKey && !firebaseConfig.apiKey.includes('your-api-key') &&
+    !!firebaseConfig.authDomain && !firebaseConfig.authDomain.includes('your-project-id') &&
+    !!firebaseConfig.projectId && !firebaseConfig.projectId.includes('your-project-id');
+
+
+// We only initialize if the config is valid.
+if (isConfigValid) {
+    try {
+        app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        storage = getStorage(app);
+    } catch (e) {
+        console.error("Firebase failed to initialize. This can happen with an invalid config even if it passes initial checks.", e);
+        // If it fails here, we reset everything.
+        app = null;
+        auth = null;
+        db = null;
+        storage = null;
     }
-    // It's invalid if it contains a placeholder keyword.
-    if (value.includes('your-api-key') || value.includes('your-project-id')) {
-        return false;
-    }
-    return true;
-};
-
-// Check if all essential configuration values are provided and valid.
-const isConfigProvidedAndValid =
-  isValueValid(firebaseConfig.apiKey) &&
-  isValueValid(firebaseConfig.authDomain) &&
-  isValueValid(firebaseConfig.projectId);
-
-// Attempt to initialize Firebase only if the configuration is provided and valid.
-if (isConfigProvidedAndValid) {
-  try {
-    app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-    storage = getStorage(app);
-    
-    // Set the flag to true ONLY after a successful initialization.
-    isFirebaseConfigured = true;
-  } catch (error) {
-    console.error("Firebase initialization failed:", error);
-    // On failure, ensure everything is null and the flag remains false.
-    app = null;
-    auth = null;
-    db = null;
-    storage = null;
-    isFirebaseConfigured = false;
-  }
 }
+
+// isFirebaseConfigured is true ONLY if initialization was attempted AND successful.
+const isFirebaseConfigured = !!(isConfigValid && app && auth && db);
 
 export { app, auth, db, storage, isFirebaseConfigured };
