@@ -46,7 +46,7 @@ import { PieChart, Pie, Cell } from "recharts"
 import { type ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { generateNickname } from "@/ai/flows/generate-nickname-flow"
-import { isFirebaseConfigured, auth } from "@/lib/firebase"
+import { db, auth } from "@/lib/firebase"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { getAllStudents, approveUser, deleteUser, addUser, getAllEntries, seedDatabase, resetStudentPin, getFontSettings, updateFontSettings } from "@/lib/actions"
 import type { DiaryEntry } from "@/lib/definitions"
@@ -110,7 +110,7 @@ export default function TeacherDashboard() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (isFirebaseConfigured) {
+    if (db) {
         startLoading(async () => {
             const [fetchedStudents, fetchedEntries, currentFonts] = await Promise.all([
                 getAllStudents(),
@@ -367,7 +367,7 @@ export default function TeacherDashboard() {
     });
   }
 
-  if (!isFirebaseConfigured) {
+  if (!db) {
     return (
         <div className="p-8">
              <Card className="mx-auto max-w-2xl w-full">

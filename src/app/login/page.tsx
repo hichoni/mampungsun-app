@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast"
 import React, { useState, useTransition, useEffect, useMemo } from "react"
 import { ArrowLeft, Loader2 } from "lucide-react"
 import { loginUser, getAllStudents, recordLogin } from "@/lib/actions"
-import { auth, isFirebaseConfigured } from "@/lib/firebase"
+import { auth } from "@/lib/firebase"
 import { signInAnonymously, signOut } from "firebase/auth"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import type { User } from "@/lib/definitions"
@@ -59,19 +59,28 @@ export default function LoginPage() {
   const [pin, setPin] = useState<string>('');
 
   const [firebaseError, setFirebaseError] = useState<{ title: string; description: string } | null>(null);
+  const [isVerifying, setIsVerifying] = useState(true);
 
   useEffect(() => {
     const verifyConnectionAndFetchStudents = async () => {
-      if (!isFirebaseConfigured || !auth) {
+      if (!auth) {
         setFirebaseError({
             title: "Firebase 미설정",
             description: "Firestore 데이터베이스 연동을 위한 환경 변수 설정이 필요합니다. 프로젝트의 `README.md` 파일을 참고하여 설정을 완료해주세요.",
         });
+        setIsVerifying(false);
         return;
       }
       try {
         await signInAnonymously(auth);
         await signOut(auth); // Immediately sign out, this was just a check
+
+        // Fetch students only after successful verification
+        startLoading(async () => {
+            const students = await getAllStudents();
+            setAllStudents(students.filter(s => s.isApproved && s.id !== 'teacher-master' && s.id !== 'ai-cheerer'));
+        });
+
       } catch (error: any) {
         console.error("Firebase connection verification failed:", error);
         if (error.code === 'auth/operation-not-allowed') {
@@ -85,14 +94,9 @@ export default function LoginPage() {
                 description: 'Firebase 구성이 올바르지 않습니다. .env.local 파일의 환경 변수 값이 정확한지 확인해주세요.',
             });
         }
-        return; // Stop if verification fails
+      } finally {
+        setIsVerifying(false);
       }
-
-      // Fetch students only after successful verification
-      startLoading(async () => {
-          const students = await getAllStudents();
-          setAllStudents(students.filter(s => s.isApproved && s.id !== 'teacher-master' && s.id !== 'ai-cheerer'));
-      });
     };
     verifyConnectionAndFetchStudents();
   }, []);
@@ -147,7 +151,8 @@ export default function LoginPage() {
                 return;
             }
             
-            await signInAnonymously(auth!);
+            if (!auth) throw new Error("Firebase auth not available");
+            await signInAnonymously(auth);
             await recordLogin(user.id);
         
             localStorage.setItem('mampungsun_user_id', user.id);
@@ -170,16 +175,16 @@ export default function LoginPage() {
     });
   }
   
+  if (isVerifying) {
+    return (
+        <div className="flex items-center justify-center min-h-screen">
+            <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+    );
+  }
+  
   if (firebaseError) {
     return <FirebaseErrorDisplay title={firebaseError.title} description={firebaseError.description} />;
-  }
-
-  if (allStudents.length === 0 && !isLoading) {
-      return (
-          <div className="flex items-center justify-center min-h-screen">
-              <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-      );
   }
 
   return (

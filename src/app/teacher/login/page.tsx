@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { ArrowLeft, Loader2 } from "lucide-react"
-import { auth, isFirebaseConfigured } from "@/lib/firebase"
+import { auth } from "@/lib/firebase"
 import { signInAnonymously, signOut } from "firebase/auth"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 
@@ -55,14 +55,16 @@ export default function TeacherLoginPage() {
   const [isLoggingIn, startLoggingIn] = useTransition();
   
   const [firebaseError, setFirebaseError] = useState<{ title: string; description: string } | null>(null);
+  const [isVerifying, setIsVerifying] = useState(true);
 
   useEffect(() => {
     const verifyConnection = async () => {
-      if (!isFirebaseConfigured || !auth) {
+      if (!auth) {
         setFirebaseError({
             title: "Firebase 미설정",
             description: "Firestore 데이터베이스 연동을 위한 환경 변수 설정이 필요합니다. 프로젝트의 `README.md` 파일을 참고하여 설정을 완료해주세요.",
         });
+        setIsVerifying(false);
         return;
       }
       try {
@@ -81,6 +83,8 @@ export default function TeacherLoginPage() {
                 description: 'Firebase 구성이 올바르지 않습니다. .env.local 파일의 환경 변수 값이 정확한지 확인해주세요.',
             });
         }
+      } finally {
+          setIsVerifying(false);
       }
     };
     verifyConnection();
@@ -91,7 +95,8 @@ export default function TeacherLoginPage() {
     if (masterId === MASTER_ID && password === MASTER_PASSWORD) {
         startLoggingIn(async () => {
             try {
-                await signInAnonymously(auth!);
+                if (!auth) throw new Error("Firebase auth not available");
+                await signInAnonymously(auth);
                 localStorage.setItem('mampungsun_user_id', 'teacher-master');
                 toast({
                     title: "로그인 성공",
@@ -116,6 +121,14 @@ export default function TeacherLoginPage() {
     }
   }
   
+  if (isVerifying) {
+    return (
+        <div className="flex items-center justify-center min-h-screen">
+            <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+    );
+  }
+
   if (firebaseError) {
     return <FirebaseErrorDisplay title={firebaseError.title} description={firebaseError.description} />;
   }

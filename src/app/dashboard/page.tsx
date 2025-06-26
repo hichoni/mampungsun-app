@@ -8,7 +8,7 @@ import { analyzeStudentEmotions } from "@/ai/flows/analyze-student-emotions"
 import { generateWelcomeMessage } from "@/ai/flows/generate-welcome-message-flow"
 import { Lightbulb, Loader2 } from "lucide-react"
 import { getPublicEntries, getAllStudents, addComment, getUser, updateDiaryEntryAnalysis } from "@/lib/actions"
-import { isFirebaseConfigured } from "@/lib/firebase"
+import { db } from "@/lib/firebase"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useRouter } from "next/navigation"
 
@@ -96,7 +96,7 @@ export default function DashboardPage() {
   }, [router]);
 
   useEffect(() => {
-    if (!isFirebaseConfigured) return;
+    if (!db) return;
 
     // Fetch welcome message in parallel
     setIsLoadingWelcome(true);
@@ -139,7 +139,7 @@ export default function DashboardPage() {
     return allUsers.find(user => user.id === userId);
   }
 
-  if (!isFirebaseConfigured) {
+  if (!db) {
     return (
         <Alert variant="destructive" className="m-4">
             <AlertTitle>Firebase 미설정</AlertTitle>
