@@ -37,29 +37,6 @@ export default function TeacherLoginPage() {
     }
   }, []);
 
-  if (configError) {
-      return (
-        <div className="flex items-center justify-center min-h-screen bg-secondary/50">
-            <Card className="mx-auto max-w-md w-full">
-                <CardHeader>
-                    <CardTitle className="text-2xl font-headline text-destructive">Firebase 설정 오류</CardTitle>
-                    <CardDescription>
-                        앱이 Firebase에 연결할 수 없습니다. 아래 안내에 따라 설정을 확인해주세요.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{configError}</p>
-                </CardContent>
-                 <CardFooter>
-                    <Button onClick={() => window.location.reload()} className="w-full">
-                        설정 완료 후 새로고침
-                    </Button>
-                </CardFooter>
-            </Card>
-        </div>
-      )
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (masterId !== MASTER_ID || password !== MASTER_PASSWORD) {
@@ -95,6 +72,29 @@ export default function TeacherLoginPage() {
             });
         }
     });
+  }
+
+  if (configError) {
+      return (
+        <div className="flex items-center justify-center min-h-screen bg-secondary/50">
+            <Card className="mx-auto max-w-md w-full">
+                <CardHeader>
+                    <CardTitle className="text-2xl font-headline text-destructive">Firebase 설정 오류</CardTitle>
+                    <CardDescription>
+                        앱이 Firebase에 연결할 수 없습니다. 아래 안내에 따라 설정을 확인해주세요.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{configError}</p>
+                </CardContent>
+                 <CardFooter>
+                    <Button onClick={() => window.location.reload()} className="w-full">
+                        설정 완료 후 새로고침
+                    </Button>
+                </CardFooter>
+            </Card>
+        </div>
+      )
   }
 
   return (

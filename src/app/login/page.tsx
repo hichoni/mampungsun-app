@@ -61,6 +61,20 @@ export default function LoginPage() {
     fetchStudents();
   }, [toast]);
   
+  const availableGrades = useMemo(() => {
+    return [...new Set(allStudents.map(u => u.grade))].sort((a,b) => a-b);
+  }, [allStudents]);
+  
+  const availableClasses = useMemo(() => {
+    if (!grade) return [];
+    return [...new Set(allStudents.filter(u => u.grade === parseInt(grade, 10)).map(u => u.class))].sort((a,b) => a-b);
+  }, [allStudents, grade]);
+  
+  const availableStudentIds = useMemo(() => {
+    if (!grade || !studentClass) return [];
+    return [...new Set(allStudents.filter(u => u.grade === parseInt(grade, 10) && u.class === parseInt(studentClass, 10)).map(u => u.studentId))].sort((a,b) => a-b);
+  }, [allStudents, grade, studentClass]);
+
   if (configError) {
       return (
         <div className="flex items-center justify-center min-h-screen bg-secondary/50">
@@ -94,20 +108,6 @@ export default function LoginPage() {
     setStudentClass(value);
     setStudentId('');
   };
-
-  const availableGrades = useMemo(() => {
-    return [...new Set(allStudents.map(u => u.grade))].sort((a,b) => a-b);
-  }, [allStudents]);
-  
-  const availableClasses = useMemo(() => {
-    if (!grade) return [];
-    return [...new Set(allStudents.filter(u => u.grade === parseInt(grade, 10)).map(u => u.class))].sort((a,b) => a-b);
-  }, [allStudents, grade]);
-  
-  const availableStudentIds = useMemo(() => {
-    if (!grade || !studentClass) return [];
-    return [...new Set(allStudents.filter(u => u.grade === parseInt(grade, 10) && u.class === parseInt(studentClass, 10)).map(u => u.studentId))].sort((a,b) => a-b);
-  }, [allStudents, grade, studentClass]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
