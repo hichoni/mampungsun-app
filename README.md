@@ -7,17 +7,17 @@
 
 ### **Step 1: Firebase 프로젝트 설정 값 확인하기**
 
-1.  [Firebase 콘솔](https://console.firebase.google.com/)로 이동하여 `mind-balloon` 프로젝트를 선택합니다.
+1.  [Firebase 콘솔](https://console.firebase.google.com/)로 이동하여 앱에 연결된 Firebase 프로젝트를 선택합니다.
 2.  왼쪽 메뉴에서 **프로젝트 개요(Project Overview)** 옆의 **설정 아이콘(⚙️)**을 클릭한 후, **프로젝트 설정**을 선택합니다.
 3.  **일반** 탭의 하단에 있는 **내 앱** 섹션에서 **`</>` (웹) 아이콘**을 클릭합니다.
 4.  **SDK 설정 및 구성** 아래에서 **구성(Config)** 옵션을 선택합니다.
-5.  아래와 같이 `firebaseConfig` 객체 안에 있는 값들을 확인합니다. 이 값들은 Step 2에서 필요합니다.
+5.  아래와 같이 `firebaseConfig` 객체 안에 있는 값들을 확인합니다. 이 값들은 Step 3에서 필요합니다.
     ```javascript
     const firebaseConfig = {
       apiKey: "AIzaSy...-...", // ◀ 이 값
-      authDomain: "mind-balloon.firebaseapp.com", // ◀ 이 값
-      projectId: "mind-balloon", // ◀ 이 값
-      storageBucket: "mind-balloon.appspot.com", // ◀ 이 값
+      authDomain: "your-project-id.firebaseapp.com", // ◀ 이 값
+      projectId: "your-project-id", // ◀ 이 값
+      storageBucket: "your-project-id.appspot.com", // ◀ 이 값
       messagingSenderId: "...", // ◀ 이 값
       appId: "1:...:web:..." // ◀ 이 값
     };
