@@ -68,7 +68,7 @@ export default function TeacherLoginPage() {
     }
   }
 
-  if (!isFirebaseConfigured()) {
+  if (!isFirebaseConfigured) {
     return (
         <div className="flex items-center justify-center min-h-screen bg-secondary/50 p-4">
              <Card className="mx-auto max-w-md w-full">

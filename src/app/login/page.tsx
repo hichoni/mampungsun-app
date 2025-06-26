@@ -36,7 +36,7 @@ export default function LoginPage() {
   const [isLoggingIn, startLoggingIn] = useTransition();
 
   useEffect(() => {
-    if (isFirebaseConfigured()) {
+    if (isFirebaseConfigured) {
         startLoadingStudents(async () => {
             const students = await getAllStudents();
             setAllStudents(students.filter(s => s.isApproved));
@@ -133,7 +133,7 @@ export default function LoginPage() {
   
   const isPending = isLoadingStudents || isLoggingIn;
 
-  if (!isFirebaseConfigured()) {
+  if (!isFirebaseConfigured) {
     return (
         <div className="flex items-center justify-center min-h-screen bg-secondary/50 p-4">
              <Card className="mx-auto max-w-md w-full">

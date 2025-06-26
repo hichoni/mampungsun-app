@@ -110,7 +110,7 @@ export default function TeacherDashboard() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (isFirebaseConfigured()) {
+    if (isFirebaseConfigured) {
         startLoading(async () => {
             const [fetchedStudents, fetchedEntries, currentFonts] = await Promise.all([
                 getAllStudents(),
@@ -367,7 +367,7 @@ export default function TeacherDashboard() {
     });
   }
 
-  if (!isFirebaseConfigured()) {
+  if (!isFirebaseConfigured) {
     return (
         <div className="p-8">
              <Card className="mx-auto max-w-2xl w-full">

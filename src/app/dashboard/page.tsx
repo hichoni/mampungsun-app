@@ -96,7 +96,7 @@ export default function DashboardPage() {
   }, [router]);
 
   useEffect(() => {
-    if (!isFirebaseConfigured()) return;
+    if (!isFirebaseConfigured) return;
 
     // Fetch welcome message in parallel
     setIsLoadingWelcome(true);
@@ -139,7 +139,7 @@ export default function DashboardPage() {
     return allUsers.find(user => user.id === userId);
   }
 
-  if (!isFirebaseConfigured()) {
+  if (!isFirebaseConfigured) {
     return (
         <Alert variant="destructive" className="m-4">
             <AlertTitle>Firebase 미설정</AlertTitle>
