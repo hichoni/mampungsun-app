@@ -14,24 +14,18 @@ const firebaseConfig: FirebaseOptions = {
 };
 
 function isFirebaseConfigured() {
-    const config = firebaseConfig;
-    
-    // This is a simplified and more robust check.
-    // It verifies that all necessary Firebase config values are present and are non-empty strings.
-    // It avoids complex logic for detecting placeholders which was causing issues with valid configurations.
-    const requiredKeys: (keyof FirebaseOptions)[] = [
-        'apiKey',
-        'authDomain',
-        'projectId',
-        'storageBucket',
-        'messagingSenderId',
-        'appId',
-    ];
-
-    return requiredKeys.every(key => {
-        const value = config[key];
-        return typeof value === 'string' && value.length > 0;
-    });
+    // This is a simple but robust check. It verifies that all necessary Firebase config 
+    // values are present and are not the placeholder values from the README.md file.
+    // It uses `.includes()` which correctly detects the placeholder text even if the user
+    // accidentally includes quotes in the .env.local file.
+    return (
+        !!firebaseConfig.apiKey && !firebaseConfig.apiKey.includes('your-api-key') &&
+        !!firebaseConfig.authDomain && !firebaseConfig.authDomain.includes('your-project-id') &&
+        !!firebaseConfig.projectId && !firebaseConfig.projectId.includes('your-project-id') &&
+        !!firebaseConfig.storageBucket && !firebaseConfig.storageBucket.includes('your-project-id') &&
+        !!firebaseConfig.messagingSenderId && !firebaseConfig.messagingSenderId.includes('your-sender-id') &&
+        !!firebaseConfig.appId && !firebaseConfig.appId.includes('your-app-id')
+    );
 }
 
 // Initialize Firebase
