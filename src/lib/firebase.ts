@@ -19,24 +19,20 @@ let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
 let isFirebaseInitialized = false;
 
-// New robust check:
-// The configuration is considered valid ONLY if all values are present (not empty, not just whitespace)
-// AND they do not contain the placeholder keyword 'your-'.
-const configValues = Object.values(firebaseConfig);
-const isConfigInvalid = configValues.some(value => {
-    // A value is invalid if it's not a string with actual content.
-    if (typeof value !== 'string' || !value.trim()) {
-        return true;
-    }
-    // Or if it contains a placeholder keyword.
-    if (value.includes('your-')) {
-        return true;
-    }
-    return false;
-});
+// A helper function to check if a value is a valid config string.
+// It must be a non-empty string and not a placeholder.
+function isValidConfigValue(value: string | undefined): value is string {
+    return typeof value === 'string' && value.trim() !== '' && !value.includes('your-');
+}
 
-
-if (!isConfigInvalid) {
+if (
+    isValidConfigValue(firebaseConfig.apiKey) &&
+    isValidConfigValue(firebaseConfig.authDomain) &&
+    isValidConfigValue(firebaseConfig.projectId) &&
+    isValidConfigValue(firebaseConfig.storageBucket) &&
+    isValidConfigValue(firebaseConfig.messagingSenderId) &&
+    isValidConfigValue(firebaseConfig.appId)
+) {
     try {
         app = getApps().length ? getApp() : initializeApp(firebaseConfig);
         auth = getAuth(app);
