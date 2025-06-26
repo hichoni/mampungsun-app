@@ -1,9 +1,8 @@
-
 'use client'
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import React, { useState, useTransition } from "react"
+import React, { useState } from "react"
 import {
   Card,
   CardContent,
@@ -36,7 +35,7 @@ function FirebaseNotConfigured() {
             <AlertTitle>Firebase 미설정</AlertTitle>
             <AlertDescription>
               <p>Firestore 데이터베이스 연동을 위한 환경 변수 설정이 필요합니다.</p>
-              <p className="mt-2">프로젝트의 `README.md` 파일을 참고하여 `.env.local` 파일 설정을 완료해주세요.</p>
+              <p className="mt-2">프로젝트의 `README.md` 파일을 참고하여 설정을 완료해주세요.</p>
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -50,9 +49,9 @@ export default function TeacherLoginPage() {
   const { toast } = useToast()
   const [masterId, setMasterId] = useState("")
   const [password, setPassword] = useState("")
-  const [isLoggingIn, startLoggingIn] = useTransition();
+  const [isLoggingIn, setIsLoggingIn] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!isFirebaseConfigured || !auth) {
@@ -65,30 +64,31 @@ export default function TeacherLoginPage() {
     }
     
     if (masterId === MASTER_ID && password === MASTER_PASSWORD) {
-        startLoggingIn(async () => {
-            try {
-                await signInAnonymously(auth);
-                localStorage.setItem('mampungsun_user_id', 'teacher-master');
-                toast({
-                    title: "로그인 성공",
-                    description: "교사 대시보드로 이동합니다."
-                })
-                router.push('/teacher/dashboard')
-            } catch (error: any) {
-                console.error("Login error:", error);
-                let description = "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.";
-                if (error.code === 'auth/operation-not-allowed') {
-                    description = "익명 로그인이 활성화되지 않았습니다. Firebase 콘솔에서 '익명 로그인'을 활성화해주세요.";
-                } else if (error.code === 'auth/configuration-not-found') {
-                    description = "Firebase 설정 정보를 찾을 수 없습니다. .env.local 파일의 Firebase 관련 환경 변수가 올바른지 확인해주세요.";
-                }
-                toast({
-                    variant: "destructive",
-                    title: "로그인 오류",
-                    description: description,
-                });
+        setIsLoggingIn(true);
+        try {
+            await signInAnonymously(auth);
+            localStorage.setItem('mampungsun_user_id', 'teacher-master');
+            toast({
+                title: "로그인 성공",
+                description: "교사 대시보드로 이동합니다."
+            })
+            router.push('/teacher/dashboard')
+        } catch (error: any) {
+            console.error("Login error:", error);
+            let description = "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.";
+            if (error.code === 'auth/operation-not-allowed') {
+                description = "익명 로그인이 활성화되지 않았습니다. Firebase 콘솔에서 '익명 로그인'을 활성화해주세요.";
+            } else if (error.code === 'auth/configuration-not-found') {
+                description = "Firebase 설정 정보를 찾을 수 없습니다. .env.local 파일의 Firebase 관련 환경 변수가 올바른지 확인해주세요.";
             }
-        });
+            toast({
+                variant: "destructive",
+                title: "로그인 오류",
+                description: description,
+            });
+        } finally {
+            setIsLoggingIn(false);
+        }
     } else {
       toast({
         variant: "destructive",

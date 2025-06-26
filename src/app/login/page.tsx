@@ -1,4 +1,3 @@
-
 'use client'
 
 import Link from "next/link"
@@ -56,7 +55,7 @@ export default function LoginPage() {
   const [studentClass, setStudentClass] = useState<string>('');
   const [studentId, setStudentId] = useState<string>('');
   const [pin, setPin] = useState<string>('');
-  const [isLoggingIn, startLoggingIn] = useTransition();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
     if (isFirebaseConfigured) {
@@ -92,7 +91,7 @@ export default function LoginPage() {
     return [...new Set(allStudents.filter(u => u.grade === parseInt(grade, 10) && u.class === parseInt(studentClass, 10)).map(u => u.studentId))].sort((a,b) => a-b);
   }, [allStudents, grade, studentClass]);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!isFirebaseConfigured || !auth) {
@@ -104,50 +103,51 @@ export default function LoginPage() {
         return;
     }
 
-    startLoggingIn(async () => {
-        try {
-            const user = await loginUser(parseInt(grade), parseInt(studentClass), parseInt(studentId));
+    setIsLoggingIn(true);
+    try {
+        const user = await loginUser(parseInt(grade), parseInt(studentClass), parseInt(studentId));
 
-            if (!user) {
-                toast({ variant: "destructive", title: "로그인 실패", description: "학생 정보를 찾을 수 없습니다." });
-                return;
-            }
-            if (!user.isApproved) {
-                toast({ variant: "destructive", title: "로그인 실패", description: "아직 선생님의 승인을 받지 않았어요." });
-                return;
-            }
-            if (user.pin !== pin) {
-                toast({ variant: "destructive", title: "로그인 실패", description: "PIN 번호가 올바르지 않습니다." });
-                return;
-            }
-            
-            await signInAnonymously(auth);
-            await recordLogin(user.id);
-        
-            localStorage.setItem('mampungsun_user_id', user.id);
-            toast({ title: "로그인 성공!", description: `환영합니다, ${user.nickname}님!` });
-
-            if (user.pin === '0000') {
-              router.push('/dashboard/force-pin-change');
-            } else {
-              router.push('/dashboard');
-            }
-            
-        } catch (error: any) {
-            console.error("Login error:", error);
-            let description = "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.";
-            if (error.code === 'auth/operation-not-allowed') {
-                description = "익명 로그인이 활성화되지 않았습니다. Firebase 콘솔에서 '익명 로그인'을 활성화해주세요.";
-            } else if (error.code === 'auth/configuration-not-found') {
-                description = "Firebase 설정 정보를 찾을 수 없습니다. .env.local 파일의 Firebase 관련 환경 변수가 올바른지 확인해주세요.";
-            }
-            toast({
-                variant: "destructive",
-                title: "로그인 오류",
-                description: description
-            });
+        if (!user) {
+            toast({ variant: "destructive", title: "로그인 실패", description: "학생 정보를 찾을 수 없습니다." });
+            return;
         }
-    });
+        if (!user.isApproved) {
+            toast({ variant: "destructive", title: "로그인 실패", description: "아직 선생님의 승인을 받지 않았어요." });
+            return;
+        }
+        if (user.pin !== pin) {
+            toast({ variant: "destructive", title: "로그인 실패", description: "PIN 번호가 올바르지 않습니다." });
+            return;
+        }
+        
+        await signInAnonymously(auth);
+        await recordLogin(user.id);
+    
+        localStorage.setItem('mampungsun_user_id', user.id);
+        toast({ title: "로그인 성공!", description: `환영합니다, ${user.nickname}님!` });
+
+        if (user.pin === '0000') {
+          router.push('/dashboard/force-pin-change');
+        } else {
+          router.push('/dashboard');
+        }
+        
+    } catch (error: any) {
+        console.error("Login error:", error);
+        let description = "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.";
+        if (error.code === 'auth/operation-not-allowed') {
+            description = "익명 로그인이 활성화되지 않았습니다. Firebase 콘솔에서 '익명 로그인'을 활성화해주세요.";
+        } else if (error.code === 'auth/configuration-not-found') {
+            description = "Firebase 설정 정보를 찾을 수 없습니다. .env.local 파일의 Firebase 관련 환경 변수가 올바른지 확인해주세요.";
+        }
+        toast({
+            variant: "destructive",
+            title: "로그인 오류",
+            description: description
+        });
+    } finally {
+        setIsLoggingIn(false);
+    }
   }
   
   const isPending = isLoadingStudents || isLoggingIn;
