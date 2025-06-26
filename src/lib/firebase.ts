@@ -18,8 +18,8 @@ let auth: Auth | null = null;
 let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
 
-// A single, reliable flag to determine if Firebase is configured.
-const isFirebaseConfigured =
+// Start with a check of the environment variables.
+let isFirebaseConfigured =
   Object.values(firebaseConfig).every(
     (value) => typeof value === 'string' && value.length > 0 && !value.includes('your-')
   );
@@ -31,17 +31,17 @@ if (isFirebaseConfigured) {
     db = getFirestore(app);
     storage = getStorage(app);
   } catch (e) {
-    console.error("Firebase initialization failed with an exception. Please check your Firebase project configuration in .env.local as it might be invalid (e.g., malformed project ID).", e);
-    // In case of an initialization error, we must ensure nothing is exported as usable.
+    console.error("Firebase initialization failed. This can happen with an invalid project configuration. Please check your .env.local file. Error details:", e);
+    // If initialization fails for ANY reason, we mark it as not configured.
+    isFirebaseConfigured = false;
     app = null;
     auth = null;
     db = null;
     storage = null;
   }
 } else {
-    // This console.error is helpful for developers running the app locally.
-    console.error("Firebase config error: Not all environment variables are set correctly in .env.local. Please check the README.md file for instructions.");
+    // This message is helpful for developers running the app locally for the first time.
+    console.error("Firebase config is incomplete. Not all required environment variables are set correctly in .env.local. Please check the README.md file for instructions.");
 }
 
-// Export the reliable flag and the services.
 export { app, auth, db, storage, isFirebaseConfigured };
