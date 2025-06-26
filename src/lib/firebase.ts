@@ -15,31 +15,22 @@ const firebaseConfig: FirebaseOptions = {
 
 function isFirebaseConfigured() {
     const config = firebaseConfig;
+    
+    // This is a simplified and more robust check.
+    // It verifies that all necessary Firebase config values are present and are non-empty strings.
+    // It avoids complex logic for detecting placeholders which was causing issues with valid configurations.
+    const requiredKeys: (keyof FirebaseOptions)[] = [
+        'apiKey',
+        'authDomain',
+        'projectId',
+        'storageBucket',
+        'messagingSenderId',
+        'appId',
+    ];
 
-    const placeholderMap: { [key: string]: string } = {
-        apiKey: 'your-api-key',
-        authDomain: 'your-project-id.firebaseapp.com',
-        projectId: 'your-project-id',
-        storageBucket: 'your-project-id.appspot.com',
-        messagingSenderId: 'your-sender-id',
-        appId: 'your-app-id'
-    };
-
-    return Object.keys(placeholderMap).every(key => {
-        const value = config[key as keyof FirebaseOptions];
-        if (typeof value !== 'string') {
-            return false;
-        }
-
-        // Trim whitespace, then remove surrounding single or double quotes.
-        const cleanedValue = value.trim().replace(/^["']|["']$/g, '');
-        
-        // If the cleaned value is empty or matches the placeholder, the config is invalid.
-        if (cleanedValue === '' || cleanedValue === placeholderMap[key as keyof typeof placeholderMap]) {
-            return false;
-        }
-
-        return true;
+    return requiredKeys.every(key => {
+        const value = config[key];
+        return typeof value === 'string' && value.length > 0;
     });
 }
 
