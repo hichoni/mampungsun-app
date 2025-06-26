@@ -27,20 +27,25 @@ function isFirebaseConfigured() {
     
     // Check each config key-value pair
     for (const key of Object.keys(placeholderMap)) {
-        const value = config[key as keyof FirebaseOptions];
+        const rawValue = config[key as keyof FirebaseOptions];
 
-        // Rule 1: Value must be a non-empty string.
-        if (!value || typeof value !== 'string' || value.trim() === '') {
+        // Rule 1: Value must exist and be a string.
+        if (!rawValue || typeof rawValue !== 'string') {
             return false;
         }
 
-        // Clean the value by trimming whitespace and removing quotes
-        let cleanedValue = value.trim();
+        // Rule 2: Trim whitespace and quotes.
+        let cleanedValue = rawValue.trim();
         if ((cleanedValue.startsWith('"') && cleanedValue.endsWith('"')) || (cleanedValue.startsWith("'") && cleanedValue.endsWith("'"))) {
             cleanedValue = cleanedValue.substring(1, cleanedValue.length - 1).trim();
         }
+        
+        // Rule 3: After cleaning, the value must not be empty.
+        if (cleanedValue === '') {
+            return false;
+        }
 
-        // Rule 2: The cleaned value must not be one of the placeholder strings for that specific key.
+        // Rule 4: The cleaned value must not be one of the placeholder strings for that specific key.
         if (cleanedValue === placeholderMap[key as keyof typeof placeholderMap]) {
             return false;
         }
