@@ -28,11 +28,13 @@ export default function TeacherLoginPage() {
   const { toast } = useToast()
   const [masterId, setMasterId] = useState("")
   const [password, setPassword] = useState("")
+  const [showConfigError, setShowConfigError] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!isFirebaseConfigured || !auth) {
+        setShowConfigError(true);
         toast({
             variant: "destructive",
             title: "Firebase 설정 오류",
@@ -53,6 +55,7 @@ export default function TeacherLoginPage() {
       } catch (error: any) {
         console.error("Anonymous sign-in failed", error);
         if (error.code === 'auth/configuration-not-found') {
+             setShowConfigError(true);
              toast({
                 variant: "destructive",
                 title: "Firebase 설정 오류",
@@ -114,6 +117,17 @@ export default function TeacherLoginPage() {
             </CardDescription>
         </CardHeader>
         <CardContent>
+          {showConfigError && (
+              <Alert variant="destructive" className="mb-4">
+                  <AlertTitle>Firebase 설정 오류</AlertTitle>
+                  <AlertDescription>
+                      <p>앱과 Firebase의 연동에 실패했습니다. 로그인 기능을 사용할 수 없습니다.</p>
+                      <p className="mt-2">
+                          프로젝트의 `README.md` 파일의 설정 가이드를 따라 `.env.local` 파일에 올바른 Firebase 키 값이 입력되었는지 다시 확인해주세요.
+                      </p>
+                  </AlertDescription>
+              </Alert>
+          )}
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="masterId">마스터 아이디</Label>
@@ -136,7 +150,7 @@ export default function TeacherLoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={showConfigError}>
               로그인
             </Button>
           </form>

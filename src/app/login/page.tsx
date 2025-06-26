@@ -34,6 +34,7 @@ export default function LoginPage() {
   const [studentId, setStudentId] = useState<string>('');
   const [pin, setPin] = useState<string>('');
   const [isLoggingIn, startLoggingIn] = useTransition();
+  const [showConfigError, setShowConfigError] = useState(false);
 
   useEffect(() => {
     if (isFirebaseConfigured) {
@@ -73,6 +74,7 @@ export default function LoginPage() {
     event.preventDefault();
 
     if (!isFirebaseConfigured || !auth) {
+        setShowConfigError(true);
         toast({
             variant: "destructive",
             title: "Firebase 설정 오류",
@@ -126,6 +128,7 @@ export default function LoginPage() {
         } catch (error: any) {
             console.error("Login error:", error);
             if (error.code === 'auth/configuration-not-found') {
+                 setShowConfigError(true);
                  toast({
                     variant: "destructive",
                     title: "Firebase 설정 오류",
@@ -178,6 +181,17 @@ export default function LoginPage() {
             </CardDescription>
         </CardHeader>
         <CardContent>
+          {showConfigError && (
+              <Alert variant="destructive" className="mb-4">
+                  <AlertTitle>Firebase 설정 오류</AlertTitle>
+                  <AlertDescription>
+                      <p>앱과 Firebase의 연동에 실패했습니다. 로그인 기능을 사용할 수 없습니다.</p>
+                      <p className="mt-2">
+                          프로젝트의 `README.md` 파일의 설정 가이드를 따라 `.env.local` 파일에 올바른 Firebase 키 값이 입력되었는지 다시 확인해주세요.
+                      </p>
+                  </AlertDescription>
+              </Alert>
+          )}
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid grid-cols-3 gap-4">
                 <div className="grid gap-2">
@@ -219,7 +233,7 @@ export default function LoginPage() {
               <Label htmlFor="pin">PIN 번호</Label>
               <Input id="pin" name="pin" type="password" required placeholder="4자리 숫자" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value)} disabled={isPending}/>
             </div>
-            <Button type="submit" className="w-full" disabled={isPending}>
+            <Button type="submit" className="w-full" disabled={isPending || showConfigError}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               로그인
             </Button>
