@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
   Card,
   CardContent,
@@ -36,7 +36,8 @@ function FirebaseNotConfigured() {
             <AlertTitle>Firebase 미설정</AlertTitle>
             <AlertDescription>
               <p>Firestore 데이터베이스 연동을 위한 환경 변수 설정이 필요합니다.</p>
-              <p className="mt-2">프로젝트의 `README.md` 파일을 참고하여 설정을 완료해주세요.</p>
+              <p className="mt-2">프로젝트의 `README.md` 파일을 참고하여 `.env.local` 파일 설정을 완료해주세요.</p>
+              <p className="mt-2">또한, Firebase 콘솔의 Authentication &gt; Sign-in method 탭에서 '익명 로그인'을 활성화했는지 확인해주세요.</p>
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -51,16 +52,19 @@ export default function TeacherLoginPage() {
   const [masterId, setMasterId] = useState("")
   const [password, setPassword] = useState("")
   const [isLoggingIn, setIsLoggingIn] = useState(false)
+  const [showConfigError, setShowConfigError] = useState(false);
+
+  useEffect(() => {
+    if (!isFirebaseConfigured) {
+      setShowConfigError(true);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!isFirebaseConfigured || !auth) {
-        toast({
-            variant: "destructive",
-            title: "Firebase 설정 오류",
-            description: "Firebase가 올바르게 설정되지 않았습니다. README.md를 확인해주세요.",
-        });
+        setShowConfigError(true);
         return;
     }
     
@@ -75,20 +79,20 @@ export default function TeacherLoginPage() {
             })
             router.push('/teacher/dashboard')
         } catch (error: any) {
-            console.error("Login error:", error);
-            let description = "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.";
-            if (error.code === 'auth/operation-not-allowed') {
-                description = "익명 로그인이 활성화되지 않았습니다. Firebase 콘솔에서 '익명 로그인'을 활성화해주세요.";
-            } else if (error.code === 'auth/configuration-not-found') {
-                description = "Firebase 설정 정보를 찾을 수 없습니다. .env.local 파일의 Firebase 관련 환경 변수가 올바른지 확인해주세요.";
+            console.error("Teacher login error:", error);
+            if (error.code === 'auth/configuration-not-found' || error.code === 'auth/operation-not-allowed') {
+                setShowConfigError(true);
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "로그인 오류",
+                    description: "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
+                });
             }
-            toast({
-                variant: "destructive",
-                title: "로그인 오류",
-                description: description,
-            });
         } finally {
-            setIsLoggingIn(false);
+            if (!showConfigError) {
+              setIsLoggingIn(false);
+            }
         }
     } else {
       toast({
@@ -99,7 +103,7 @@ export default function TeacherLoginPage() {
     }
   }
 
-  if (!isFirebaseConfigured) {
+  if (showConfigError) {
     return <FirebaseNotConfigured />;
   }
 
