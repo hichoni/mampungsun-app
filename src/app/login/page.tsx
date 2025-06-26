@@ -23,6 +23,27 @@ import { signInAnonymously } from "firebase/auth"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import type { User } from "@/lib/definitions"
 
+function FirebaseNotConfigured() {
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-secondary/50 p-4">
+      <Card className="mx-auto max-w-md w-full">
+        <CardHeader>
+          <CardTitle className="text-2xl font-headline text-destructive">설정 필요</CardTitle>
+          <CardDescription>앱을 사용하기 전에 Firebase 설정이 필요합니다.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertTitle>Firebase 미설정</AlertTitle>
+            <AlertDescription>
+              <p>Firestore 데이터베이스 연동을 위한 환경 변수 설정이 필요합니다.</p>
+              <p className="mt-2">프로젝트의 `README.md` 파일을 참고하여 `.env.local` 파일 설정을 완료해주세요.</p>
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -41,7 +62,7 @@ export default function LoginPage() {
     if (isFirebaseConfigured) {
       startLoadingStudents(async () => {
           const students = await getAllStudents();
-          setAllStudents(students.filter(s => s.isApproved));
+          setAllStudents(students.filter(s => s.isApproved && s.id !== 'teacher-master' && s.id !== 'ai-cheerer'));
       });
     }
   }, []);
@@ -58,7 +79,7 @@ export default function LoginPage() {
   };
 
   const availableGrades = useMemo(() => {
-    return [...new Set(allStudents.filter(u => u.grade > 0).map(u => u.grade))].sort((a,b) => a-b);
+    return [...new Set(allStudents.map(u => u.grade))].sort((a,b) => a-b);
   }, [allStudents]);
   
   const availableClasses = useMemo(() => {
@@ -74,21 +95,12 @@ export default function LoginPage() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!isFirebaseConfigured || !auth) {
-        toast({
-            variant: "destructive",
-            title: "Firebase 미설정",
-            description: "앱 설정을 확인해주세요. README.md 파일에 설정 방법이 안내되어 있습니다.",
-        });
+    if (!auth) {
+        toast({ variant: "destructive", title: "인증 서비스 오류", description: "Firebase 인증이 올바르게 설정되지 않았습니다. 관리자에게 문의하세요." });
         return;
     }
-
     if (!grade || !studentClass || !studentId || !pin) {
-        toast({
-            variant: "destructive",
-            title: "오류",
-            description: "모든 정보를 입력해주세요."
-        });
+        toast({ variant: "destructive", title: "오류", description: "모든 정보를 입력해주세요." });
         return;
     }
 
@@ -100,19 +112,16 @@ export default function LoginPage() {
                 toast({ variant: "destructive", title: "로그인 실패", description: "학생 정보를 찾을 수 없습니다." });
                 return;
             }
-        
             if (!user.isApproved) {
                 toast({ variant: "destructive", title: "로그인 실패", description: "아직 선생님의 승인을 받지 않았어요." });
                 return;
             }
-        
             if (user.pin !== pin) {
                 toast({ variant: "destructive", title: "로그인 실패", description: "PIN 번호가 올바르지 않습니다." });
                 return;
             }
             
             await signInAnonymously(auth);
-            
             await recordLogin(user.id);
         
             localStorage.setItem('mampungsun_user_id', user.id);
@@ -126,7 +135,7 @@ export default function LoginPage() {
             
         } catch (error: any) {
             console.error("Login error:", error);
-            if (error.code === 'auth/configuration-not-found' || error.code === 'auth/operation-not-allowed') {
+            if (error.code === 'auth/operation-not-allowed') {
                 toast({
                   variant: "destructive",
                   title: "Firebase 설정 오류",
@@ -143,25 +152,7 @@ export default function LoginPage() {
   const isPending = isLoadingStudents || isLoggingIn;
 
   if (!isFirebaseConfigured) {
-    return (
-        <div className="flex items-center justify-center min-h-screen bg-secondary/50 p-4">
-             <Card className="mx-auto max-w-md w-full">
-                <CardHeader>
-                    <CardTitle className="text-2xl font-headline text-destructive">설정 필요</CardTitle>
-                    <CardDescription>앱을 사용하기 전에 Firebase 설정이 필요합니다.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Alert variant="destructive">
-                        <AlertTitle>Firebase 미설정</AlertTitle>
-                        <AlertDescription>
-                            <p>Firestore 데이터베이스 연동을 위한 환경 변수 설정이 필요합니다.</p>
-                            <p className="mt-2">프로젝트의 `README.md` 파일을 참고하여 `.env.local` 파일 설정을 완료해주세요.</p>
-                        </AlertDescription>
-                    </Alert>
-                </CardContent>
-            </Card>
-        </div>
-    )
+    return <FirebaseNotConfigured />;
   }
 
   return (
