@@ -1,4 +1,3 @@
-
 'use client'
 
 import Link from "next/link"
@@ -19,11 +18,11 @@ import React, { useState, useTransition, useEffect, useMemo } from "react"
 import { ArrowLeft, Loader2 } from "lucide-react"
 import { loginUser, getAllStudents, recordLogin } from "@/lib/actions"
 import { auth, isFirebaseConfigured } from "@/lib/firebase"
-import { signInAnonymously } from "firebase/auth"
+import { signInAnonymously, signOut } from "firebase/auth"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import type { User } from "@/lib/definitions"
 
-function FirebaseNotConfigured() {
+function FirebaseNotConfigured({ needsAnonymousAuth }: { needsAnonymousAuth?: boolean }) {
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary/50 p-4">
       <Card className="mx-auto max-w-md w-full">
@@ -35,9 +34,12 @@ function FirebaseNotConfigured() {
           <Alert variant="destructive">
             <AlertTitle>Firebase 미설정</AlertTitle>
             <AlertDescription>
-              <p>Firestore 데이터베이스 연동을 위한 환경 변수 설정이 필요합니다.</p>
-              <p className="mt-2">프로젝트의 `README.md` 파일을 참고하여 `.env.local` 파일 설정을 완료해주세요.</p>
-              <p className="mt-2">또한, Firebase 콘솔의 Authentication &gt; Sign-in method 탭에서 '익명 로그인'을 활성화했는지 확인해주세요.</p>
+                <p>
+                    {needsAnonymousAuth
+                    ? "Firebase 콘솔의 Authentication > Sign-in method 탭에서 '익명 로그인'을 활성화해주세요."
+                    : "Firestore 데이터베이스 연동을 위한 환경 변수 설정이 필요합니다. 프로젝트의 `README.md` 파일을 참고하여 설정을 완료해주세요."
+                    }
+                </p>
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -58,17 +60,37 @@ export default function LoginPage() {
   const [studentId, setStudentId] = useState<string>('');
   const [pin, setPin] = useState<string>('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [showConfigError, setShowConfigError] = useState(false);
+
+  const [verificationStatus, setVerificationStatus] = useState<'verifying' | 'success' | 'failure'>('verifying');
+  const [needsAnonymousAuth, setNeedsAnonymousAuth] = useState(false);
 
   useEffect(() => {
-    if (isFirebaseConfigured) {
+    const verifyConnectionAndFetchStudents = async () => {
+      // Step 1: Verify Firebase Connection
+      if (!isFirebaseConfigured || !auth) {
+        setVerificationStatus('failure');
+        return;
+      }
+      try {
+        await signInAnonymously(auth);
+        await signOut(auth); // Immediately sign out, this was just a check
+        setVerificationStatus('success');
+      } catch (error: any) {
+        console.error("Firebase connection verification failed:", error);
+        if (error.code === 'auth/operation-not-allowed') {
+          setNeedsAnonymousAuth(true);
+        }
+        setVerificationStatus('failure');
+        return; // Stop if verification fails
+      }
+
+      // Step 2: Fetch students only after successful verification
       startLoadingStudents(async () => {
           const students = await getAllStudents();
           setAllStudents(students.filter(s => s.isApproved && s.id !== 'teacher-master' && s.id !== 'ai-cheerer'));
       });
-    } else {
-        setShowConfigError(true);
-    }
+    };
+    verifyConnectionAndFetchStudents();
   }, []);
 
   const handleGradeChange = (value: string) => {
@@ -98,11 +120,6 @@ export default function LoginPage() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    
-    if (!isFirebaseConfigured || !auth) {
-        setShowConfigError(true);
-        return;
-    }
 
     if (!grade || !studentClass || !studentId || !pin) {
         toast({ variant: "destructive", title: "오류", description: "모든 정보를 입력해주세요." });
@@ -129,7 +146,7 @@ export default function LoginPage() {
             return;
         }
         
-        await signInAnonymously(auth);
+        await signInAnonymously(auth!);
         await recordLogin(user.id);
     
         localStorage.setItem('mampungsun_user_id', user.id);
@@ -143,26 +160,28 @@ export default function LoginPage() {
         
     } catch (error: any) {
         console.error("Login error:", error);
-        if (error.code === 'auth/configuration-not-found' || error.code === 'auth/operation-not-allowed') {
-            setShowConfigError(true);
-        } else {
-            toast({
-                variant: "destructive",
-                title: "로그인 오류",
-                description: "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요."
-            });
-        }
+        toast({
+            variant: "destructive",
+            title: "로그인 오류",
+            description: "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요."
+        });
     } finally {
-        if (!showConfigError) { // Only set to false if we are not showing the config error screen
-          setIsLoggingIn(false);
-        }
+        setIsLoggingIn(false);
     }
   }
   
   const isPending = isLoadingStudents || isLoggingIn;
 
-  if (showConfigError) {
-    return <FirebaseNotConfigured />;
+  if (verificationStatus === 'verifying') {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (verificationStatus === 'failure') {
+    return <FirebaseNotConfigured needsAnonymousAuth={needsAnonymousAuth} />;
   }
 
   return (
