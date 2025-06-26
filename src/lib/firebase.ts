@@ -14,25 +14,45 @@ const firebaseConfig: FirebaseOptions = {
 };
 
 function isFirebaseConfigured() {
-    // This is the most robust check. It verifies that each essential key has a non-empty,
-    // non-placeholder value. This avoids all the complex placeholder guessing that caused previous issues.
     const config = firebaseConfig;
-    
-    // Check for undefined, null, or empty strings.
-    if (!config.apiKey || !config.authDomain || !config.projectId || !config.storageBucket || !config.messagingSenderId || !config.appId) {
+
+    const values = [
+        config.apiKey,
+        config.authDomain,
+        config.projectId,
+        config.storageBucket,
+        config.messagingSenderId,
+        config.appId,
+    ];
+
+    // 1. Check for falsy values (undefined, null, ''). If any value is missing, it's not configured.
+    if (values.some(v => !v)) {
         return false;
     }
 
-    // Check for placeholder values.
-    if (config.apiKey.includes('your-api-key') ||
-        config.authDomain.includes('your-project-id') ||
-        config.projectId.includes('your-project-id') ||
-        config.storageBucket.includes('your-project-id') ||
-        config.messagingSenderId.includes('your-sender-id') ||
-        config.appId.includes('your-app-id')) {
+    // 2. Check if any value is an exact match for the placeholder strings from the README.
+    // This is the safest way to detect an unconfigured state without false positives.
+    const placeholders = [
+        'your-api-key',
+        'your-project-id.firebaseapp.com',
+        'your-project-id',
+        'your-project-id.appspot.com',
+        'your-sender-id',
+        'your-app-id'
+    ];
+    
+    // Using Array.prototype.includes for a direct and exact comparison.
+    if (
+        placeholders.includes(config.apiKey!) ||
+        placeholders.includes(config.authDomain!) ||
+        placeholders.includes(config.projectId!) ||
+        placeholders.includes(config.storageBucket!) ||
+        placeholders.includes(config.messagingSenderId!) ||
+        placeholders.includes(config.appId!)
+    ) {
         return false;
     }
-    
+
     return true;
 }
 
