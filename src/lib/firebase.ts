@@ -16,33 +16,32 @@ const firebaseConfig: FirebaseOptions = {
 function isFirebaseConfigured() {
     const config = firebaseConfig;
 
-    const placeholders = [
-        'your-api-key',
-        'your-project-id.firebaseapp.com',
-        'your-project-id',
-        'your-project-id.appspot.com',
-        'your-sender-id',
-        'your-app-id'
-    ];
+    const placeholderMap: { [key: string]: string } = {
+        apiKey: 'your-api-key',
+        authDomain: 'your-project-id.firebaseapp.com',
+        projectId: 'your-project-id',
+        storageBucket: 'your-project-id.appspot.com',
+        messagingSenderId: 'your-sender-id',
+        appId: 'your-app-id'
+    };
     
-    for (const value of Object.values(config)) {
-        // Rule 1: The value must exist and be a string.
-        if (!value || typeof value !== 'string') {
+    // Check each config key-value pair
+    for (const key of Object.keys(placeholderMap)) {
+        const value = config[key as keyof FirebaseOptions];
+
+        // Rule 1: Value must be a non-empty string.
+        if (!value || typeof value !== 'string' || value.trim() === '') {
             return false;
         }
 
-        // Rule 2: The value, after being cleaned of whitespace and quotes, must not be empty.
+        // Clean the value by trimming whitespace and removing quotes
         let cleanedValue = value.trim();
         if ((cleanedValue.startsWith('"') && cleanedValue.endsWith('"')) || (cleanedValue.startsWith("'") && cleanedValue.endsWith("'"))) {
             cleanedValue = cleanedValue.substring(1, cleanedValue.length - 1).trim();
         }
-        
-        if (cleanedValue === '') {
-            return false;
-        }
 
-        // Rule 3: The cleaned value must not be one of the placeholder strings.
-        if (placeholders.includes(cleanedValue)) {
+        // Rule 2: The cleaned value must not be one of the placeholder strings for that specific key.
+        if (cleanedValue === placeholderMap[key as keyof typeof placeholderMap]) {
             return false;
         }
     }
@@ -52,15 +51,10 @@ function isFirebaseConfigured() {
 
 // Initialize Firebase
 let app;
-if (!getApps().length) {
-    if (!isFirebaseConfigured()) {
-        console.warn("Firebase config is not set or is incomplete. Please check your .env.local file. Firebase services will not be initialized.");
-        app = null;
-    } else {
-        app = initializeApp(firebaseConfig);
-    }
+if (isFirebaseConfigured()) {
+    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 } else {
-    app = getApp();
+    app = null;
 }
 
 const auth = app ? getAuth(app) : null;
