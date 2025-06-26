@@ -36,18 +36,19 @@ async function revalidateDiaryPaths() {
 }
 
 // --- Auth Action ---
-export async function getAnonymousSession() {
+export async function getAnonymousSession(): Promise<{ success: boolean; error?: string }> {
     if (!auth) {
-        throw new Error("Firebase is not configured correctly. Please check your .env.local file.");
+        return { success: false, error: "Firebase is not configured correctly. Please check your .env.local file." };
     }
     try {
         await signInAnonymously(auth);
+        return { success: true };
     } catch (error: any) {
         console.error("Anonymous sign-in failed on server:", error);
         if (error.code === 'auth/configuration-not-found') {
-            throw new Error("익명 로그인이 Firebase 프로젝트에 설정되지 않았습니다. Firebase 콘솔 > Authentication > Sign-in method 에서 '익명' 제공업체를 활성화해주세요.");
+            return { success: false, error: "익명 로그인이 Firebase 프로젝트에 설정되지 않았습니다. Firebase 콘솔 > Authentication > Sign-in method 에서 '익명' 제공업체를 활성화해주세요." };
         }
-        throw new Error("인증 서비스에 연결하지 못했습니다. Firebase 설정 또는 인터넷 연결을 확인해주세요.");
+        return { success: false, error: "인증 서비스에 연결하지 못했습니다. Firebase 설정 또는 인터넷 연결을 확인해주세요." };
     }
 }
 

@@ -73,7 +73,11 @@ export default function TeacherLoginPage() {
 
     startLoggingIn(async () => {
         try {
-            await getAnonymousSession();
+            const sessionResult = await getAnonymousSession();
+            if (!sessionResult.success && sessionResult.error) {
+                setConfigError(sessionResult.error);
+                return;
+            }
             
             localStorage.setItem('mampungsun_user_id', 'teacher-master');
             toast({
@@ -84,15 +88,11 @@ export default function TeacherLoginPage() {
 
         } catch (error: any) {
             console.error("Teacher login error:", error);
-            if (error.message.includes("익명 로그인")) {
-                setConfigError(error.message);
-            } else {
-                toast({
-                    variant: "destructive",
-                    title: "로그인 중 오류 발생",
-                    description: error.message || "잠시 후 다시 시도해주세요.",
-                });
-            }
+            toast({
+                variant: "destructive",
+                title: "로그인 중 오류 발생",
+                description: error.message || "잠시 후 다시 시도해주세요.",
+            });
         }
     });
   }

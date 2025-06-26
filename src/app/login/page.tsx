@@ -134,7 +134,12 @@ export default function LoginPage() {
                 return;
             }
             
-            await getAnonymousSession();
+            const sessionResult = await getAnonymousSession();
+            if (!sessionResult.success && sessionResult.error) {
+                setConfigError(sessionResult.error);
+                return;
+            }
+            
             await recordLogin(user.id);
         
             localStorage.setItem('mampungsun_user_id', user.id);
@@ -148,15 +153,11 @@ export default function LoginPage() {
             
         } catch (error: any) {
             console.error("Login error:", error);
-            if (error.message.includes("익명 로그인")) {
-              setConfigError(error.message);
-            } else {
-              toast({
-                  variant: "destructive",
-                  title: "로그인 오류",
-                  description: error.message || "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요."
-              });
-            }
+            toast({
+                variant: "destructive",
+                title: "로그인 오류",
+                description: error.message || "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요."
+            });
         }
     });
   }
