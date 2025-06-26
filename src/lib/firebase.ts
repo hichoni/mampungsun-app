@@ -16,32 +16,35 @@ const firebaseConfig: FirebaseOptions = {
 function isFirebaseConfigured() {
     const config = firebaseConfig;
     
-    // Helper to check if a value is unconfigured (undefined, null, empty, or just whitespace)
-    const isValueUnconfigured = (value: string | undefined): boolean => {
-        return !value || value.trim() === '';
+    // Helper to check if a value is still a placeholder.
+    // It handles trimming and removes potential quotes.
+    const isPlaceholder = (value: string | undefined, placeholder: string): boolean => {
+        if (!value) {
+            return true; // Value is missing
+        }
+        let processedValue = value.trim();
+        // Remove quotes if they exist at both ends
+        if ((processedValue.startsWith('"') && processedValue.endsWith('"')) || (processedValue.startsWith("'") && processedValue.endsWith("'"))) {
+            processedValue = processedValue.substring(1, processedValue.length - 1);
+        }
+        
+        // If after all processing the value is empty, it's not configured.
+        if (!processedValue) {
+            return true;
+        }
+
+        // Return true only if it's the exact placeholder.
+        return processedValue === placeholder;
     };
     
-    // Check if any required config value is missing.
+    // Check if any config value is still a placeholder.
     if (
-        isValueUnconfigured(config.apiKey) ||
-        isValueUnconfigured(config.authDomain) ||
-        isValueUnconfigured(config.projectId) ||
-        isValueUnconfigured(config.storageBucket) ||
-        isValueUnconfigured(config.messagingSenderId) ||
-        isValueUnconfigured(config.appId)
-    ) {
-        return false;
-    }
-
-    // Check if any config value still contains a placeholder keyword.
-    // This is more robust than checking for exact matches.
-    if (
-        config.apiKey!.includes('your-api-key') ||
-        config.authDomain!.includes('your-project-id') ||
-        config.projectId!.includes('your-project-id') ||
-        config.storageBucket!.includes('your-project-id') ||
-        config.messagingSenderId!.includes('your-sender-id') ||
-        config.appId!.includes('your-app-id')
+        isPlaceholder(config.apiKey, 'your-api-key') ||
+        isPlaceholder(config.authDomain, 'your-project-id.firebaseapp.com') ||
+        isPlaceholder(config.projectId, 'your-project-id') ||
+        isPlaceholder(config.storageBucket, 'your-project-id.appspot.com') ||
+        isPlaceholder(config.messagingSenderId, 'your-sender-id') ||
+        isPlaceholder(config.appId, 'your-app-id')
     ) {
         return false;
     }
