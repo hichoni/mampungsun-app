@@ -17,10 +17,23 @@ import { useToast } from "@/hooks/use-toast"
 import React, { useState, useTransition, useEffect, useMemo } from "react"
 import { ArrowLeft, Loader2 } from "lucide-react"
 import { loginUser, getAllStudents, recordLogin } from "@/lib/actions"
-import { isFirebaseConfigured, auth } from "@/lib/firebase"
+import { auth } from "@/lib/firebase"
 import { signInAnonymously } from "firebase/auth"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import type { User } from "@/lib/definitions"
+
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+
+function isConfigValid(config: object): boolean {
+    return Object.values(config).every(value => value && typeof value === 'string' && !value.includes('your-'));
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,13 +48,21 @@ export default function LoginPage() {
   const [pin, setPin] = useState<string>('');
   const [isLoggingIn, startLoggingIn] = useTransition();
 
+  const [configStatus, setConfigStatus] = useState<'checking' | 'valid' | 'invalid'>('checking');
+
   useEffect(() => {
-    if (isFirebaseConfigured) {
-        startLoadingStudents(async () => {
-            const students = await getAllStudents();
-            setAllStudents(students.filter(s => s.isApproved));
-        });
+    // Client-side check for Firebase config
+    if (isConfigValid(firebaseConfig) && auth) {
+      setConfigStatus('valid');
+    } else {
+      setConfigStatus('invalid');
+      return;
     }
+
+    startLoadingStudents(async () => {
+        const students = await getAllStudents();
+        setAllStudents(students.filter(s => s.isApproved));
+    });
   }, []);
 
   const handleGradeChange = (value: string) => {
@@ -72,6 +93,15 @@ export default function LoginPage() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    if (configStatus !== 'valid' || !auth) {
+        toast({
+            variant: "destructive",
+            title: "Firebase 설정 오류",
+            description: "앱을 사용하기 전에 README.md를 참고하여 설정을 완료해주세요."
+        });
+        return;
+    }
+
     if (!grade || !studentClass || !studentId || !pin) {
         toast({
             variant: "destructive",
@@ -99,9 +129,8 @@ export default function LoginPage() {
                 toast({ variant: "destructive", title: "로그인 실패", description: "PIN 번호가 올바르지 않습니다." });
                 return;
             }
-
             
-            await signInAnonymously(auth!);
+            await signInAnonymously(auth);
             
             await recordLogin(user.id);
         
@@ -116,14 +145,26 @@ export default function LoginPage() {
             
         } catch (error: any) {
             console.error("Login error:", error);
-            toast({ variant: "destructive", title: "로그인 오류", description: "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요." });
+            if (error.code === 'auth/configuration-not-found') {
+                setConfigStatus('invalid');
+            } else {
+                toast({ variant: "destructive", title: "로그인 오류", description: "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요." });
+            }
         }
     });
   }
   
   const isPending = isLoadingStudents || isLoggingIn;
 
-  if (!isFirebaseConfigured) {
+  if (configStatus === 'checking') {
+    return (
+        <div className="flex items-center justify-center min-h-screen">
+            <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+    );
+  }
+
+  if (configStatus === 'invalid') {
     return (
         <div className="flex items-center justify-center min-h-screen bg-secondary/50 p-4">
              <Card className="mx-auto max-w-md w-full">
@@ -136,7 +177,7 @@ export default function LoginPage() {
                         <AlertTitle>Firebase 미설정</AlertTitle>
                         <AlertDescription>
                             <p>Firestore 데이터베이스 연동을 위한 환경 변수 설정이 필요합니다.</p>
-                            <p className="mt-2">프로젝트의 `README.md` 파일을 참고하여 설정을 완료해주세요.</p>
+                            <p className="mt-2">프로젝트의 `README.md` 파일을 참고하여 `.env.local` 파일 설정을 완료해주세요.</p>
                         </AlertDescription>
                     </Alert>
                 </CardContent>
