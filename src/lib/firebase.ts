@@ -14,20 +14,26 @@ const firebaseConfig: FirebaseOptions = {
 };
 
 function isFirebaseConfigured() {
-    // A robust check to ensure all necessary Firebase config values are present.
-    // It verifies that each essential key has a non-empty, non-placeholder value.
+    // This is the most robust check. It verifies that each essential key has a non-empty,
+    // non-placeholder value. This avoids all the complex placeholder guessing that caused previous issues.
     const config = firebaseConfig;
     
-    // This is the most reliable check: are the values defined and not empty strings?
-    // This avoids all the complex placeholder guessing that caused previous issues.
-    return !!(
-        config.apiKey &&
-        config.authDomain &&
-        config.projectId &&
-        config.storageBucket &&
-        config.messagingSenderId &&
-        config.appId
-    );
+    // Check for undefined, null, or empty strings.
+    if (!config.apiKey || !config.authDomain || !config.projectId || !config.storageBucket || !config.messagingSenderId || !config.appId) {
+        return false;
+    }
+
+    // Check for placeholder values.
+    if (config.apiKey.includes('your-api-key') ||
+        config.authDomain.includes('your-project-id') ||
+        config.projectId.includes('your-project-id') ||
+        config.storageBucket.includes('your-project-id') ||
+        config.messagingSenderId.includes('your-sender-id') ||
+        config.appId.includes('your-app-id')) {
+        return false;
+    }
+    
+    return true;
 }
 
 // Initialize Firebase
