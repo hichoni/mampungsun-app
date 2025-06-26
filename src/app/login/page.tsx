@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import React, { useState, useTransition, useEffect, useMemo } from "react"
@@ -175,8 +174,6 @@ export default function LoginPage() {
             <CardTitle className="text-2xl font-headline">학생 로그인</CardTitle>
             <CardDescription>
                 학년, 반, 번호를 선택하고 PIN 번호를 입력하세요.
-                <br />
-                <span className="text-xs text-muted-foreground">초기 PIN 번호는 '0000'입니다.</span>
             </CardDescription>
         </CardHeader>
         <CardContent>

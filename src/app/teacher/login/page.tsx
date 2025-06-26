@@ -108,8 +108,6 @@ export default function TeacherLoginPage() {
             <CardTitle className="text-2xl font-headline">교사 로그인</CardTitle>
             <CardDescription>
                 마스터 아이디와 비밀번호를 입력하세요.
-                <br />
-                <span className="text-xs text-muted-foreground">초기 아이디: master, 비밀번호: password123</span>
             </CardDescription>
         </CardHeader>
         <CardContent>
