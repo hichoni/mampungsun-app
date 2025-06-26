@@ -29,6 +29,7 @@ export default function LoginPage() {
   const [allStudents, setAllStudents] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingIn, startLoggingIn] = useTransition();
+  const [configError, setConfigError] = useState<string | null>(null);
 
   const [grade, setGrade] = useState<string>('');
   const [studentClass, setStudentClass] = useState<string>('');
@@ -36,48 +37,46 @@ export default function LoginPage() {
   const [pin, setPin] = useState<string>('');
 
   useEffect(() => {
-    // Only fetch students if Firebase is configured.
-    if (auth) {
-      const fetchStudents = async () => {
-        setIsLoading(true);
-        try {
-          const students = await getAllStudents();
-          setAllStudents(students.filter(s => s.isApproved && s.id !== 'teacher-master' && s.id !== 'ai-cheerer'));
-        } catch (error) {
-          console.error("Failed to fetch student list:", error);
-          toast({
-              variant: "destructive",
-              title: "데이터 로드 실패",
-              description: "학생 목록을 불러오는 중 문제가 발생했습니다."
-          });
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      fetchStudents();
+    if (!auth) {
+      setConfigError("앱이 Firebase에 연결할 수 없습니다. 환경 변수 설정이 올바른지 확인해주세요.\n\n프로젝트의 `README.md` 파일을 열어 `Step 5: .env.local 파일 생성 및 값 붙여넣기` 부분을 다시 한번 확인하고, `.env.local` 파일에 올바른 값을 입력했는지 검토해주세요.");
+      return;
     }
+
+    const fetchStudents = async () => {
+      setIsLoading(true);
+      try {
+        const students = await getAllStudents();
+        setAllStudents(students.filter(s => s.isApproved && s.id !== 'teacher-master' && s.id !== 'ai-cheerer'));
+      } catch (error) {
+        console.error("Failed to fetch student list:", error);
+        toast({
+            variant: "destructive",
+            title: "데이터 로드 실패",
+            description: "학생 목록을 불러오는 중 문제가 발생했습니다."
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchStudents();
   }, [toast]);
   
-  // If auth is null, Firebase isn't configured correctly.
-  // This is the most robust way to prevent auth errors.
-  if (!auth) {
+  if (configError) {
       return (
         <div className="flex items-center justify-center min-h-screen bg-secondary/50">
             <Card className="mx-auto max-w-md w-full">
                 <CardHeader>
                     <CardTitle className="text-2xl font-headline text-destructive">Firebase 설정 오류</CardTitle>
                     <CardDescription>
-                        앱이 Firebase에 연결할 수 없습니다. 환경 변수 설정이 올바른지 확인해주세요.
+                        앱이 Firebase에 연결할 수 없습니다. 아래 안내에 따라 설정을 확인해주세요.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                        프로젝트의 `README.md` 파일을 열어 `Step 2: 로컬 개발 환경 설정` 부분을 다시 한번 확인하고, `.env.local` 파일에 올바른 값을 입력했는지 검토해주세요.
-                    </p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{configError}</p>
                 </CardContent>
                  <CardFooter>
-                    <Button asChild className="w-full">
-                        <Link href="/">홈으로 돌아가기</Link>
+                    <Button onClick={() => window.location.reload()} className="w-full">
+                        설정 완료 후 새로고침
                     </Button>
                 </CardFooter>
             </Card>
@@ -149,11 +148,15 @@ export default function LoginPage() {
             
         } catch (error: any) {
             console.error("Login error:", error);
-            toast({
-                variant: "destructive",
-                title: "로그인 오류",
-                description: error.message || "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요."
-            });
+            if (error.message.includes("익명 로그인")) {
+              setConfigError(error.message);
+            } else {
+              toast({
+                  variant: "destructive",
+                  title: "로그인 오류",
+                  description: error.message || "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요."
+              });
+            }
         }
     });
   }

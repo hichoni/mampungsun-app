@@ -5,13 +5,27 @@
 
 이 설정을 완료하지 않으면 **앱이 절대로 동작하지 않습니다.** 아래 안내에 따라 **`.env.local`** 파일을 설정해주세요.
 
-### **Step 1: Firebase 프로젝트 설정 값 확인하기**
+### **Step 1: Firebase 프로젝트 생성 및 웹 앱 등록**
 
-1.  [Firebase 콘솔](https://console.firebase.google.com/)로 이동하여 앱에 연결된 Firebase 프로젝트를 선택합니다.
-2.  왼쪽 메뉴에서 **프로젝트 개요(Project Overview)** 옆의 **설정 아이콘(⚙️)**을 클릭한 후, **프로젝트 설정**을 선택합니다.
-3.  **일반** 탭의 하단에 있는 **내 앱** 섹션에서 **`</>` (웹) 아이콘**을 클릭합니다.
-4.  **SDK 설정 및 구성** 아래에서 **구성(Config)** 옵션을 선택합니다.
-5.  아래와 같이 `firebaseConfig` 객체 안에 있는 값들을 확인합니다. 이 값들은 Step 3에서 필요합니다.
+1.  [Firebase 콘솔](https://console.firebase.google.com/)로 이동하여 새 프로젝트를 만들거나 기존 프로젝트를 선택합니다.
+2.  프로젝트 개요(Project Overview) 페이지에서 **`</>` (웹) 아이콘**을 클릭하여 새 웹 앱을 등록합니다.
+3.  앱 닉네임을 입력하고 **'앱 등록'** 버튼을 누릅니다. Firebase 호스팅 설정은 나중에 할 수 있으니 건너뛰어도 됩니다.
+
+### **Step 2: Firebase 인증(Authentication) 활성화 (매우 중요)**
+
+로그인 기능을 사용하려면 반드시 익명 인증을 활성화해야 합니다.
+
+1.  Firebase 콘솔의 왼쪽 메뉴에서 **빌드(Build) > Authentication**으로 이동합니다.
+2.  **'시작하기(Get started)'** 버튼을 클릭합니다.
+3.  **Sign-in method** 탭에서 **'익명(Anonymous)'** 제공업체를 선택합니다.
+4.  오른쪽에 나타나는 **'활성화'** 스위치를 켠 후, **'저장'** 버튼을 클릭합니다.
+
+### **Step 3: Firebase 프로젝트 설정 값 확인하기**
+
+1.  왼쪽 메뉴에서 **프로젝트 개요(Project Overview)** 옆의 **설정 아이콘(⚙️)**을 클릭한 후, **프로젝트 설정**을 선택합니다.
+2.  **일반** 탭의 하단에 있는 **내 앱** 섹션에서 방금 등록한 웹 앱을 선택합니다.
+3.  **SDK 설정 및 구성** 아래에서 **구성(Config)** 옵션을 선택합니다.
+4.  아래와 같이 `firebaseConfig` 객체 안에 있는 값들을 확인합니다. 이 값들은 Step 5에서 필요합니다.
     ```javascript
     const firebaseConfig = {
       apiKey: "AIzaSy...-...", // ◀ 이 값
@@ -23,7 +37,7 @@
     };
     ```
 
-### **Step 2: Google AI API 키 발급받기**
+### **Step 4: Google AI API 키 발급받기**
 
 AI 기능을 사용하려면 Google AI Studio에서 API 키를 발급받아야 합니다.
 
@@ -31,17 +45,17 @@ AI 기능을 사용하려면 Google AI Studio에서 API 키를 발급받아야 �
 2.  **[Create API key in new project]** 버튼을 클릭하여 새 API 키를 발급받으세요.
 3.  생성된 API 키(`AIza...`로 시작하는 긴 문자열)를 복사해서 안전한 곳에 보관하세요.
 
-### **Step 3: `.env.local` 파일 생성 및 값 붙여넣기**
+### **Step 5: `.env.local` 파일 생성 및 값 붙여넣기**
 
 1.  프로젝트의 가장 바깥쪽(최상위 경로)에 `.env.local` 이라는 이름으로 새 파일을 만듭니다.
 2.  아래 내용을 그대로 복사하여 새로 만든 `.env.local` 파일에 붙여넣습니다.
-3.  `your-...` 로 표시된 모든 값을 Step 1과 Step 2에서 확인하고 발급받은 **실제 값으로 교체**합니다. **따옴표는 그대로 유지**해야 합니다.
+3.  `your-...` 로 표시된 모든 값을 Step 3과 Step 4에서 확인하고 발급받은 **실제 값으로 교체**합니다. **따옴표는 그대로 유지**해야 합니다.
 
     ```
-    # Step 2에서 발급받은 Google AI API 키를 여기에 붙여넣으세요.
+    # Step 4에서 발급받은 Google AI API 키를 여기에 붙여넣으세요.
     GOOGLE_API_KEY="your-google-api-key"
 
-    # Step 1에서 확인한 Firebase 설정 값을 여기에 각각 붙여넣으세요.
+    # Step 3에서 확인한 Firebase 설정 값을 여기에 각각 붙여넣으세요.
     NEXT_PUBLIC_FIREBASE_API_KEY="your-api-key"
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="your-project-id.firebaseapp.com"
     NEXT_PUBLIC_FIREBASE_PROJECT_ID="your-project-id"
@@ -62,7 +76,7 @@ AI 기능을 사용하려면 Google AI Studio에서 API 키를 발급받아야 �
 1.  [**Google Cloud Secret Manager 페이지**](https://console.cloud.google.com/security/secret-manager)로 이동합니다.
 2.  페이지 상단에 있는 **[+ 보안 비밀 만들기]** 버튼을 클릭합니다.
 3.  **이름**에는 `GOOGLE_API_KEY` 라고 **반드시 똑같이** 입력합니다.
-4.  **보안 비밀 값**에는 Step 2에서 발급받은 **실제 API 키**를 붙여넣습니다.
+4.  **보안 비밀 값**에는 Step 4에서 발급받은 **실제 API 키**를 붙여넣습니다.
 5.  **[보안 비밀 만들기]** 버튼을 클릭하여 저장을 완료합니다.
 
 이제 `git push origin main` 명령어로 코드를 배포하면, AI 기능이 온라인에서 완벽하게 활성화됩니다.
