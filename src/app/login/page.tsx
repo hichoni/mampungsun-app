@@ -1,3 +1,4 @@
+
 'use client'
 
 import Link from "next/link"
@@ -73,6 +74,15 @@ export default function LoginPage() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    if (!isFirebaseConfigured || !auth) {
+        toast({
+            variant: "destructive",
+            title: "Firebase 미설정",
+            description: "앱 설정을 확인해주세요. README.md 파일에 설정 방법이 안내되어 있습니다.",
+        });
+        return;
+    }
+
     if (!grade || !studentClass || !studentId || !pin) {
         toast({
             variant: "destructive",
@@ -116,7 +126,16 @@ export default function LoginPage() {
             
         } catch (error: any) {
             console.error("Login error:", error);
-            toast({ variant: "destructive", title: "로그인 오류", description: "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요." });
+            if (error.code === 'auth/configuration-not-found' || error.code === 'auth/operation-not-allowed') {
+                toast({
+                  variant: "destructive",
+                  title: "Firebase 설정 오류",
+                  description: "익명 로그인이 활성화되지 않았을 수 있습니다. Firebase 콘솔의 Authentication > Sign-in method 탭에서 익명 로그인을 활성화해주세요.",
+                  duration: 10000, // Show for longer
+                });
+            } else {
+                toast({ variant: "destructive", title: "로그인 오류", description: "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요." });
+            }
         }
     });
   }
