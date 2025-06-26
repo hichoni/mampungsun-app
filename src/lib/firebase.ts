@@ -31,6 +31,7 @@ function isFirebaseConfigured() {
 // Initialize Firebase
 let app;
 try {
+    // We only attempt to initialize if the config is valid.
     if (isFirebaseConfigured()) {
         app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     } else {
