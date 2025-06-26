@@ -23,11 +23,18 @@ let isFirebaseInitialized = false;
 // The configuration is considered valid ONLY if all values are present (not empty, not just whitespace)
 // AND they do not contain the placeholder keyword 'your-'.
 const configValues = Object.values(firebaseConfig);
-const isConfigInvalid = configValues.some(value => 
-    !value ||             // is falsy (null, undefined, empty string)
-    !value.trim() ||      // is only whitespace
-    value.includes('your-') // contains a placeholder
-);
+const isConfigInvalid = configValues.some(value => {
+    // A value is invalid if it's not a string with actual content.
+    if (typeof value !== 'string' || !value.trim()) {
+        return true;
+    }
+    // Or if it contains a placeholder keyword.
+    if (value.includes('your-')) {
+        return true;
+    }
+    return false;
+});
+
 
 if (!isConfigInvalid) {
     try {
