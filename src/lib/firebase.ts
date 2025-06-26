@@ -13,37 +13,36 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-let app: FirebaseApp | null = null;
-let auth: Auth | null = null;
-let db: Firestore | null = null;
-let storage: FirebaseStorage | null = null;
-let isFirebaseInitialized = false;
-
-// A helper function to check if a value is a valid config string.
+// Helper function to check if a value is a valid config string.
 // It must be a non-empty string and not a placeholder.
 function isValidConfigValue(value: string | undefined): value is string {
+    // Ensure the value is a string and not just whitespace before checking content.
     return typeof value === 'string' && value.trim() !== '' && !value.includes('your-');
 }
 
-if (
+const allConfigValuesValid =
     isValidConfigValue(firebaseConfig.apiKey) &&
     isValidConfigValue(firebaseConfig.authDomain) &&
     isValidConfigValue(firebaseConfig.projectId) &&
     isValidConfigValue(firebaseConfig.storageBucket) &&
     isValidConfigValue(firebaseConfig.messagingSenderId) &&
-    isValidConfigValue(firebaseConfig.appId)
-) {
+    isValidConfigValue(firebaseConfig.appId);
+
+
+let app: FirebaseApp | null = null;
+let auth: Auth | null = null;
+let db: Firestore | null = null;
+let storage: FirebaseStorage | null = null;
+
+if (allConfigValuesValid) {
     try {
         app = getApps().length ? getApp() : initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
         storage = getStorage(app);
-        // Mark as initialized ONLY on successful initialization.
-        isFirebaseInitialized = true;
     } catch(e) {
         console.error("Firebase initialization failed. Please check your Firebase project configuration in .env.local. It might be invalid.", e);
-        // If initialization fails for any reason, ensure the flag is false and services are null.
-        isFirebaseInitialized = false;
+        // Explicitly nullify on error to ensure isFirebaseConfigured is false.
         app = null;
         auth = null;
         db = null;
@@ -51,5 +50,6 @@ if (
     }
 }
 
-export const isFirebaseConfigured = isFirebaseInitialized; 
+// The single source of truth is whether the `app` object was successfully created.
+export const isFirebaseConfigured = !!app; 
 export { app, auth, db, storage };
