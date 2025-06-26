@@ -1,4 +1,3 @@
-
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
@@ -13,20 +12,23 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// A more robust check for the essential environment variables.
-// It trims the values to ensure they are not just whitespace.
-const hasEssentialConfig =
-  firebaseConfig.apiKey?.trim() &&
-  firebaseConfig.authDomain?.trim() &&
-  firebaseConfig.projectId?.trim();
+// A simple and direct check for valid configuration.
+// It ensures that essential variables are present and are NOT the placeholder values.
+const isFirebaseConfigured =
+  firebaseConfig.apiKey &&
+  firebaseConfig.authDomain &&
+  firebaseConfig.projectId &&
+  !firebaseConfig.apiKey.includes('your-api-key') &&
+  !firebaseConfig.authDomain.includes('your-project-id') &&
+  !firebaseConfig.projectId.includes('your-project-id');
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
 
-// Initialize Firebase only if the configuration is present and not just whitespace.
-if (hasEssentialConfig) {
+// Initialize Firebase only if the configuration is valid.
+if (isFirebaseConfigured) {
   try {
     app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     auth = getAuth(app);
@@ -42,8 +44,4 @@ if (hasEssentialConfig) {
   }
 }
 
-// Export a simple boolean flag for UI components to check if Firebase is ready.
-// It's true only if the app object was successfully initialized.
-export const isFirebaseConfigured = !!app;
-
-export { app, auth, db, storage };
+export { app, auth, db, storage, isFirebaseConfigured };
