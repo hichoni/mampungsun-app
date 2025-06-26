@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import React, { useState, useEffect, useTransition } from "react"
+import React, { useState, useTransition } from "react"
 import {
   Card,
   CardContent,
@@ -16,36 +16,10 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { ArrowLeft, Loader2 } from "lucide-react"
 import { auth } from "@/lib/firebase"
-import { signInAnonymously, signOut } from "firebase/auth"
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { signInAnonymously } from "firebase/auth"
 
 const MASTER_ID = "master"
 const MASTER_PASSWORD = "password123"
-
-function FirebaseErrorDisplay({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-secondary/50 p-4">
-      <Card className="mx-auto max-w-md w-full">
-        <CardHeader>
-          <CardTitle className="text-2xl font-headline text-destructive">{title}</CardTitle>
-          <CardDescription>앱을 사용하기 전에 필요한 설정입니다.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Alert variant="destructive">
-            <AlertTitle>해결 방법</AlertTitle>
-            <AlertDescription>
-              <p>{description}</p>
-            </AlertDescription>
-          </Alert>
-          <Button onClick={() => window.location.reload()} className="w-full mt-4">
-            설정 후 새로고침
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
-
 
 export default function TeacherLoginPage() {
   const router = useRouter()
@@ -53,84 +27,56 @@ export default function TeacherLoginPage() {
   const [masterId, setMasterId] = useState("")
   const [password, setPassword] = useState("")
   const [isLoggingIn, startLoggingIn] = useTransition();
-  
-  const [firebaseError, setFirebaseError] = useState<{ title: string; description: string } | null>(null);
-  const [isVerifying, setIsVerifying] = useState(true);
-
-  useEffect(() => {
-    const verifyConnection = async () => {
-      if (!auth) {
-        setFirebaseError({
-            title: "Firebase 미설정",
-            description: "Firestore 데이터베이스 연동을 위한 환경 변수 설정이 필요합니다. 프로젝트의 `README.md` 파일을 참고하여 설정을 완료해주세요.",
-        });
-        setIsVerifying(false);
-        return;
-      }
-      try {
-        await signInAnonymously(auth);
-        await signOut(auth); // Immediately sign out, this was just a check
-      } catch (error: any) {
-        console.error("Firebase connection verification failed:", error);
-        if (error.code === 'auth/operation-not-allowed') {
-          setFirebaseError({
-              title: 'Firebase 설정 오류',
-              description: "Firebase 콘솔의 Authentication > Sign-in method 탭에서 '익명 로그인'을 활성화해주세요.",
-          });
-        } else {
-            setFirebaseError({
-                title: 'Firebase 설정 오류',
-                description: 'Firebase 구성이 올바르지 않습니다. .env.local 파일의 환경 변수 값이 정확한지 확인해주세요.',
-            });
-        }
-      } finally {
-          setIsVerifying(false);
-      }
-    };
-    verifyConnection();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (masterId === MASTER_ID && password === MASTER_PASSWORD) {
-        startLoggingIn(async () => {
-            try {
-                if (!auth) throw new Error("Firebase auth not available");
-                await signInAnonymously(auth);
-                localStorage.setItem('mampungsun_user_id', 'teacher-master');
-                toast({
-                    title: "로그인 성공",
-                    description: "교사 대시보드로 이동합니다."
-                })
-                router.push('/teacher/dashboard')
-            } catch (error) {
-                console.error("Teacher login error during actual sign-in:", error);
-                toast({
-                    variant: "destructive",
-                    title: "로그인 오류",
-                    description: "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
-                });
-            }
-        });
-    } else {
+    if (masterId !== MASTER_ID || password !== MASTER_PASSWORD) {
       toast({
         variant: "destructive",
         title: "로그인 실패",
         description: "아이디 또는 비밀번호가 올바르지 않습니다."
       })
+      return;
     }
-  }
-  
-  if (isVerifying) {
-    return (
-        <div className="flex items-center justify-center min-h-screen">
-            <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-    );
-  }
 
-  if (firebaseError) {
-    return <FirebaseErrorDisplay title={firebaseError.title} description={firebaseError.description} />;
+    startLoggingIn(async () => {
+        try {
+            if (!auth) {
+                 toast({
+                    variant: "destructive",
+                    title: "Firebase 미설정",
+                    description: "환경 변수 설정이 필요합니다. README.md를 확인해주세요."
+                });
+                return;
+            }
+            // First, ensure we can get an anonymous session
+            await signInAnonymously(auth);
+            
+            // If successful, proceed with app logic
+            localStorage.setItem('mampungsun_user_id', 'teacher-master');
+            toast({
+                title: "로그인 성공",
+                description: "교사 대시보드로 이동합니다."
+            })
+            router.push('/teacher/dashboard')
+
+        } catch (error: any) {
+            console.error("Teacher login error:", error);
+            if (error.code === 'auth/operation-not-allowed') {
+                 toast({
+                    variant: "destructive",
+                    title: "Firebase 설정 오류",
+                    description: "Firebase 콘솔에서 '익명 로그인'을 활성화해주세요.",
+                });
+            } else {
+                 toast({
+                    variant: "destructive",
+                    title: "Firebase 인증 오류",
+                    description: "Firebase 구성이 올바르지 않습니다. 환경 변수를 확인해주세요.",
+                });
+            }
+        }
+    });
   }
 
   return (

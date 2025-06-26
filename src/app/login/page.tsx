@@ -18,88 +18,47 @@ import React, { useState, useTransition, useEffect, useMemo } from "react"
 import { ArrowLeft, Loader2 } from "lucide-react"
 import { loginUser, getAllStudents, recordLogin } from "@/lib/actions"
 import { auth } from "@/lib/firebase"
-import { signInAnonymously, signOut } from "firebase/auth"
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { signInAnonymously } from "firebase/auth"
 import type { User } from "@/lib/definitions"
-
-function FirebaseErrorDisplay({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-secondary/50 p-4">
-      <Card className="mx-auto max-w-md w-full">
-        <CardHeader>
-          <CardTitle className="text-2xl font-headline text-destructive">{title}</CardTitle>
-          <CardDescription>앱을 사용하기 전에 필요한 설정입니다.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Alert variant="destructive">
-            <AlertTitle>해결 방법</AlertTitle>
-            <AlertDescription>
-              <p>{description}</p>
-            </AlertDescription>
-          </Alert>
-          <Button onClick={() => window.location.reload()} className="w-full mt-4">
-            설정 후 새로고침
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   
   const [allStudents, setAllStudents] = useState<User[]>([]);
-  const [isLoading, startLoading] = useTransition();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingIn, startLoggingIn] = useTransition();
 
   const [grade, setGrade] = useState<string>('');
   const [studentClass, setStudentClass] = useState<string>('');
   const [studentId, setStudentId] = useState<string>('');
   const [pin, setPin] = useState<string>('');
 
-  const [firebaseError, setFirebaseError] = useState<{ title: string; description: string } | null>(null);
-  const [isVerifying, setIsVerifying] = useState(true);
+  const [formDisabled, setFormDisabled] = useState(false);
 
   useEffect(() => {
-    const verifyConnectionAndFetchStudents = async () => {
-      if (!auth) {
-        setFirebaseError({
-            title: "Firebase 미설정",
-            description: "Firestore 데이터베이스 연동을 위한 환경 변수 설정이 필요합니다. 프로젝트의 `README.md` 파일을 참고하여 설정을 완료해주세요.",
-        });
-        setIsVerifying(false);
-        return;
-      }
+    const fetchStudents = async () => {
+      setIsLoading(true);
       try {
-        await signInAnonymously(auth);
-        await signOut(auth); // Immediately sign out, this was just a check
-
-        // Fetch students only after successful verification
-        startLoading(async () => {
-            const students = await getAllStudents();
-            setAllStudents(students.filter(s => s.isApproved && s.id !== 'teacher-master' && s.id !== 'ai-cheerer'));
-        });
-
-      } catch (error: any) {
-        console.error("Firebase connection verification failed:", error);
-        if (error.code === 'auth/operation-not-allowed') {
-          setFirebaseError({
-              title: 'Firebase 설정 오류',
-              description: "Firebase 콘솔의 Authentication > Sign-in method 탭에서 '익명 로그인'을 활성화해주세요.",
-          });
-        } else {
-             setFirebaseError({
-                title: 'Firebase 설정 오류',
-                description: 'Firebase 구성이 올바르지 않습니다. .env.local 파일의 환경 변수 값이 정확한지 확인해주세요.',
-            });
+        if (!auth) {
+          throw new Error("Firebase not configured");
         }
+        const students = await getAllStudents();
+        setAllStudents(students.filter(s => s.isApproved && s.id !== 'teacher-master' && s.id !== 'ai-cheerer'));
+      } catch (error) {
+        console.error("Failed to fetch student list:", error);
+        toast({
+            variant: "destructive",
+            title: "데이터 로드 실패",
+            description: "학생 목록을 불러올 수 없습니다. Firebase 설정을 확인해주세요."
+        });
+        setFormDisabled(true);
       } finally {
-        setIsVerifying(false);
+        setIsLoading(false);
       }
     };
-    verifyConnectionAndFetchStudents();
-  }, []);
+    fetchStudents();
+  }, [toast]);
 
   const handleGradeChange = (value: string) => {
     setGrade(value);
@@ -134,7 +93,7 @@ export default function LoginPage() {
         return;
     }
 
-    startLoading(async () => {
+    startLoggingIn(async () => {
         try {
             const user = await loginUser(parseInt(grade), parseInt(studentClass), parseInt(studentId));
 
@@ -166,26 +125,24 @@ export default function LoginPage() {
             
         } catch (error: any) {
             console.error("Login error:", error);
-            toast({
-                variant: "destructive",
-                title: "로그인 오류",
-                description: "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요."
-            });
+            if (error.code === 'auth/operation-not-allowed') {
+                toast({
+                   variant: "destructive",
+                   title: "Firebase 설정 오류",
+                   description: "Firebase 콘솔에서 '익명 로그인'을 활성화해주세요.",
+               });
+           } else {
+               toast({
+                   variant: "destructive",
+                   title: "로그인 오류",
+                   description: "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요."
+               });
+           }
         }
     });
   }
   
-  if (isVerifying) {
-    return (
-        <div className="flex items-center justify-center min-h-screen">
-            <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-    );
-  }
-  
-  if (firebaseError) {
-    return <FirebaseErrorDisplay title={firebaseError.title} description={firebaseError.description} />;
-  }
+  const isDisabled = isLoading || isLoggingIn || formDisabled;
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary/50">
@@ -207,7 +164,7 @@ export default function LoginPage() {
             <div className="grid grid-cols-3 gap-4">
                 <div className="grid gap-2">
                     <Label htmlFor="grade">학년</Label>
-                    <Select name="grade" required value={grade} onValueChange={handleGradeChange} disabled={isLoading}>
+                    <Select name="grade" required value={grade} onValueChange={handleGradeChange} disabled={isDisabled}>
                         <SelectTrigger id="grade">
                             <SelectValue placeholder="학년" />
                         </SelectTrigger>
@@ -219,7 +176,7 @@ export default function LoginPage() {
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="class">반</Label>
-                    <Select name="class" required value={studentClass} onValueChange={handleClassChange} disabled={!grade || isLoading}>
+                    <Select name="class" required value={studentClass} onValueChange={handleClassChange} disabled={!grade || isDisabled}>
                         <SelectTrigger id="class">
                             <SelectValue placeholder="반" />
                         </SelectTrigger>
@@ -230,7 +187,7 @@ export default function LoginPage() {
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="studentId">번호</Label>
-                     <Select name="studentId" required value={studentId} onValueChange={setStudentId} disabled={!studentClass || isLoading}>
+                     <Select name="studentId" required value={studentId} onValueChange={setStudentId} disabled={!studentClass || isDisabled}>
                         <SelectTrigger id="studentId">
                             <SelectValue placeholder="번호" />
                         </SelectTrigger>
@@ -242,10 +199,10 @@ export default function LoginPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="pin">PIN 번호</Label>
-              <Input id="pin" name="pin" type="password" required placeholder="4자리 숫자" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value)} disabled={isLoading}/>
+              <Input id="pin" name="pin" type="password" required placeholder="4자리 숫자" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value)} disabled={isDisabled}/>
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="w-full" disabled={isDisabled}>
+              {isLoggingIn && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               로그인
             </Button>
           </form>
