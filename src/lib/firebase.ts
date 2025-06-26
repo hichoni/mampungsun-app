@@ -12,36 +12,26 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// A simple and direct check for valid configuration.
-// It ensures that essential variables are present and are NOT the placeholder values.
+// This is the simplest possible check for configuration.
+// It only verifies that the essential environment variables are present.
+// It does NOT validate their content. If these are present but contain placeholder values,
+// Firebase will throw a specific error during authentication, which is now handled
+// correctly in the login pages.
 const isFirebaseConfigured =
-  firebaseConfig.apiKey &&
-  firebaseConfig.authDomain &&
-  firebaseConfig.projectId &&
-  !firebaseConfig.apiKey.includes('your-api-key') &&
-  !firebaseConfig.authDomain.includes('your-project-id') &&
-  !firebaseConfig.projectId.includes('your-project-id');
+  !!firebaseConfig.apiKey &&
+  !!firebaseConfig.authDomain &&
+  !!firebaseConfig.projectId;
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
 
-// Initialize Firebase only if the configuration is valid.
 if (isFirebaseConfigured) {
-  try {
-    app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-    storage = getStorage(app);
-  } catch (error) {
-    console.error("Firebase initialization error:", error);
-    // If initialization fails, ensure all services are null.
-    app = null;
-    auth = null;
-    db = null;
-    storage = null;
-  }
+  app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
 }
 
 export { app, auth, db, storage, isFirebaseConfigured };

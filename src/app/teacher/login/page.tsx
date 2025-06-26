@@ -33,7 +33,6 @@ export default function TeacherLoginPage() {
 
     if (masterId === MASTER_ID && password === MASTER_PASSWORD) {
       try {
-        // Final safety check: ensure auth is actually available before using it.
         if (!auth) {
             toast({
                 variant: "destructive",
@@ -52,11 +51,19 @@ export default function TeacherLoginPage() {
         router.push('/dashboard')
       } catch (error: any) {
         console.error("Anonymous sign-in failed", error);
-        toast({
-          variant: "destructive",
-          title: "인증 실패",
-          description: "Firebase 인증에 실패했습니다. 설정을 다시 확인해주세요."
-        });
+        if (error.code === 'auth/configuration-not-found') {
+             toast({
+                variant: "destructive",
+                title: "Firebase 설정 오류",
+                description: "환경 변수(.env.local)에 올바른 Firebase 설정 값이 입력되었는지 확인해주세요."
+            });
+        } else {
+            toast({
+              variant: "destructive",
+              title: "인증 실패",
+              description: "Firebase 인증에 실패했습니다. 잠시 후 다시 시도해주세요."
+            });
+        }
         return;
       }
     } else {

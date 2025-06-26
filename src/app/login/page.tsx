@@ -83,7 +83,6 @@ export default function LoginPage() {
 
     startLoggingIn(async () => {
         try {
-            // Final safety check: ensure auth is actually available before using it.
             if (!auth) {
               toast({
                   variant: "destructive",
@@ -126,7 +125,15 @@ export default function LoginPage() {
             
         } catch (error: any) {
             console.error("Login error:", error);
-            toast({ variant: "destructive", title: "로그인 오류", description: "로그인 중 문제가 발생했습니다. Firebase 설정을 확인해주세요." });
+            if (error.code === 'auth/configuration-not-found') {
+                 toast({
+                    variant: "destructive",
+                    title: "Firebase 설정 오류",
+                    description: "환경 변수(.env.local)에 올바른 Firebase 설정 값이 입력되었는지 확인해주세요."
+                });
+            } else {
+                toast({ variant: "destructive", title: "로그인 오류", description: "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요." });
+            }
         }
     });
   }
