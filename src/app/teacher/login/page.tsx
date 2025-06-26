@@ -1,3 +1,4 @@
+
 'use client'
 
 import Link from "next/link"
@@ -7,6 +8,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -28,6 +30,33 @@ export default function TeacherLoginPage() {
   const [password, setPassword] = useState("")
   const [isLoggingIn, startLoggingIn] = useTransition();
 
+  // If auth is null, Firebase isn't configured correctly.
+  // This is the most robust way to prevent auth errors.
+  if (!auth) {
+      return (
+        <div className="flex items-center justify-center min-h-screen bg-secondary/50">
+            <Card className="mx-auto max-w-md w-full">
+                <CardHeader>
+                    <CardTitle className="text-2xl font-headline text-destructive">Firebase 설정 오류</CardTitle>
+                    <CardDescription>
+                        앱이 Firebase에 연결할 수 없습니다. 환경 변수 설정이 올바른지 확인해주세요.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                        프로젝트의 `README.md` 파일을 열어 `Step 2: 로컬 개발 환경 설정` 부분을 다시 한번 확인하고, `.env.local` 파일에 올바른 값을 입력했는지 검토해주세요.
+                    </p>
+                </CardContent>
+                 <CardFooter>
+                    <Button asChild className="w-full">
+                        <Link href="/">홈으로 돌아가기</Link>
+                    </Button>
+                </CardFooter>
+            </Card>
+        </div>
+      )
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (masterId !== MASTER_ID || password !== MASTER_PASSWORD) {
@@ -41,18 +70,8 @@ export default function TeacherLoginPage() {
 
     startLoggingIn(async () => {
         try {
-            if (!auth) {
-                 toast({
-                    variant: "destructive",
-                    title: "Firebase 미설정",
-                    description: "환경 변수 설정이 필요합니다. README.md를 확인해주세요."
-                });
-                return;
-            }
-            // First, ensure we can get an anonymous session
             await signInAnonymously(auth);
             
-            // If successful, proceed with app logic
             localStorage.setItem('mampungsun_user_id', 'teacher-master');
             toast({
                 title: "로그인 성공",
@@ -62,7 +81,13 @@ export default function TeacherLoginPage() {
 
         } catch (error: any) {
             console.error("Teacher login error:", error);
-            if (error.code === 'auth/operation-not-allowed') {
+            if (error.code === 'auth/configuration-not-found') {
+                 toast({
+                    variant: "destructive",
+                    title: "Firebase 인증 오류",
+                    description: "Firebase 설정 값(API 키 등)이 올바르지 않습니다. .env.local 파일을 다시 확인해주세요.",
+                });
+            } else if (error.code === 'auth/operation-not-allowed') {
                  toast({
                     variant: "destructive",
                     title: "Firebase 설정 오류",
@@ -71,8 +96,8 @@ export default function TeacherLoginPage() {
             } else {
                  toast({
                     variant: "destructive",
-                    title: "Firebase 인증 오류",
-                    description: "Firebase 구성이 올바르지 않습니다. 환경 변수를 확인해주세요.",
+                    title: "로그인 중 알 수 없는 오류",
+                    description: "잠시 후 다시 시도해주세요.",
                 });
             }
         }

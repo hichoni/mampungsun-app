@@ -1,3 +1,4 @@
+
 'use client'
 
 import Link from "next/link"
@@ -6,6 +7,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -34,31 +36,55 @@ export default function LoginPage() {
   const [studentId, setStudentId] = useState<string>('');
   const [pin, setPin] = useState<string>('');
 
-  const [formDisabled, setFormDisabled] = useState(false);
-
   useEffect(() => {
-    const fetchStudents = async () => {
-      setIsLoading(true);
-      try {
-        if (!auth) {
-          throw new Error("Firebase not configured");
+    // Only fetch students if Firebase is configured.
+    if (auth) {
+      const fetchStudents = async () => {
+        setIsLoading(true);
+        try {
+          const students = await getAllStudents();
+          setAllStudents(students.filter(s => s.isApproved && s.id !== 'teacher-master' && s.id !== 'ai-cheerer'));
+        } catch (error) {
+          console.error("Failed to fetch student list:", error);
+          toast({
+              variant: "destructive",
+              title: "데이터 로드 실패",
+              description: "학생 목록을 불러오는 중 문제가 발생했습니다."
+          });
+        } finally {
+          setIsLoading(false);
         }
-        const students = await getAllStudents();
-        setAllStudents(students.filter(s => s.isApproved && s.id !== 'teacher-master' && s.id !== 'ai-cheerer'));
-      } catch (error) {
-        console.error("Failed to fetch student list:", error);
-        toast({
-            variant: "destructive",
-            title: "데이터 로드 실패",
-            description: "학생 목록을 불러올 수 없습니다. Firebase 설정을 확인해주세요."
-        });
-        setFormDisabled(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchStudents();
+      };
+      fetchStudents();
+    }
   }, [toast]);
+  
+  // If auth is null, Firebase isn't configured correctly.
+  // This is the most robust way to prevent auth errors.
+  if (!auth) {
+      return (
+        <div className="flex items-center justify-center min-h-screen bg-secondary/50">
+            <Card className="mx-auto max-w-md w-full">
+                <CardHeader>
+                    <CardTitle className="text-2xl font-headline text-destructive">Firebase 설정 오류</CardTitle>
+                    <CardDescription>
+                        앱이 Firebase에 연결할 수 없습니다. 환경 변수 설정이 올바른지 확인해주세요.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                        프로젝트의 `README.md` 파일을 열어 `Step 2: 로컬 개발 환경 설정` 부분을 다시 한번 확인하고, `.env.local` 파일에 올바른 값을 입력했는지 검토해주세요.
+                    </p>
+                </CardContent>
+                 <CardFooter>
+                    <Button asChild className="w-full">
+                        <Link href="/">홈으로 돌아가기</Link>
+                    </Button>
+                </CardFooter>
+            </Card>
+        </div>
+      )
+  }
 
   const handleGradeChange = (value: string) => {
     setGrade(value);
@@ -110,7 +136,6 @@ export default function LoginPage() {
                 return;
             }
             
-            if (!auth) throw new Error("Firebase auth not available");
             await signInAnonymously(auth);
             await recordLogin(user.id);
         
@@ -125,7 +150,13 @@ export default function LoginPage() {
             
         } catch (error: any) {
             console.error("Login error:", error);
-            if (error.code === 'auth/operation-not-allowed') {
+            if (error.code === 'auth/configuration-not-found') {
+                toast({
+                   variant: "destructive",
+                   title: "Firebase 인증 오류",
+                   description: "Firebase 설정 값(API 키 등)이 올바르지 않습니다. .env.local 파일을 다시 확인해주세요.",
+               });
+           } else if (error.code === 'auth/operation-not-allowed') {
                 toast({
                    variant: "destructive",
                    title: "Firebase 설정 오류",
@@ -142,7 +173,7 @@ export default function LoginPage() {
     });
   }
   
-  const isDisabled = isLoading || isLoggingIn || formDisabled;
+  const isDisabled = isLoading || isLoggingIn;
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary/50">

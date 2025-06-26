@@ -13,18 +13,21 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// A function to check if the config is valid.
+const checkFirebaseConfig = (): boolean => {
+    return Object.values(firebaseConfig).every(
+        (value) => value && typeof value === 'string' && value.trim() !== '' && !value.includes('your-')
+    );
+}
+
+const isConfigValid = checkFirebaseConfig();
+
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
 
-// Start with a check of the environment variables.
-let isFirebaseConfigured =
-  Object.values(firebaseConfig).every(
-    (value) => typeof value === 'string' && value.length > 0 && !value.includes('your-')
-  );
-
-if (isFirebaseConfigured) {
+if (isConfigValid) {
   try {
     app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     auth = getAuth(app);
@@ -32,16 +35,16 @@ if (isFirebaseConfigured) {
     storage = getStorage(app);
   } catch (e) {
     console.error("Firebase initialization failed. This can happen with an invalid project configuration. Please check your .env.local file. Error details:", e);
-    // If initialization fails for ANY reason, we mark it as not configured.
-    isFirebaseConfigured = false;
+    // If initialization fails for ANY reason, nullify everything.
     app = null;
     auth = null;
     db = null;
     storage = null;
   }
 } else {
-    // This message is helpful for developers running the app locally for the first time.
-    console.error("Firebase config is incomplete. Not all required environment variables are set correctly in .env.local. Please check the README.md file for instructions.");
+    // This console log is helpful for developers running the app locally for the first time.
+    console.log("Firebase config is incomplete or invalid. Please check your environment variables.");
 }
 
-export { app, auth, db, storage, isFirebaseConfigured };
+// We no longer export isFirebaseConfigured, as checking for `auth` being null is the source of truth.
+export { app, auth, db, storage };
