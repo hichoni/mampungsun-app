@@ -17,39 +17,35 @@ let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
-
 let isFirebaseInitialized = false;
 
-// A robust check to see if the Firebase config is valid.
-// It checks for two things:
-// 1. Are any of the required values missing (falsy)?
-const hasMissingValues = Object.values(firebaseConfig).some((value) => !value);
-// 2. Do any of the values contain the placeholder "your-"?
-const hasPlaceholderValues = JSON.stringify(firebaseConfig).includes('your-');
+// New robust check:
+// The configuration is considered valid ONLY if all values are present (not empty, not just whitespace)
+// AND they do not contain the placeholder keyword 'your-'.
+const configValues = Object.values(firebaseConfig);
+const isConfigInvalid = configValues.some(value => 
+    !value ||             // is falsy (null, undefined, empty string)
+    !value.trim() ||      // is only whitespace
+    value.includes('your-') // contains a placeholder
+);
 
-const configIsInvalid = hasMissingValues || hasPlaceholderValues;
-
-// Initialize Firebase only if the config is NOT invalid.
-if (!configIsInvalid) {
+if (!isConfigInvalid) {
     try {
         app = getApps().length ? getApp() : initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
         storage = getStorage(app);
-        // Mark as initialized ONLY on success.
+        // Mark as initialized ONLY on successful initialization.
         isFirebaseInitialized = true;
     } catch(e) {
         console.error("Firebase initialization failed. Please check your Firebase project configuration in .env.local. It might be invalid.", e);
-        // If initialization fails for any reason, ensure the flag is false.
+        // If initialization fails for any reason, ensure the flag is false and services are null.
         isFirebaseInitialized = false;
         app = null;
         auth = null;
         db = null;
         storage = null;
     }
-} else {
-    // If config is invalid from the start, ensure the flag is false.
-    isFirebaseInitialized = false;
 }
 
 export const isFirebaseConfigured = isFirebaseInitialized; 
