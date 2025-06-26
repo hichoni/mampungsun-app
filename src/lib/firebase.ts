@@ -13,43 +13,55 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Helper function to check if a value is a valid config string.
-// It must be a non-empty string and not a placeholder.
-function isValidConfigValue(value: string | undefined): value is string {
-    // Ensure the value is a string and not just whitespace before checking content.
-    return typeof value === 'string' && value.trim() !== '' && !value.includes('your-');
-}
-
-const allConfigValuesValid =
-    isValidConfigValue(firebaseConfig.apiKey) &&
-    isValidConfigValue(firebaseConfig.authDomain) &&
-    isValidConfigValue(firebaseConfig.projectId) &&
-    isValidConfigValue(firebaseConfig.storageBucket) &&
-    isValidConfigValue(firebaseConfig.messagingSenderId) &&
-    isValidConfigValue(firebaseConfig.appId);
-
-
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
+let _isFirebaseConfigured = false;
 
-if (allConfigValuesValid) {
+// This function defensively initializes Firebase and sets the configuration status.
+function initializeFirebase() {
+    // 1. Check if all config values are present and are non-empty strings.
+    const allKeysPresentAndValid = Object.values(firebaseConfig).every(
+      (value) => typeof value === 'string' && value.trim() !== ''
+    );
+    
+    if (!allKeysPresentAndValid) {
+        console.error("Firebase config error: Not all environment variables are set or are empty strings in .env.local.");
+        return; // Exit early, leaving _isFirebaseConfigured as false.
+    }
+
+    // 2. Check for placeholder values from the README.
+    const hasPlaceholder = Object.values(firebaseConfig).some((value) =>
+      (value as string).includes('your-')
+    );
+
+    if (hasPlaceholder) {
+        console.error("Firebase config error: Placeholder values found in .env.local. Please replace them with actual Firebase project credentials from your Firebase console.");
+        return; // Exit early, leaving _isFirebaseConfigured as false.
+    }
+
+    // 3. If all checks pass, try to initialize Firebase.
     try {
         app = getApps().length ? getApp() : initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
         storage = getStorage(app);
-    } catch(e) {
-        console.error("Firebase initialization failed. Please check your Firebase project configuration in .env.local. It might be invalid.", e);
-        // Explicitly nullify on error to ensure isFirebaseConfigured is false.
+        _isFirebaseConfigured = true; // Set to true ONLY on successful initialization.
+    } catch (e) {
+        console.error("Firebase initialization failed with an exception. Please check your Firebase project configuration in .env.local as it might be invalid (e.g., malformed project ID).", e);
+        // Explicitly nullify everything on error to prevent partial initialization.
         app = null;
         auth = null;
         db = null;
         storage = null;
+        _isFirebaseConfigured = false;
     }
 }
 
-// The single source of truth is whether the `app` object was successfully created.
-export const isFirebaseConfigured = !!app; 
+// Run the initialization logic when this module is imported.
+initializeFirebase();
+
+// Export the results. `isFirebaseConfigured` is the single source of truth.
+export const isFirebaseConfigured = _isFirebaseConfigured;
 export { app, auth, db, storage };
