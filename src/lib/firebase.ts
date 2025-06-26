@@ -18,24 +18,26 @@ let auth: Auth | null = null;
 let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
 
-// This flag will be true ONLY if the configuration is valid AND initialization succeeds.
 let isFirebaseInitialized = false;
 
-// Check for presence of essential keys and ensure they are not placeholder values.
-const configIsInvalid = 
-    !firebaseConfig.apiKey || firebaseConfig.apiKey.includes('your-api-key') ||
-    !firebaseConfig.authDomain || firebaseConfig.authDomain.includes('your-project-id') ||
-    !firebaseConfig.projectId || firebaseConfig.projectId.includes('your-project-id');
+// A robust check to see if the Firebase config is valid.
+// It checks for two things:
+// 1. Are any of the required values missing (falsy)?
+const hasMissingValues = Object.values(firebaseConfig).some((value) => !value);
+// 2. Do any of the values contain the placeholder "your-"?
+const hasPlaceholderValues = JSON.stringify(firebaseConfig).includes('your-');
 
+const configIsInvalid = hasMissingValues || hasPlaceholderValues;
 
-// Initialize Firebase only if the config is valid.
+// Initialize Firebase only if the config is NOT invalid.
 if (!configIsInvalid) {
     try {
         app = getApps().length ? getApp() : initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
         storage = getStorage(app);
-        isFirebaseInitialized = true; // Mark as initialized ONLY on success.
+        // Mark as initialized ONLY on success.
+        isFirebaseInitialized = true;
     } catch(e) {
         console.error("Firebase initialization failed. Please check your Firebase project configuration in .env.local. It might be invalid.", e);
         // If initialization fails for any reason, ensure the flag is false.
@@ -46,7 +48,7 @@ if (!configIsInvalid) {
         storage = null;
     }
 } else {
-    // If config is invalid from the start, ensure flag is false.
+    // If config is invalid from the start, ensure the flag is false.
     isFirebaseInitialized = false;
 }
 
