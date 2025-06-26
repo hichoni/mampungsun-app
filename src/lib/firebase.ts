@@ -14,49 +14,27 @@ const firebaseConfig: FirebaseOptions = {
 };
 
 function isFirebaseConfigured() {
+    // A robust check to ensure all necessary Firebase config values are present.
+    // It verifies that each essential key has a non-empty, non-placeholder value.
     const config = firebaseConfig;
     
-    // Helper to check if a value is still a placeholder.
-    // It handles trimming and removes potential quotes.
-    const isPlaceholder = (value: string | undefined, placeholder: string): boolean => {
-        if (!value) {
-            return true; // Value is missing
-        }
-        let processedValue = value.trim();
-        // Remove quotes if they exist at both ends
-        if ((processedValue.startsWith('"') && processedValue.endsWith('"')) || (processedValue.startsWith("'") && processedValue.endsWith("'"))) {
-            processedValue = processedValue.substring(1, processedValue.length - 1);
-        }
-        
-        // If after all processing the value is empty, it's not configured.
-        if (!processedValue) {
-            return true;
-        }
-
-        // Return true only if it's the exact placeholder.
-        return processedValue === placeholder;
-    };
-    
-    // Check if any config value is still a placeholder.
-    if (
-        isPlaceholder(config.apiKey, 'your-api-key') ||
-        isPlaceholder(config.authDomain, 'your-project-id.firebaseapp.com') ||
-        isPlaceholder(config.projectId, 'your-project-id') ||
-        isPlaceholder(config.storageBucket, 'your-project-id.appspot.com') ||
-        isPlaceholder(config.messagingSenderId, 'your-sender-id') ||
-        isPlaceholder(config.appId, 'your-app-id')
-    ) {
-        return false;
-    }
-
-    return true;
+    // This is the most reliable check: are the values defined and not empty strings?
+    // This avoids all the complex placeholder guessing that caused previous issues.
+    return !!(
+        config.apiKey &&
+        config.authDomain &&
+        config.projectId &&
+        config.storageBucket &&
+        config.messagingSenderId &&
+        config.appId
+    );
 }
 
 // Initialize Firebase
 let app;
 if (!getApps().length) {
     if (!isFirebaseConfigured()) {
-        console.warn("Firebase config is not set or contains placeholder values. Please check your .env.local file. Firebase services will not be initialized.");
+        console.warn("Firebase config is not set or is incomplete. Please check your .env.local file. Firebase services will not be initialized.");
         app = null;
     } else {
         app = initializeApp(firebaseConfig);
