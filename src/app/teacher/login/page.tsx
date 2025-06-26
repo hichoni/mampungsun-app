@@ -31,17 +31,11 @@ export default function TeacherLoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isFirebaseConfigured() || !auth) {
-        toast({
-          variant: "destructive",
-          title: "Firebase 설정 오류",
-          description: "Firebase 설정이 올바르지 않습니다. README 파일을 확인해주세요."
-        });
-        return;
-    }
-
     if (masterId === MASTER_ID && password === MASTER_PASSWORD) {
       try {
+        // The auth object is checked at the page level. If it's null, this page won't render.
+        if (!auth) throw new Error("Firebase Auth is not initialized.");
+        
         await signInAnonymously(auth);
         localStorage.setItem('mampungsun_user_id', 'teacher-master');
         toast({

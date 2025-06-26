@@ -72,11 +72,6 @@ export default function LoginPage() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!isFirebaseConfigured() || !auth) {
-        toast({ variant: "destructive", title: "Firebase 미설정", description: "Firebase 설정이 올바르지 않습니다. README 파일을 확인해주세요." });
-        return;
-    }
-
     if (!grade || !studentClass || !studentId || !pin) {
         toast({
             variant: "destructive",
@@ -88,6 +83,9 @@ export default function LoginPage() {
 
     startLoggingIn(async () => {
         try {
+            // The auth object is checked at the page level. If it's null, this page won't render.
+            if (!auth) throw new Error("Firebase Auth is not initialized.");
+
             const user = await loginUser(parseInt(grade), parseInt(studentClass), parseInt(studentId));
 
             if (!user) {
