@@ -54,8 +54,13 @@ export default function TeacherLoginPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!isFirebaseConfigured || !auth) {
-        toast({ variant: "destructive", title: "설정 오류", description: "Firebase가 올바르게 설정되지 않았습니다. README.md를 확인해주세요." });
+        toast({
+            variant: "destructive",
+            title: "Firebase 설정 오류",
+            description: "Firebase가 올바르게 설정되지 않았습니다. README.md를 확인해주세요.",
+        });
         return;
     }
     
