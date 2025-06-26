@@ -16,22 +16,6 @@ const firebaseConfig: FirebaseOptions = {
 function isFirebaseConfigured() {
     const config = firebaseConfig;
 
-    const values = [
-        config.apiKey,
-        config.authDomain,
-        config.projectId,
-        config.storageBucket,
-        config.messagingSenderId,
-        config.appId,
-    ];
-
-    // 1. Check for falsy values (undefined, null, ''). If any value is missing, it's not configured.
-    if (values.some(v => !v)) {
-        return false;
-    }
-
-    // 2. Check if any value is an exact match for the placeholder strings from the README.
-    // This is the safest way to detect an unconfigured state without false positives.
     const placeholders = [
         'your-api-key',
         'your-project-id.firebaseapp.com',
@@ -41,16 +25,26 @@ function isFirebaseConfigured() {
         'your-app-id'
     ];
     
-    // Using Array.prototype.includes for a direct and exact comparison.
-    if (
-        placeholders.includes(config.apiKey!) ||
-        placeholders.includes(config.authDomain!) ||
-        placeholders.includes(config.projectId!) ||
-        placeholders.includes(config.storageBucket!) ||
-        placeholders.includes(config.messagingSenderId!) ||
-        placeholders.includes(config.appId!)
-    ) {
-        return false;
+    for (const value of Object.values(config)) {
+        // Rule 1: The value must exist and be a string.
+        if (!value || typeof value !== 'string') {
+            return false;
+        }
+
+        // Rule 2: The value, after being cleaned of whitespace and quotes, must not be empty.
+        let cleanedValue = value.trim();
+        if ((cleanedValue.startsWith('"') && cleanedValue.endsWith('"')) || (cleanedValue.startsWith("'") && cleanedValue.endsWith("'"))) {
+            cleanedValue = cleanedValue.substring(1, cleanedValue.length - 1).trim();
+        }
+        
+        if (cleanedValue === '') {
+            return false;
+        }
+
+        // Rule 3: The cleaned value must not be one of the placeholder strings.
+        if (placeholders.includes(cleanedValue)) {
+            return false;
+        }
     }
 
     return true;
