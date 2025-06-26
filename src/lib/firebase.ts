@@ -15,12 +15,29 @@ const firebaseConfig: FirebaseOptions = {
 function isFirebaseConfigured() {
     const config = firebaseConfig;
     
-    // 이 함수는 값이 유효한지(존재하고, 비어있지 않고, 플레이스홀더가 아닌지) 확인합니다.
     const check = (value: string | undefined, placeholder: string) => {
-        // 값이 반드시 문자열이어야 하고, 공백이 아니어야 하며, 플레이스홀더와 달라야 합니다.
-        if (typeof value !== 'string' || value.trim() === '' || value.trim() === placeholder) {
+        // 1. 값이 문자열이 아니면 유효하지 않음
+        if (typeof value !== 'string') {
             return false;
         }
+
+        // 2. 앞뒤 공백 제거
+        const trimmedValue = value.trim();
+
+        // 3. 공백 제거 후 빈 문자열이면 유효하지 않음
+        if (trimmedValue === '') {
+            return false;
+        }
+
+        // 4. 앞뒤 따옴표(큰따옴표 또는 작은따옴표)를 제거
+        const unquotedValue = trimmedValue.replace(/^"|"$/g, '').replace(/^'|'$/g, '');
+
+        // 5. 따옴표 제거 후 견본(placeholder) 값과 일치하면 유효하지 않음
+        if (unquotedValue === placeholder) {
+            return false;
+        }
+
+        // 모든 검사를 통과하면 유효함
         return true;
     }
 
